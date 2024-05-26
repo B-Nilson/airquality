@@ -37,6 +37,8 @@ aqhi_messaging = list(
 
 # FUNCTIONS --------
 
+# Canadian AQHI -----------------------------------------------------------
+
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
 AQHI = function(pm25_hourly, no2_hourly = NULL, o3_hourly = NULL, quiet = FALSE){
   # Calculate AQHI+ (pm25 only)
@@ -112,11 +114,9 @@ AQHI_plus = function(
     pm25_hourly,
     min_allowed_pm25 = 0)
 {
-  ## FORMATTING -------------
   # Remove values < min_allowed_pm25 (normally 0)
   pm25_hourly[pm25_hourly < min_allowed_pm25] = NA
 
-  # MAIN ----------------
   # Get AQHI+
   aqhi_p = cut(pm25_hourly,
       breaks = aqhi_breakpoints,
@@ -133,9 +133,14 @@ AQHI_plus = function(
     )
 
   # Get health messages
-  health_messages = dplyr::bind_rows(aqhi_messaging[risk])
+  health_messages = lapply(aqhi_messaging[risk], function(x){
+    if(is.null(x)){
+      data.frame(high_risk_pop = NA, general_pop = NA)
+    }else return(x)
+  })
+  health_messages = dplyr::bind_rows(health_messages)
 
-  # RETURN ---------------
+  # Combine and return
   data.frame(
     pm25_hourly = pm25_hourly,
     AQHI_plus = aqhi_p,
@@ -173,9 +178,6 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       annual = c('2020' = 17, '2025' = 12)
     )
   )
-  # helper functions to replace NA/inf with val
-  swap_na = function(x, val = -99) ifelse(is.na(x), val, x)
-  swap_inf = function(x, val = NA) ifelse(is.infinite(x), val, x)
   # helper functions to remove NA by default
   mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
   max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
@@ -333,9 +335,6 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
                       .after = "annual_mean_of_hourly") %>%
       dplyr::relocate(p_complete, .after = "year")
   }
+  return(met)
 }
-
-
-
-
 
