@@ -16,5 +16,7 @@ Imports:
     data.table,
     dplyr,
     lubridate,
+    magrittr,
     stringr,
     tidyr
+RoxygenNote: 7.3.1
