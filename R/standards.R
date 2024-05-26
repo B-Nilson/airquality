@@ -357,8 +357,8 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       dplyr::group_by(year = lubridate::year(date)) %>%
       dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
       # hourly mean -> daily maxima
-      dplyr::summarise(daily_max_hourly_so2 = max(no2, na.rm = T), .groups = "drop") %>%
       dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
+      dplyr::summarise(daily_max_hourly_so2 = max(.data$so2, na.rm = T), .groups = "drop") %>%
       # daily maxima -> annual 98th percentile
       dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
       dplyr::summarise(
