@@ -1,42 +1,4 @@
 
-## DEFINITIONS --------------
-
-# 10, 20, ..., 90, 100, >100 (ug/m3)
-aqhi_breakpoints = setNames(
-  c(-Inf, 1:10*10, Inf),
-  c(NA, 1:10, "+")
-)
-
-# Low [1-3], Mod. [4-6], High [7-10], V. High [+]
-aqhi_levels = list(
-  Low = 1:3,
-  Moderate = 4:6,
-  High = 7:10,
-  "Very High" = "+"
-)
-
-# Health messaging
-aqhi_messaging = list(
-  Low = data.frame(
-    high_risk_pop = "Enjoy your usual activities.",
-    general_pop = "Ideal air quality for outdoor activities."
-  ),
-  Moderate = data.frame(
-    high_risk_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
-    general_pop = "No need to modify your usual activities unless you experience symptoms."
-  ),
-  High = data.frame(
-    high_risk_pop = "Reduce or reschedule activities outdoors.",
-    general_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
-  ),
-  "Very High" = data.frame(
-    high_risk_pop = "Avoid strenuous activity outdoors.",
-    general_pop = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
-  )
-)
-
-# FUNCTIONS --------
-
 # Canadian AQHI -----------------------------------------------------------
 
 AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr){
@@ -57,7 +19,7 @@ AQHI_risk_category = function(AQHI){
   risk = factor(
     AQHI, unlist(aqhi_levels),
     unlist(
-      sapply(seq_along(aqhi_levels), function(i){
+      sapply(seq_along(aqhi_levels), \(i){
         rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
       })
     )
@@ -68,26 +30,26 @@ AQHI_risk_category = function(AQHI){
 AQHI_health_messaging = function(risk_categories){
   aqhi_messaging = list(
     Low = data.frame(
-      high_risk_pop = "Enjoy your usual activities.",
-      general_pop = "Ideal air quality for outdoor activities."
+      high_risk_pop_message = "Enjoy your usual activities.",
+      general_pop_message = "Ideal air quality for outdoor activities."
     ),
     Moderate = data.frame(
-      high_risk_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
-      general_pop = "No need to modify your usual activities unless you experience symptoms."
+      high_risk_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
+      general_pop_message = "No need to modify your usual activities unless you experience symptoms."
     ),
     High = data.frame(
-      high_risk_pop = "Reduce or reschedule activities outdoors.",
-      general_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
+      high_risk_pop_message = "Reduce or reschedule activities outdoors.",
+      general_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
     ),
     "Very High" = data.frame(
-      high_risk_pop = "Avoid strenuous activity outdoors.",
-      general_pop = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
+      high_risk_pop_message = "Avoid strenuous activity outdoors.",
+      general_pop_message = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
     )
   )
 
-  lapply(aqhi_messaging[risk_categories], function(x){
+  lapply(aqhi_messaging[risk_categories], \(x){
     if (is.null(x)) {
-      data.frame(high_risk_pop = NA, general_pop = NA)
+      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
     }else return(x)
   }) %>% dplyr::bind_rows()
 }
@@ -107,15 +69,23 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
       risk = dplyr::case_when(
         AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ risk),
       # And health messaging
-      high_risk_pop = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop, TRUE ~ high_risk_pop),
-      general_pop = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop, TRUE ~ general_pop)
+      high_risk_pop_message = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop_message,
+        TRUE ~ high_risk_pop_message),
+      general_pop_message = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop_message,
+        TRUE ~ general_pop_message)
     )
 }
 
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
 AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
+  # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
+
+  aqhi_breakpoints = stats::setNames(
+    c(-Inf, 1:10*10, Inf),
+    c(NA, 1:10, "+")
+  )
   # Join inputs
   obs = dplyr::bind_cols(
     date = datetimes, pm25 = pm25_hourly,
@@ -140,8 +110,10 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
         no2_rolling_3hr = roll_mean_3hr_min_2(obs$no2),
         o3_rolling_3hr = roll_mean_3hr_min_2(obs$o3),
         # Calculate AQHI
-        AQHI = cut(breaks = aqhi_breakpoints/10, labels = unlist(aqhi_levels),
-          AQHI_formula(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr)),
+        AQHI = cut(
+          AQHI_formula(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr),
+          breaks = aqhi_breakpoints/10,
+          labels = names(aqhi_breakpoints[-1])),
         # Get risk levels
         risk = AQHI_risk_category(AQHI)
       ) %>%
@@ -159,33 +131,27 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 # Calculates Canadian AQHI+ (PM2.5 only)
 AQHI_plus = function(
     pm25_hourly,
-    min_allowed_pm25 = 0)
-{
+    min_allowed_pm25 = 0){
+
+  # Define breakpoint for AQHI levels
+  aqhi_breakpoints = stats::setNames(
+    c(-Inf, 1:10*10, Inf),
+    c(NA, 1:10, "+")
+  )
+
   # Remove values < min_allowed_pm25 (normally 0)
   pm25_hourly[pm25_hourly < min_allowed_pm25] = NA
 
   # Get AQHI+
   aqhi_p = cut(pm25_hourly,
       breaks = aqhi_breakpoints,
-      labels = unlist(aqhi_levels))
+      labels = names(aqhi_breakpoints)[-1])
 
   # Get risk levels
-  risk = factor(
-      aqhi_p, unlist(aqhi_levels),
-      unlist(
-        sapply(seq_along(aqhi_levels), function(i){
-          rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
-        })
-      )
-    )
+  risk = AQHI_risk_category(aqhi_p)
 
   # Get health messages
-  health_messages = lapply(aqhi_messaging[risk], function(x){
-    if(is.null(x)){
-      data.frame(high_risk_pop = NA, general_pop = NA)
-    }else return(x)
-  })
-  health_messages = dplyr::bind_rows(health_messages)
+  health_messages = AQHI_health_messaging(risk)
 
   # Combine and return
   data.frame(
@@ -266,7 +232,7 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       # Daily mean -> annual 98th percentile and annual mean
       dplyr::group_by(year = lubridate::year(date)) %>%
       dplyr::summarise(p_complete = round(sum(!is.na(pm25_mean)) / dplyr::n(), 3)*100,
-                perc_98_of_daily_means = unname(quantile(pm25_mean, 0.98, na.rm = T)),
+                perc_98_of_daily_means = unname(stats::quantile(pm25_mean, 0.98, na.rm = T)),
                 mean_of_daily_means = mean(pm25_mean, na.rm = T)) %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
@@ -299,7 +265,7 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(`8hr_mean_o3`)) %>%
       # daily max -> annual 4th highest
       dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::arrange(desc(daily_max_8hr_mean_o3)) %>%
+      dplyr::arrange(dplyr::desc(daily_max_8hr_mean_o3)) %>%
       dplyr::summarise(
         p_complete = round(sum(!is.na(daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
         fourth_highest_daily_max_8hr_mean_o3 = daily_max_8hr_mean_o3[4]) %>%
@@ -328,7 +294,7 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
       dplyr::summarise(
         p_complete = round(sum(!is.na(daily_max_hourly_no2)) / dplyr::n(), 3)*100,
-        perc_98_of_daily_maxima = unname(quantile(
+        perc_98_of_daily_maxima = unname(stats::quantile(
           daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
@@ -360,7 +326,7 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
       dplyr::summarise(
         p_complete = round(sum(!is.na(daily_max_hourly_so2)) / dplyr::n(), 3)*100,
-        perc_99_of_daily_maxima = unname(quantile(
+        perc_99_of_daily_maxima = unname(stats::quantile(
           daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
