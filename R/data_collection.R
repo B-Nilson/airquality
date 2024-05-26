@@ -59,8 +59,8 @@ get_bcmoe_data = function(stations, date_range){
           DATE_PST = "character", EMS_ID = "character", STATION_NAME = "character")) %>%
         dplyr::bind_rows() %>%
         # Fix date timezone (PST not UTC)
-        dplyr::mutate(DATE_PST = tryCatch(lubridate::as_datetime(DATE_PST, tz = "Etc/GMT+8"),
-                          error = lubridate::ymd_hm(DATE_PST, tz = "Etc/GMT+8"))
+        dplyr::mutate(DATE_PST = tryCatch(lubridate::ymd_hms(DATE_PST, tz = "Etc/GMT+8"),
+                          warning = function(...) lubridate::ymd_hm(DATE_PST, tz = "Etc/GMT+8"))
                  ) %>%
         # Drop DATE and TIME columns (erroneous)
         dplyr::select(-DATE, -TIME))
