@@ -40,6 +40,6 @@ AQHI_plus(obs$pm25)
 obs = data.frame(
   date = seq(lubridate::ymd_h("2024-01-01 00"),
              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-  pm25 = c(-2, -0.1, sample(1:150, 22))
+  pm25 = c(-2, -0.1, sample(1:150, 22)))
 AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 }
