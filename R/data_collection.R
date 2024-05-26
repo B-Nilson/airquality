@@ -1,0 +1,79 @@
+
+# [Canada] BC MoE Data ----------------------------------------------------
+
+# TODO: setup loading in and parsing station metadata
+get_bcmoe_meta = function(){
+  meta_file = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Hourly_Raw_Air_Data/Year_to_Date/bc_air_monitoring_stations.csv"
+  # ORRR
+  meta_file = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/AnnualSummary/{year}/bc_air_monitoring_stations.csv"
+}
+
+get_bcmoe_data = function(stations, date_range){
+  # DEFINITIONS -----------------
+  # Where BC MoE AQ/Met data are stored
+  ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  # Where to get the QA/QC'ed obs - usually a few years out of date
+  loc_qaqc = paste0(ftp_site, "Archieved/STATION_DATA_{year}/{station}.csv") # "Archieved" lol
+  # Where to get the raw obs
+  loc_raw = paste0(ftp_site, "Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/{station}.csv") # actually since qa/qc to date, not just this year
+
+
+  # MAIN -------------
+
+  # Get list of available years in loc_qaqc
+  qaqc_years = suppressWarnings(loc_qaqc %>%
+    stringr::str_remove("STATION_DATA.*") %>%
+    readLines() %>%
+    stringr::str_split("\\s", simplify = T) %>%
+    .[,ncol(.)] %>%
+    stringr::str_remove("STATION_DATA_") %>%
+    as.numeric()) %>%
+    .[!is.na(.)]
+
+  # Get data for each year for each station
+  stations_data = seq( # Get all years in desired date range
+    date_range[1], date_range[2],
+                     by = "1 days") %>%
+    lubridate::with_tz("Etc/GMT+8") %>% # (in PST)
+    lubridate::year() %>%
+    unique() %>%
+    # Loop through years and get data for stations
+    lapply(function(year){
+      # After getting the loc_raw data we don't need to again
+      if(! (year-1) %in% qaqc_years) return(NULL)
+
+      # If year has qaqc'ed data
+      if(year %in% qaqc_years){
+        # Use qaqc location
+        loc = loc_qaqc %>%
+          stringr::str_replace("\\{year\\}", as.character(year))
+      # Otherwise, use raw location
+      }else loc = loc_raw
+
+      # Get each stations data for this year
+      suppressWarnings(stations %>%
+        # Insert station ids into file location
+        stringr::str_replace(loc, "\\{station\\}", .) %>%
+        # Load each stations data and combine
+        lapply(data.table::fread, colClasses = c(
+          DATE_PST = "character", EMS_ID = "character", STATION_NAME = "character")) %>%
+        dplyr::bind_rows() %>%
+        # Fix date timezone (PST not UTC)
+        dplyr::mutate(DATE_PST = tryCatch(lubridate::as_datetime(DATE_PST, tz = "Etc/GMT+8"),
+                          error = lubridate::ymd_hm(DATE_PST, tz = "Etc/GMT+8"))
+                 ) %>%
+        # Drop DATE and TIME columns (erroneous)
+        dplyr::select(-DATE, -TIME))
+    }) %>%
+    # Combine annual datasets
+    dplyr::bind_rows() %>%
+    # Filter to desired date range
+    dplyr::filter(
+      DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+    # Drop columns with all NAs
+    dplyr::select(dplyr::where(
+      ~!all(is.na(.x))
+    ))
+
+  return(stations_data)
+}
