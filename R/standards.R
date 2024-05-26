@@ -61,27 +61,27 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
     dplyr::mutate(
       # Check in AQHI+ > AQHI
       AQHI_plus_exceeds_AQHI = swap_na(
-        as.numeric(aqhi_plus$AQHI_plus) > as.numeric(AQHI), TRUE),
+        as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI), TRUE),
       # Replace AQHI levels if so
       AQHI = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus, TRUE ~ AQHI),
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus, TRUE ~ .data$AQHI),
       # And risk levels
       risk = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ risk),
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ .data$risk),
       # And health messaging
       high_risk_pop_message = dplyr::case_when(
         AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop_message,
-        TRUE ~ high_risk_pop_message),
+        TRUE ~ .data$high_risk_pop_message),
       general_pop_message = dplyr::case_when(
         AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop_message,
-        TRUE ~ general_pop_message)
+        TRUE ~ .data$general_pop_message)
     )
 }
 
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
 AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
   # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
-
+  . = NULL # so build check doesn't yell at me
   aqhi_breakpoints = stats::setNames(
     c(-Inf, 1:10*10, Inf),
     c(NA, 1:10, "+")
@@ -106,16 +106,16 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
       # +3hr rolling means, + AQHI, +risk levels
       dplyr::mutate(
         # Calculate rolling 3 hour averages (at least 2 hours per average)
-        pm25_rolling_3hr = roll_mean_3hr_min_2(obs$pm25),
-        no2_rolling_3hr = roll_mean_3hr_min_2(obs$no2),
-        o3_rolling_3hr = roll_mean_3hr_min_2(obs$o3),
+        pm25_rolling_3hr = roll_mean_3hr_min_2(.data$pm25),
+        no2_rolling_3hr = roll_mean_3hr_min_2(.data$no2),
+        o3_rolling_3hr = roll_mean_3hr_min_2(.data$o3),
         # Calculate AQHI
-        AQHI = cut(
-          AQHI_formula(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr),
+        AQHI = cut(AQHI_formula(
+          .data$pm25_rolling_3hr, .data$no2_rolling_3hr, .data$o3_rolling_3hr),
           breaks = aqhi_breakpoints/10,
           labels = names(aqhi_breakpoints[-1])),
         # Get risk levels
-        risk = AQHI_risk_category(AQHI)
+        risk = AQHI_risk_category(.data$AQHI)
       ) %>%
       # + health messaging
       dplyr::bind_cols(., AQHI_health_messaging(.$risk)) %>%
@@ -163,11 +163,10 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #' obs = data.frame(
 #'   date = seq(lubridate::ymd_h("2024-01-01 00"),
 #'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-#'   pm25 = c(-2, -0.1, sample(1:150, 22))
+#'   pm25 = c(-2, -0.1, sample(1:150, 22)))
 #' AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
-AQHI_plus = function(
-    pm25_hourly,
-    min_allowed_pm25 = 0){
+#' @importFrom rlang .data
+AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 
   # Define breakpoint for AQHI levels
   aqhi_breakpoints = stats::setNames(
@@ -204,7 +203,7 @@ AQHI_plus = function(
 CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
                  no2_hourly = NULL, so2_hourly = NULL){
   # TODO: Ensure 3 years of data provided
-
+  . = NULL # so build check doesn't yell at me
   # Define thresholds for each pollutant / avg / year
   thresholds = list(
     pm25 = list(
@@ -250,14 +249,14 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
     so2 = so2_hourly
   ) %>%
     # Fill in missing hours with NAs
-    tidyr::complete(date = seq(lubridate::floor_date(min(date), "years"),
-                        lubridate::ceiling_date(max(date), "years") - lubridate::hours(1),
+    tidyr::complete(date = seq(lubridate::floor_date(min(.data$date), "years"),
+                        lubridate::ceiling_date(max(.data$date), "years") - lubridate::hours(1),
                              "1 hours")) %>%
-    dplyr::arrange(date)
+    dplyr::arrange(.data$date)
 
   # Get daily mean and max
   daily = obs %>%
-    dplyr::group_by(date = lubridate::floor_date(date, "days")) %>%
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
     dplyr::summarise(dplyr::across(dplyr::everything(),
                                    c(mean = mean_no_na, max = max_no_na)))
 
@@ -266,120 +265,122 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   if(!is.null(pm25_hourly)){
     met$pm25 = daily %>%
       # Daily mean -> annual 98th percentile and annual mean
-      dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::summarise(p_complete = round(sum(!is.na(pm25_mean)) / dplyr::n(), 3)*100,
-                perc_98_of_daily_means = unname(stats::quantile(pm25_mean, 0.98, na.rm = T)),
-                mean_of_daily_means = mean(pm25_mean, na.rm = T)) %>%
+      dplyr::group_by(year = lubridate::year(.data$date)) %>%
+      dplyr::summarise(p_complete = round(sum(!is.na(.data$pm25_mean)) / dplyr::n(), 3)*100,
+                perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
+                mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
         # +3 year averages,
-        `3yr_mean_of_perc_98` = get_lag_n_mean(perc_98_of_daily_means, n = 3),
-        `3yr_mean_of_means` = get_lag_n_mean(mean_of_daily_means, n = 3),
+        `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_means, n = 3),
+        `3yr_mean_of_means` = get_lag_n_mean(.data$mean_of_daily_means, n = 3),
         # +standards for that year
-        daily_standard = sapply(year, get_threshold,
+        daily_standard = sapply(.data$year, get_threshold,
                                 thresholds = thresholds$pm25$daily),
-        annual_standard = sapply(year, get_threshold,
+        annual_standard = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$pm25$annual),
         # +whether standards are met
-        meets_standard_daily = `3yr_mean_of_perc_98` <= daily_standard,
-        meets_standard_annual = `3yr_mean_of_means` <= annual_standard
+        meets_standard_daily = .data$`3yr_mean_of_perc_98` <= .data$daily_standard,
+        meets_standard_annual = .data$`3yr_mean_of_means` <= .data$annual_standard
       ) %>%
-      dplyr::relocate(c(daily_standard, meets_standard_daily),
+      dplyr::relocate(c(.data$daily_standard, .data$meets_standard_daily),
                       .after = "3yr_mean_of_perc_98")%>%
-      dplyr::relocate(mean_of_daily_means,
+      dplyr::relocate(.data$mean_of_daily_means,
                       .after = "meets_standard_daily") %>%
-      dplyr::relocate(p_complete, .after = "year")
+      dplyr::relocate(.data$p_complete, .after = "year")
   }
   # Test o3 if provided
   if(!is.null(o3_hourly)){
     met$o3 = obs %>%
       # hourly mean -> 8 hourly mean
-      dplyr::group_by(date = lubridate::floor_date(date, "8 hours")) %>%
-      dplyr::summarise(`8hr_mean_o3` = mean(o3, na.rm = T)) %>%
+      dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
+      dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
       # 8 hourly mean -> daily max
-      dplyr::group_by(date = lubridate::floor_date(date, "days")) %>%
-      dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(`8hr_mean_o3`)) %>%
+      dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
+      dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
       # daily max -> annual 4th highest
-      dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::arrange(dplyr::desc(daily_max_8hr_mean_o3)) %>%
+      dplyr::group_by(year = lubridate::year(.data$date)) %>%
+      dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
       dplyr::summarise(
-        p_complete = round(sum(!is.na(daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
-        fourth_highest_daily_max_8hr_mean_o3 = daily_max_8hr_mean_o3[4]) %>%
+        p_complete = round(sum(!is.na(.data$daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
+        fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
         # +3 year averages
-        `3yr_mean` = get_lag_n_mean(fourth_highest_daily_max_8hr_mean_o3, n = 3),
+        `3yr_mean` = get_lag_n_mean(.data$fourth_highest_daily_max_8hr_mean_o3, n = 3),
         # +standard for that year
-        standard = sapply(year, get_threshold,
+        standard = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$o3$`8hr`),
         # +whether standard is met
-        meets_standard = `3yr_mean` <= standard
+        meets_standard = .data$`3yr_mean` <= .data$standard
       ) %>%
-      dplyr::relocate(p_complete, .after = "year")
+      dplyr::relocate(.data$p_complete, .after = "year")
   }
   # Test no2 if provided
   if(!is.null(no2_hourly)){
     met$no2 = obs %>%
       # + annual mean
-      dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::mutate(annual_mean_of_hourly = mean(no2, na.rm = T)) %>%
+      dplyr::group_by(year = lubridate::year(.data$date)) %>%
+      dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
       # hourly mean -> daily maxima
-      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), annual_mean_of_hourly) %>%
-      dplyr::summarise(daily_max_hourly_no2 = max(no2, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
+                      .data$annual_mean_of_hourly) %>%
+      dplyr::summarise(daily_max_hourly_no2 = max(.data$no2, na.rm = T), .groups = "drop") %>%
       # daily maxima -> annual 98th percentile
-      dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
+      dplyr::group_by(year = lubridate::year(date),
+                      .data$annual_mean_of_hourly) %>%
       dplyr::summarise(
-        p_complete = round(sum(!is.na(daily_max_hourly_no2)) / dplyr::n(), 3)*100,
+        p_complete = round(sum(!is.na(.data$daily_max_hourly_no2)) / dplyr::n(), 3)*100,
         perc_98_of_daily_maxima = unname(stats::quantile(
-          daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
+          .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
         # +3 year averages
-        `3yr_mean_of_perc_98` = get_lag_n_mean(perc_98_of_daily_maxima, n = 3),
+        `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_maxima, n = 3),
         # +standards for that year
-        standard_hourly = sapply(year, get_threshold,
+        standard_hourly = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$no2$hourly),
-        standard_annual = sapply(year, get_threshold,
+        standard_annual = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$no2$annual),
         # +whether standard is met
-        meets_standard_hourly = annual_mean_of_hourly <= standard_hourly,
-        meets_standard_annual = `3yr_mean_of_perc_98` <= standard_annual,
+        meets_standard_hourly = .data$annual_mean_of_hourly <= .data$standard_hourly,
+        meets_standard_annual = .data$`3yr_mean_of_perc_98` <= .data$standard_annual,
       ) %>%
-      dplyr::relocate(c(standard_hourly, meets_standard_hourly),
+      dplyr::relocate(c(.data$standard_hourly, .data$meets_standard_hourly),
                       .after = "annual_mean_of_hourly") %>%
-      dplyr::relocate(p_complete, .after = "year")
+      dplyr::relocate(.data$p_complete, .after = "year")
   }
   # Test so2 if provided
   if(!is.null(so2_hourly)){
     met$so2 = obs %>%
       # + annual mean
       dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::mutate(annual_mean_of_hourly = mean(so2, na.rm = T)) %>%
+      dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
       # hourly mean -> daily maxima
-      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), annual_mean_of_hourly) %>%
       dplyr::summarise(daily_max_hourly_so2 = max(no2, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
       # daily maxima -> annual 98th percentile
-      dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
+      dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
       dplyr::summarise(
-        p_complete = round(sum(!is.na(daily_max_hourly_so2)) / dplyr::n(), 3)*100,
+        p_complete = round(sum(!is.na(.data$daily_max_hourly_so2)) / dplyr::n(), 3)*100,
         perc_99_of_daily_maxima = unname(stats::quantile(
-          daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
+          .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
       dplyr::mutate(
         # +3 year averages
-        `3yr_mean_of_perc_99` = get_lag_n_mean(perc_99_of_daily_maxima, n = 3),
+        `3yr_mean_of_perc_99` = get_lag_n_mean(.data$perc_99_of_daily_maxima, n = 3),
         # +standards for that year
-        standard_hourly = sapply(year, get_threshold,
+        standard_hourly = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$so2$hourly),
-        standard_annual = sapply(year, get_threshold,
+        standard_annual = sapply(.data$year, get_threshold,
                                  thresholds = thresholds$so2$annual),
         # +whether standard is met
-        meets_standard_hourly = annual_mean_of_hourly <= standard_hourly,
-        meets_standard_annual = `3yr_mean_of_perc_99` <= standard_annual,
+        meets_standard_hourly = .data$annual_mean_of_hourly <= .data$standard_hourly,
+        meets_standard_annual = .data$`3yr_mean_of_perc_99` <= .data$standard_annual,
       ) %>%
-      dplyr::relocate(c(standard_hourly, meets_standard_hourly),
+      dplyr::relocate(c(.data$standard_hourly, .data$meets_standard_hourly),
                       .after = "annual_mean_of_hourly") %>%
-      dplyr::relocate(p_complete, .after = "year")
+      dplyr::relocate(.data$p_complete, .after = "year")
   }
   return(met)
 }

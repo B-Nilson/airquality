@@ -9,6 +9,7 @@ get_bcmoe_meta = function(){
 }
 
 get_bcmoe_qaqc_years = function(){
+  . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
 
   qaqc_dirs = ftp_site_qaqc %>%
@@ -52,7 +53,7 @@ get_bcmoe_data = function(stations, date_range){
     # Combine annual datasets
     dplyr::bind_rows() %>%
     # Filter to desired date range
-    dplyr::filter(DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+    dplyr::filter(.data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
     # Drop columns with all NAs
     dplyr::select(dplyr::where(~!all(is.na(.x))))
 
@@ -60,6 +61,7 @@ get_bcmoe_data = function(stations, date_range){
 }
 
 get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
+  . = NULL # so build check doesn't yell at me
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
   # Where to get the QA/QC'ed obs - usually a few years out of date
@@ -97,11 +99,11 @@ get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
      dplyr::bind_rows() %>%
      # Format date time properly
      dplyr::mutate(DATE_PST = tryCatch(
-       lubridate::ymd_hms(DATE_PST, tz = tzone),
-       warning = \(...) lubridate::ymd_hm(DATE_PST, tz = tzone))
+       lubridate::ymd_hms(.data$DATE_PST, tz = tzone),
+       warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = tzone))
      ) %>%
      # Drop DATE and TIME columns (erroneous)
-     dplyr::select(-DATE, -TIME)
+     dplyr::select(-.data$DATE, -.data$TIME)
 
   return(stations_data)
 }

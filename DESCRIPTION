@@ -17,6 +17,7 @@ Imports:
     dplyr,
     lubridate,
     magrittr,
+    rlang,
     stringr,
     tidyr,
     zoo

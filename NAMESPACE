@@ -3,3 +3,4 @@
 export("%>%")
 export(AQHI_plus)
 importFrom(magrittr,"%>%")
+importFrom(rlang,.data)
