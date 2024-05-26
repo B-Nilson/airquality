@@ -30,6 +30,29 @@ get_bcmoe_qaqc_years = function(){
 }
 
 get_bcmoe_data = function(stations, date_range){
+  # Get list of available years in loc_qaqc
+  qaqc_years = get_bcmoe_qaqc_years()
+
+  # Get data for each year for each station
+  stations_data = seq( # Get all years in desired date range
+    date_range[1], date_range[2],
+                     by = "1 days") %>%
+    lubridate::with_tz(tzone) %>% # (in PST)
+    lubridate::year() %>%
+    unique() %>%
+    # Loop through years and get data for stations
+    lapply(function(year) get_annual_bcmoe_data(stations, year, qaqc_years)) %>%
+    # Combine annual datasets
+    dplyr::bind_rows() %>%
+    # Filter to desired date range
+    dplyr::filter(DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+    # Drop columns with all NAs
+    dplyr::select(dplyr::where(~!all(is.na(.x))))
+
+  return(stations_data)
+}
+
+get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
   # Where to get the QA/QC'ed obs - usually a few years out of date
@@ -44,50 +67,35 @@ get_bcmoe_data = function(stations, date_range){
     EMS_ID = "character",
     STATION_NAME = "character")
 
-  # Get list of available years in loc_qaqc
-  qaqc_years = get_bcmoe_qaqc_years()
+  if(is.null(qaqc_years))
+    # Get list of years that have been qaqc'ed if needed
+    qaqc_years = get_bcmoe_qaqc_years()
 
-  # Get data for each year for each station
-  stations_data = seq( # Get all years in desired date range
-    date_range[1], date_range[2],
-                     by = "1 days") %>%
-    lubridate::with_tz(tzone) %>% # (in PST)
-    lubridate::year() %>%
-    unique() %>%
-    # Loop through years and get data for stations
-    lapply(function(year){
-      # After getting the loc_raw data we don't need to again
-      if(! (year-1) %in% qaqc_years) return(NULL)
+  # After getting the loc_raw data we don't need to again
+  if(! (year-1) %in% qaqc_years) return(NULL)
 
-      # If year has qaqc'ed data
-      if(year %in% qaqc_years){
-        # Use qaqc location
-        loc = loc_qaqc %>%
-          stringr::str_replace("\\{year\\}", as.character(year))
-      # Otherwise, use raw location
-      }else loc = loc_raw
+  # If year has qaqc'ed data
+  if(year %in% qaqc_years){
+    # Use qaqc location
+    loc = loc_qaqc %>%
+      stringr::str_replace("\\{year\\}", as.character(year))
+    # Otherwise, use raw location
+  }else loc = loc_raw
 
-      # Get each stations data for this year
-      suppressWarnings(stations %>%
-        # Insert station ids into file location
-        stringr::str_replace(loc, "\\{station\\}", .) %>%
-        # Load each stations data and combine
-        lapply(data.table::fread, colClasses = colClasses) %>%
-        dplyr::bind_rows() %>%
-        # Format date time properly
-        dplyr::mutate(DATE_PST = tryCatch(
-          lubridate::ymd_hms(DATE_PST, tz = tzone),
-          warning = function(...) lubridate::ymd_hm(DATE_PST, tz = tzone))
-        ) %>%
-        # Drop DATE and TIME columns (erroneous)
-        dplyr::select(-DATE, -TIME))
-    }) %>%
-    # Combine annual datasets
-    dplyr::bind_rows() %>%
-    # Filter to desired date range
-    dplyr::filter(DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
-    # Drop columns with all NAs
-    dplyr::select(dplyr::where(~!all(is.na(.x))))
+  # Get each stations data for this year
+  stations_data = stations %>%
+     # Insert station ids into file location
+     stringr::str_replace(loc, "\\{station\\}", .) %>%
+     # Load each stations data and combine
+     lapply(data.table::fread, colClasses = colClasses) %>%
+     dplyr::bind_rows() %>%
+     # Format date time properly
+     dplyr::mutate(DATE_PST = tryCatch(
+       lubridate::ymd_hms(DATE_PST, tz = tzone),
+       warning = function(...) lubridate::ymd_hm(DATE_PST, tz = tzone))
+     ) %>%
+     # Drop DATE and TIME columns (erroneous)
+     dplyr::select(-DATE, -TIME)
 
   return(stations_data)
 }
