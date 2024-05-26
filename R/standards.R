@@ -40,34 +40,46 @@ aqhi_messaging = list(
 # Canadian AQHI -----------------------------------------------------------
 
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
-AQHI = function(pm25_hourly, no2_hourly = NULL, o3_hourly = NULL, quiet = FALSE){
+AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
+  # Join inputs
+  obs = bind_cols(
+    date = datetimes, pm25 = pm25_hourly,
+    o3 = o3_hourly, no2 = no2_hourly
+  ) %>%
+    # Fill in missing hours with NAs
+    tidyr::complete(date = seq(min(date), max(date), "1 hours")) %>%
+    arrange(date)
+
   # Calculate AQHI+ (pm25 only)
-  aqhi_plus = AQHI_plus(pm25_hourly)
+  aqhi_plus = AQHI_plus(obs$pm25)
 
   # Need all 3 pollutants to calculate AQHI
-  if(!is.null(no2_hourly) & !is.null(o3_hourly)){
+  if(!all(is.na(no2_hourly)) & !all(is.na(o3_hourly))){
     # Rolling 3 hour average PM2.5 (at least 2 hours per average)
-    pm25_rolling_3hr = zoo::rollapply(pm25_hourly, width = 3,
+    obs$pm25_rolling_3hr = zoo::rollapply(obs$pm25, width = 3,
                                      align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2)
+                                     FUN = mean_if_enough, min_n = 2)%>%
+      round(1)
     # Rolling 3 hour average NO2 (at least 2 hours per average)
-    no2_rolling_3hr = zoo::rollapply(no2_hourly, width = 3,
+    obs$no2_rolling_3hr = zoo::rollapply(obs$no2, width = 3,
                                      align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2)
+                                     FUN = mean_if_enough, min_n = 2)%>%
+      round(1)
     # Rolling 3 hour average O3(at least 2 hours per average)
-    o3_rolling_3hr = zoo::rollapply(o3_hourly, width = 3,
+    obs$o3_rolling_3hr = zoo::rollapply(obs$o3, width = 3,
                                      align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2)
+                                     FUN = mean_if_enough, min_n = 2) %>%
+      round(1)
     # Calculate AQHI
-    aqhi = cut(round(10/10.4 * 100 * (
+    obs$AQHI = cut(round(10/10.4 * 100 * (
       (exp(0.000537 * o3_rolling_3hr) - 1) +
         (exp(0.000871 * no2_rolling_3hr) - 1) +
           (exp(0.000487 * pm25_rolling_3hr) - 1)
     )), aqhi_breakpoints/10, unlist(aqhi_levels))
 
     # Get risk levels
-    risk = factor(
-      aqhi, unlist(aqhi_levels),
+    obs$risk = factor(
+      obs$AQHI, unlist(aqhi_levels),
       unlist(
         sapply(seq_along(aqhi_levels), function(i){
           rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
@@ -76,37 +88,38 @@ AQHI = function(pm25_hourly, no2_hourly = NULL, o3_hourly = NULL, quiet = FALSE)
     )
 
     # Get health messages
-    health_messages = lapply(aqhi_messaging[risk], function(x){
+    health_messages = lapply(aqhi_messaging[obs$risk], function(x){
       if(is.null(x)){
         data.frame(high_risk_pop = NA, general_pop = NA)
       }else return(x)
-    })
-    health_messages = dplyr::bind_rows(health_messages)
+    }) %>% dplyr::bind_rows()
 
     # Combine
-    out = data.frame(
-      pm25_hourly = pm25_hourly,
-      no2_hourly = no2_hourly,
-      o3_hourly = o3_hourly,
-      AQHI = aqhi,
-      risk = risk,
+    obs = data.frame(
+      obs,
       health_messages
     )
 
-    # TODO: clean this up
     # Use AQHI+ if it exceeds AQHI
-    out$AQHI_plus_exceeds_AQHI = as.numeric(aqhi_plus$AQHI_plus) > as.numeric(out$AQHI)
-    out$AQHI_plus_exceeds_AQHI[is.na(out$AQHI_plus_exceeds_AQHI)] = T
-    out$AQHI = ifelse(out$AQHI_plus_exceeds_AQHI, aqhi_plus$AQHI_plus, out$AQHI)
-    out$risk = ifelse(out$AQHI_plus_exceeds_AQHI, aqhi_plus$risk, out$risk)
-    out$high_risk_pop = ifelse(out$AQHI_plus_exceeds_AQHI, aqhi_plus$high_risk_pop, out$high_risk_pop)
-    out$general_pop = ifelse(out$AQHI_plus_exceeds_AQHI, aqhi_plus$general_pop, out$general_pop)
+    obs = obs %>%
+      mutate(
+        AQHI_plus_exceeds_AQHI = as.numeric(aqhi_plus$AQHI_plus) > as.numeric(AQHI),
+        AQHI_plus_exceeds_AQHI = swap_na(AQHI_plus_exceeds_AQHI, TRUE),
+        AQHI = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus,
+                         TRUE ~ AQHI),
+        risk = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk,
+                         TRUE ~ risk),
+        high_risk_pop = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop,
+                                  TRUE ~ obs$high_risk_pop),
+        general_pop = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop,
+                             TRUE ~ obs$general_pop)
+      )
 
   }else{
-    if(!quiet) warning("Returning AQHI+ (PM2.5 only) as NO2 and O3 were not provided.")
-    out = aqhi_plus
+    if(!quiet) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
+    obs = aqhi_plus
   }
-  return(out)
+  return(obs)
 }
 
 # Calculates Canadian AQHI+ (PM2.5 only)
