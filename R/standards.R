@@ -39,6 +39,81 @@ aqhi_messaging = list(
 
 # Canadian AQHI -----------------------------------------------------------
 
+AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr){
+  round(10/10.4 * 100 * (
+    (exp(0.000537 * o3_rolling_3hr) - 1) +
+      (exp(0.000871 * no2_rolling_3hr) - 1) +
+      (exp(0.000487 * pm25_rolling_3hr) - 1)
+  ))
+}
+
+AQHI_risk_category = function(AQHI){
+  aqhi_levels = list(
+    Low = 1:3,
+    Moderate = 4:6,
+    High = 7:10,
+    "Very High" = "+"
+  )
+  risk = factor(
+    AQHI, unlist(aqhi_levels),
+    unlist(
+      sapply(seq_along(aqhi_levels), function(i){
+        rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
+      })
+    )
+  )
+  return(risk)
+}
+
+AQHI_health_messaging = function(risk_categories){
+  aqhi_messaging = list(
+    Low = data.frame(
+      high_risk_pop = "Enjoy your usual activities.",
+      general_pop = "Ideal air quality for outdoor activities."
+    ),
+    Moderate = data.frame(
+      high_risk_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
+      general_pop = "No need to modify your usual activities unless you experience symptoms."
+    ),
+    High = data.frame(
+      high_risk_pop = "Reduce or reschedule activities outdoors.",
+      general_pop = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
+    ),
+    "Very High" = data.frame(
+      high_risk_pop = "Avoid strenuous activity outdoors.",
+      general_pop = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
+    )
+  )
+
+  lapply(aqhi_messaging[risk_categories], function(x){
+    if (is.null(x)) {
+      data.frame(high_risk_pop = NA, general_pop = NA)
+    }else return(x)
+  }) %>% dplyr::bind_rows()
+}
+
+# TODO: make sure AQHI is a column in obs
+AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
+  obs %>%
+    # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
+    mutate(
+      # Check in AQHI+ > AQHI
+      AQHI_plus_exceeds_AQHI = swap_na(
+        as.numeric(aqhi_plus$AQHI_plus) > as.numeric(AQHI), TRUE),
+      # Replace AQHI levels if so
+      AQHI = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus, TRUE ~ AQHI),
+      # And risk levels
+      risk = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ risk),
+      # And health messaging
+      high_risk_pop = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop, TRUE ~ high_risk_pop),
+      general_pop = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop, TRUE ~ general_pop)
+    )
+}
+
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
 AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
   # Join inputs
@@ -54,67 +129,26 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
   aqhi_plus = AQHI_plus(obs$pm25)
 
   # Need all 3 pollutants to calculate AQHI
-  if(!all(is.na(no2_hourly)) & !all(is.na(o3_hourly))){
-    # Rolling 3 hour average PM2.5 (at least 2 hours per average)
-    obs$pm25_rolling_3hr = zoo::rollapply(obs$pm25, width = 3,
-                                     align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2)%>%
-      round(1)
-    # Rolling 3 hour average NO2 (at least 2 hours per average)
-    obs$no2_rolling_3hr = zoo::rollapply(obs$no2, width = 3,
-                                     align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2)%>%
-      round(1)
-    # Rolling 3 hour average O3(at least 2 hours per average)
-    obs$o3_rolling_3hr = zoo::rollapply(obs$o3, width = 3,
-                                     align = "right", fill = NA,
-                                     FUN = mean_if_enough, min_n = 2) %>%
-      round(1)
-    # Calculate AQHI
-    obs$AQHI = cut(round(10/10.4 * 100 * (
-      (exp(0.000537 * o3_rolling_3hr) - 1) +
-        (exp(0.000871 * no2_rolling_3hr) - 1) +
-          (exp(0.000487 * pm25_rolling_3hr) - 1)
-    )), aqhi_breakpoints/10, unlist(aqhi_levels))
-
-    # Get risk levels
-    obs$risk = factor(
-      obs$AQHI, unlist(aqhi_levels),
-      unlist(
-        sapply(seq_along(aqhi_levels), function(i){
-          rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
-        })
-      )
-    )
-
-    # Get health messages
-    health_messages = lapply(aqhi_messaging[obs$risk], function(x){
-      if(is.null(x)){
-        data.frame(high_risk_pop = NA, general_pop = NA)
-      }else return(x)
-    }) %>% dplyr::bind_rows()
-
-    # Combine
-    obs = data.frame(
-      obs,
-      health_messages
-    )
-
-    # Use AQHI+ if it exceeds AQHI
+  have_all_3_pol = !all(is.na(pm25_hourly)) &
+    !all(is.na(no2_hourly)) & !all(is.na(o3_hourly))
+  if (have_all_3_pol) {
     obs = obs %>%
+      # +3hr rolling means, + AQHI, +risk levels
       mutate(
-        AQHI_plus_exceeds_AQHI = as.numeric(aqhi_plus$AQHI_plus) > as.numeric(AQHI),
-        AQHI_plus_exceeds_AQHI = swap_na(AQHI_plus_exceeds_AQHI, TRUE),
-        AQHI = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus,
-                         TRUE ~ AQHI),
-        risk = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk,
-                         TRUE ~ risk),
-        high_risk_pop = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop,
-                                  TRUE ~ obs$high_risk_pop),
-        general_pop = case_when(AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop,
-                             TRUE ~ obs$general_pop)
-      )
-
+        # Calculate rolling 3 hour averages (at least 2 hours per average)
+        pm25_rolling_3hr = roll_mean_3hr_min_2(obs$pm25),
+        no2_rolling_3hr = roll_mean_3hr_min_2(obs$no2),
+        o3_rolling_3hr = roll_mean_3hr_min_2(obs$o3),
+        # Calculate AQHI
+        AQHI = cut(breaks = aqhi_breakpoints/10, labels = unlist(aqhi_levels),
+          AQHI_formula(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr)),
+        # Get risk levels
+        risk = AQHI_risk_category(AQHI)
+      ) %>%
+      # + health messaging
+      bind_cols(., AQHI_health_messaging(.$risk)) %>%
+      # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
+      AQHI_replace_w_AQHI_plus(aqhi_plus)
   }else{
     if(!quiet) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
     obs = aqhi_plus
