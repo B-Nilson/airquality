@@ -201,10 +201,6 @@ AQHI_plus = function(
 
 CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
                  no2_hourly = NULL, so2_hourly = NULL){
-  require(dplyr)
-  require(lubridate)
-  require(tidyr)
-
   # TODO: Ensure 3 years of data provided
 
   # Define thresholds for each pollutant / avg / year
