@@ -96,7 +96,7 @@ AQHI_health_messaging = function(risk_categories){
 AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
   obs %>%
     # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
-    mutate(
+    dplyr::mutate(
       # Check in AQHI+ > AQHI
       AQHI_plus_exceeds_AQHI = swap_na(
         as.numeric(aqhi_plus$AQHI_plus) > as.numeric(AQHI), TRUE),
@@ -117,13 +117,13 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 # Calculates Canadian AQHI (overriden by AQHI+ if higher)
 AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
   # Join inputs
-  obs = bind_cols(
+  obs = dplyr::bind_cols(
     date = datetimes, pm25 = pm25_hourly,
     o3 = o3_hourly, no2 = no2_hourly
   ) %>%
     # Fill in missing hours with NAs
     tidyr::complete(date = seq(min(date), max(date), "1 hours")) %>%
-    arrange(date)
+    dplyr::arrange(date)
 
   # Calculate AQHI+ (pm25 only)
   aqhi_plus = AQHI_plus(obs$pm25)
@@ -134,7 +134,7 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
   if (have_all_3_pol) {
     obs = obs %>%
       # +3hr rolling means, + AQHI, +risk levels
-      mutate(
+      dplyr::mutate(
         # Calculate rolling 3 hour averages (at least 2 hours per average)
         pm25_rolling_3hr = roll_mean_3hr_min_2(obs$pm25),
         no2_rolling_3hr = roll_mean_3hr_min_2(obs$no2),
@@ -146,7 +146,7 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
         risk = AQHI_risk_category(AQHI)
       ) %>%
       # + health messaging
-      bind_cols(., AQHI_health_messaging(.$risk)) %>%
+      dplyr::bind_cols(., AQHI_health_messaging(.$risk)) %>%
       # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
       AQHI_replace_w_AQHI_plus(aqhi_plus)
   }else{
@@ -228,7 +228,7 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   get_threshold = function(thresholds, year){
     out = thresholds %>%
       .[as.numeric(names(.)) <= year] %>%
-      last()
+      dplyr::last()
     if(length(out) == 0) out = NA
     return(out)
   }
@@ -237,38 +237,39 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
     out = x
     if(n <= 1) stop("`n` must be greater than one")
     for(i in 1:(n-1)){
-      out = out + lag(x, i)
+      out = out + dplyr::lag(x, i)
     }
     return(out/n)
   }
   # Join inputs
-  obs = bind_cols(
+  obs = dplyr::bind_cols(
     date = datetimes, pm25 = pm25_hourly,
     o3 = o3_hourly, no2 = no2_hourly,
     so2 = so2_hourly
   ) %>%
     # Fill in missing hours with NAs
-    complete(date = seq(lubridate::floor_date(min(date), "years"),
+    tidyr::complete(date = seq(lubridate::floor_date(min(date), "years"),
                         lubridate::ceiling_date(max(date), "years") - lubridate::hours(1),
                              "1 hours")) %>%
-    arrange(date)
+    dplyr::arrange(date)
 
   # Get daily mean and max
   daily = obs %>%
-    group_by(date = lubridate::floor_date(date, "days")) %>%
-    summarise(across(everything(), c(mean = mean_no_na, max = max_no_na)))
+    dplyr::group_by(date = lubridate::floor_date(date, "days")) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(),
+                                   c(mean = mean_no_na, max = max_no_na)))
 
   met = list()
   # Test pm25 if provided
   if(!is.null(pm25_hourly)){
     met$pm25 = daily %>%
       # Daily mean -> annual 98th percentile and annual mean
-      group_by(year = year(date)) %>%
-      summarise(p_complete = round(sum(!is.na(pm25_mean)) / n(), 3)*100,
-                perc_98_of_daily_means = quantile(pm25_mean, 0.98, na.rm = T),
+      dplyr::group_by(year = lubridate::year(date)) %>%
+      dplyr::summarise(p_complete = round(sum(!is.na(pm25_mean)) / dplyr::n(), 3)*100,
+                perc_98_of_daily_means = unname(quantile(pm25_mean, 0.98, na.rm = T)),
                 mean_of_daily_means = mean(pm25_mean, na.rm = T)) %>%
       # +3 year averages, +standard for that year, +whether standard is met
-      mutate(
+      dplyr::mutate(
         # +3 year averages,
         `3yr_mean_of_perc_98` = get_lag_n_mean(perc_98_of_daily_means, n = 3),
         `3yr_mean_of_means` = get_lag_n_mean(mean_of_daily_means, n = 3),
@@ -291,19 +292,19 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   if(!is.null(o3_hourly)){
     met$o3 = obs %>%
       # hourly mean -> 8 hourly mean
-      group_by(date = floor_date(date, "8 hours")) %>%
-      summarise(`8hr_mean_o3` = mean(o3, na.rm = T)) %>%
+      dplyr::group_by(date = lubridate::floor_date(date, "8 hours")) %>%
+      dplyr::summarise(`8hr_mean_o3` = mean(o3, na.rm = T)) %>%
       # 8 hourly mean -> daily max
-      group_by(date = floor_date(date, "days")) %>%
-      summarise(daily_max_8hr_mean_o3 = max_no_na(`8hr_mean_o3`)) %>%
+      dplyr::group_by(date = lubridate::floor_date(date, "days")) %>%
+      dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(`8hr_mean_o3`)) %>%
       # daily max -> annual 4th highest
-      group_by(year = year(date)) %>%
-      arrange(desc(daily_max_8hr_mean_o3)) %>%
-      summarise(
-        p_complete = round(sum(!is.na(daily_max_8hr_mean_o3)) / n(), 3)*100,
+      dplyr::group_by(year = lubridate::year(date)) %>%
+      dplyr::arrange(desc(daily_max_8hr_mean_o3)) %>%
+      dplyr::summarise(
+        p_complete = round(sum(!is.na(daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
         fourth_highest_daily_max_8hr_mean_o3 = daily_max_8hr_mean_o3[4]) %>%
       # +3 year averages, +standard for that year, +whether standard is met
-      mutate(
+      dplyr::mutate(
         # +3 year averages
         `3yr_mean` = get_lag_n_mean(fourth_highest_daily_max_8hr_mean_o3, n = 3),
         # +standard for that year
@@ -318,19 +319,19 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   if(!is.null(no2_hourly)){
     met$no2 = obs %>%
       # + annual mean
-      group_by(year = year(date)) %>%
-      mutate(annual_mean_of_hourly = mean(no2, na.rm = T)) %>%
+      dplyr::group_by(year = lubridate::year(date)) %>%
+      dplyr::mutate(annual_mean_of_hourly = mean(no2, na.rm = T)) %>%
       # hourly mean -> daily maxima
-      group_by(date = floor_date(date, "1 days"), annual_mean_of_hourly) %>%
-      summarise(daily_max_hourly_no2 = max(no2, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), annual_mean_of_hourly) %>%
+      dplyr::summarise(daily_max_hourly_no2 = max(no2, na.rm = T), .groups = "drop") %>%
       # daily maxima -> annual 98th percentile
-      group_by(year = year(date), annual_mean_of_hourly) %>%
-      summarise(
-        p_complete = round(sum(!is.na(daily_max_hourly_no2)) / n(), 3)*100,
-        perc_98_of_daily_maxima = quantile(
-          daily_max_hourly_no2, 0.98, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
+      dplyr::summarise(
+        p_complete = round(sum(!is.na(daily_max_hourly_no2)) / dplyr::n(), 3)*100,
+        perc_98_of_daily_maxima = unname(quantile(
+          daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
-      mutate(
+      dplyr::mutate(
         # +3 year averages
         `3yr_mean_of_perc_98` = get_lag_n_mean(perc_98_of_daily_maxima, n = 3),
         # +standards for that year
@@ -350,19 +351,19 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   if(!is.null(so2_hourly)){
     met$so2 = obs %>%
       # + annual mean
-      group_by(year = year(date)) %>%
-      mutate(annual_mean_of_hourly = mean(so2, na.rm = T)) %>%
+      dplyr::group_by(year = lubridate::year(date)) %>%
+      dplyr::mutate(annual_mean_of_hourly = mean(so2, na.rm = T)) %>%
       # hourly mean -> daily maxima
-      group_by(date = floor_date(date, "1 days"), annual_mean_of_hourly) %>%
-      summarise(daily_max_hourly_so2 = max(no2, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), annual_mean_of_hourly) %>%
+      dplyr::summarise(daily_max_hourly_so2 = max(no2, na.rm = T), .groups = "drop") %>%
       # daily maxima -> annual 98th percentile
-      group_by(year = year(date), annual_mean_of_hourly) %>%
-      summarise(
-        p_complete = round(sum(!is.na(daily_max_hourly_so2)) / n(), 3)*100,
-        perc_99_of_daily_maxima = quantile(
-          daily_max_hourly_so2, 0.99, na.rm = T), .groups = "drop") %>%
+      dplyr::group_by(year = lubridate::year(date), annual_mean_of_hourly) %>%
+      dplyr::summarise(
+        p_complete = round(sum(!is.na(daily_max_hourly_so2)) / dplyr::n(), 3)*100,
+        perc_99_of_daily_maxima = unname(quantile(
+          daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
       # +3 year averages, +standard for that year, +whether standard is met
-      mutate(
+      dplyr::mutate(
         # +3 year averages
         `3yr_mean_of_perc_99` = get_lag_n_mean(perc_99_of_daily_maxima, n = 3),
         # +standards for that year
