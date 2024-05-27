@@ -98,8 +98,10 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #' , and is calculated using hourly means instead of using 3 hour means.
 #' The AQHI+ overrides the AQHI if it exceeds the AQHI, which typically occurs during wildfire smoke events.
 #'
-#' The AQHI was originally published by Steib et. al in 2008 (\link{https://doi.org/10.3155/1047-3289.58.3.435}),
+#' The AQHI was originally published by Steib et. al in 2008,
 #'  and has been adopted by all Canadian provinces/territories (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+#'
+#' @references \link{https://doi.org/10.3155/1047-3289.58.3.435}
 #'
 #' @family Canadian AQHI Functions
 #' @family Canadian Air Quality Standards
@@ -188,8 +190,10 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #' The risk categories match the AQHI Low [1-3, or 0-30 ug/m^3], Moderate [4-6, or 30.1-60 ug/m^3]
 #' , High [7-10, or 60.1-100 ug/m^3], and Very High [+, or >100 ug/m^3] and share the same health messaging.
 #'
-#' The AQHI+ was originally published by Yao et. al in 2019 (\link{https://doi.org/10.17269/s41997-019-00237-w}),
+#' The AQHI+ was originally published by Yao et. al in 2019,
 #'  and has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+#'
+#' @references \link{https://doi.org/10.17269/s41997-019-00237-w}
 #'
 #' @family Canadian AQHI Functions
 #' @family Canadian Air Quality Standards
@@ -258,7 +262,7 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 #' The Canadian Ambient Air Quality Standards (CAAQS) are part of a collaborative national Air Quality Management System (AQMS), to better protect human health and the environment.
 #' Standards are defined for fine particulate matter (PM2.5), ozone (O3), nitrogen dioxide (NO2), and sulphur dioxide (SO2), and are typically updated ever 5 years.
 #'
-#' See \link{https://ccme.ca/en/air-quality-report} for more information.
+#' @references \link{https://ccme.ca/en/air-quality-report}
 #' @family Canadian Air Quality Standards
 #'
 #' @return a list of tibbles (data.frames), one tibble per pollutant provided with annual CAAQS metrics and management levels

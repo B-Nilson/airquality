@@ -29,8 +29,6 @@ a list of tibbles (data.frames), one tibble per pollutant provided with annual C
 \description{
 The Canadian Ambient Air Quality Standards (CAAQS) are part of a collaborative national Air Quality Management System (AQMS), to better protect human health and the environment.
 Standards are defined for fine particulate matter (PM2.5), ozone (O3), nitrogen dioxide (NO2), and sulphur dioxide (SO2), and are typically updated ever 5 years.
-
-See \link{https://ccme.ca/en/air-quality-report} for more information.
 }
 \examples{
 obs = data.frame(
@@ -40,6 +38,9 @@ obs = data.frame(
   no2 = sample(1:150, 24), so2 = sample(1:150, 24))
 CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
      o3_hourly = obs$o3, no2_hourly = obs$no2, so2_hourly = obs$so2)
+}
+\references{
+\link{https://ccme.ca/en/air-quality-report}
 }
 \seealso{
 Other Canadian Air Quality Standards: 

@@ -35,7 +35,7 @@ AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM
 , and is calculated using hourly means instead of using 3 hour means.
 The AQHI+ overrides the AQHI if it exceeds the AQHI, which typically occurs during wildfire smoke events.
 
-The AQHI was originally published by Steib et. al in 2008 (\link{https://doi.org/10.3155/1047-3289.58.3.435}),
+The AQHI was originally published by Steib et. al in 2008,
  and has been adopted by all Canadian provinces/territories (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 }
 \examples{
@@ -47,6 +47,9 @@ AQHI(datetimes = obs$date, pm25_hourly = obs$pm25,
      o3_hourly = obs$o3, no2_hourly = obs$no2)
 
 AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
+}
+\references{
+\link{https://doi.org/10.3155/1047-3289.58.3.435}
 }
 \seealso{
 Other Canadian AQHI Functions: 
