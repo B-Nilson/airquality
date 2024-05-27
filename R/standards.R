@@ -96,7 +96,10 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
     dplyr::arrange(date)
 
   # Calculate AQHI+ (pm25 only)
-  aqhi_plus = AQHI_plus(obs$pm25)
+  aqhi_plus = AQHI_plus(obs$pm25) %>%
+    # Add columns in case only PM2.5 provided
+    dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) %>%
+    dplyr::relocate(.data$AQHI, .before = "AQHI_plus")
 
   # Need all 3 pollutants to calculate AQHI
   have_all_3_pol = !all(is.na(pm25_hourly)) &
@@ -114,6 +117,7 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
           .data$pm25_rolling_3hr, .data$no2_rolling_3hr, .data$o3_rolling_3hr),
           breaks = aqhi_breakpoints/10,
           labels = names(aqhi_breakpoints[-1])),
+        AQHI_plus = aqhi_plus$AQHI_plus,
         # Get risk levels
         risk = AQHI_risk_category(.data$AQHI)
       ) %>%
@@ -127,7 +131,6 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
   }
   return(obs)
 }
-
 
 #' Calculate the Canadian AQHI+ from hourly PM2.5 observations
 #'
