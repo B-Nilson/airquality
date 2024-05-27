@@ -27,8 +27,8 @@ Hourly PM2.5 is split into bins of 10 ug/m^3 up to 100 ug/m^3 (AQHI+ 1 - 10)
 The risk categories match the AQHI Low [1-3, or 0-30 ug/m^3], Moderate [4-6, or 30.1-60 ug/m^3]
 , High [7-10, or 60.1-100 ug/m^3], and Very High [+, or >100 ug/m^3] and share the same health messaging.
 
-AQHI+ was originally published in Yao et. al (2019) DOI: https://doi.org/10.17269/s41997-019-00237-w.
-And has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+The AQHI+ was originally published by Yao et. al in 2019 (\link{https://doi.org/10.17269/s41997-019-00237-w}),
+ and has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 }
 \examples{
 obs = data.frame(
@@ -43,3 +43,8 @@ obs = data.frame(
   pm25 = c(-2, -0.1, sample(1:150, 22)))
 AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 }
+\seealso{
+Other Canadian AQHI Functions: 
+\code{\link{AQHI}()}
+}
+\concept{Canadian AQHI Functions}

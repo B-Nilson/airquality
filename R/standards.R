@@ -186,9 +186,10 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #' The risk categories match the AQHI Low [1-3, or 0-30 ug/m^3], Moderate [4-6, or 30.1-60 ug/m^3]
 #' , High [7-10, or 60.1-100 ug/m^3], and Very High [+, or >100 ug/m^3] and share the same health messaging.
 #'
-#' AQHI+ was originally published in Yao et. al (2019) DOI: https://doi.org/10.17269/s41997-019-00237-w.
-#' And has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+#' The AQHI+ was originally published by Yao et. al in 2019 (\link{https://doi.org/10.17269/s41997-019-00237-w}),
+#'  and has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 #'
+#' @family Canadian AQHI Functions
 #' @return A tibble (data.frame) with columns:
 #' hourly_pm25, AQHI_plus, risk, high_risk_pop_message, general_pop_message
 #' and `length(pm25_hourly)` rows
