@@ -264,9 +264,6 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       annual = c('2020' = 17, '2025' = 12)
     )
   )
-  # helper functions to remove NA by default
-  mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
-  max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
   # helper function to extract relevant thresholds
   get_threshold = function(thresholds, year){
     out = thresholds %>%

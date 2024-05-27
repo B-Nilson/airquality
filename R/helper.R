@@ -15,3 +15,7 @@ roll_mean_3hr_min_2 = function(x) {
 # helper functions to replace NA/inf with val
 swap_na = function(x, val = -99) ifelse(is.na(x), val, x)
 swap_inf = function(x, val = NA) ifelse(is.infinite(x), val, x)
+
+# helper functions to remove NA by default
+mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
+max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
