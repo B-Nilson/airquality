@@ -15,7 +15,7 @@ AQHI(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE)
 
 \item{o3_hourly}{(Optional). Vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
 
-\item{quiet}{(Optional). Logical (TRUE/FALSE) value indicating if warnings/messages should be printed. Default is FALSE}
+\item{quiet}{(Optional). A single logical (TRUE/FALSE) value indicating if AQHI+ warning (if o3 and no2 not provided) should be hidden. Default is FALSE}
 }
 \value{
 A tibble (data.frame) with columns (*if all 3 pollutants provided):
@@ -51,5 +51,10 @@ AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
 \seealso{
 Other Canadian AQHI Functions: 
 \code{\link{AQHI_plus}()}
+
+Other Canadian Air Quality Standards: 
+\code{\link{AQHI_plus}()},
+\code{\link{CAAQS}()}
 }
 \concept{Canadian AQHI Functions}
+\concept{Canadian Air Quality Standards}

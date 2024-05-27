@@ -102,6 +102,8 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #'  and has been adopted by all Canadian provinces/territories (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 #'
 #' @family Canadian AQHI Functions
+#' @family Canadian Air Quality Standards
+#'
 #' @return A tibble (data.frame) with columns (*if all 3 pollutants provided):
 #' date, pm25, o3*, no2*, pm25_rolling_3hr*, o3_rolling_3hr*, o3_rolling_3hr*,
 #'  AQHI, AQHI_plus, risk, high_risk_pop_message, general_pop_message, AQHI_plus_exceeds_AQHI*
@@ -190,6 +192,8 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #'  and has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 #'
 #' @family Canadian AQHI Functions
+#' @family Canadian Air Quality Standards
+#'
 #' @return A tibble (data.frame) with columns:
 #' hourly_pm25, AQHI_plus, risk, high_risk_pop_message, general_pop_message
 #' and `length(pm25_hourly)` rows
