@@ -3,5 +3,6 @@
 export("%>%")
 export(AQHI)
 export(AQHI_plus)
+export(CAAQS)
 importFrom(magrittr,"%>%")
 importFrom(rlang,.data)
