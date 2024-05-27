@@ -18,4 +18,5 @@ swap_inf = function(x, val = NA) ifelse(is.infinite(x), val, x)
 
 # helper functions to remove NA by default
 mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
+min_no_na = function(x, ...) swap_inf(suppressWarnings(min(x, na.rm = T, ...)), NA)
 max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
