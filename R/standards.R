@@ -78,7 +78,45 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
     )
 }
 
-# Calculates Canadian AQHI (overriden by AQHI+ if higher)
+#' Calculate Canadian AQHI from hourly PM2.5, NO2, and O3 observations
+#'
+#' @param datetimes Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
+#' @param pm25_hourly Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
+#' @param no2_hourly (Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
+#' @param o3_hourly (Optional). Vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
+#' @param quiet (Optional). A single logical (TRUE/FALSE) value indicating if AQHI+ warning (if o3 and no2 not provided) should be hidden. Default is FALSE
+#'
+#' @description
+#' The Canadian Air Quality Health Index (AQHI) combines the health risk of
+#' fine particulate matter (PM2.5), ozone (O3), and nitrogen dioxide (NO2) on a scale from 1-10 (+).
+#' The AQHI is "the sum of excess mortality risk associated with individual pollutants
+#' from a time-series analysis of air pollution and mortality in Canadian cities,
+#' adjusted to a 0–10 scale, and calculated hourly on the basis of trailing 3-hr average pollutant concentrations."
+#'
+#' The Canadian AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).
+#' AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM2.5, ozone (O3), and nitrogen dioxide (NO2)
+#' , and is calculated using hourly means instead of using 3 hour means.
+#' The AQHI+ overrides the AQHI if it exceeds the AQHI, which typically occurs during wildfire smoke events.
+#'
+#' The AQHI was originally published by Steib et. al in 2008 (\link{https://doi.org/10.3155/1047-3289.58.3.435}),
+#'  and has been adopted by all Canadian provinces/territories (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+#'
+#' @family Canadian AQHI Functions
+#' @return A tibble (data.frame) with columns (*if all 3 pollutants provided):
+#' date, pm25, o3*, no2*, pm25_rolling_3hr*, o3_rolling_3hr*, o3_rolling_3hr*,
+#'  AQHI, AQHI_plus, risk, high_risk_pop_message, general_pop_message, AQHI_plus_exceeds_AQHI*
+#'  and potentially more rows than `length(datetimes)` (due to any missing hours being filled with NA values).
+#' @export
+#'
+#' @examples
+#' obs = data.frame(
+#'   date = seq(lubridate::ymd_h("2024-01-01 00"),
+#'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
+#'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
+#' AQHI(datetimes = obs$date, pm25_hourly = obs$pm25,
+#'      o3_hourly = obs$o3, no2_hourly = obs$no2)
+#'
+#' AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
 AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
   # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
   . = NULL # so build check doesn't yell at me
