@@ -436,6 +436,7 @@ CAAQS_objectives = function(mgmt_levels){
 #' @param o3_hourly (Optional). Vector of hourly mean ozone (O3) concentrations (ppb).
 #' @param no2_hourly (Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).
 #' @param so2_hourly (Optional). Vector of hourly mean sulphur dioxide (SO2) concentrations (ppb).
+#' @param min_completeness A single value from 0 to 1 indicating the required annual data completeness for a pollutant. Default is 0.5 (50 percent).
 #'
 #' @description
 #' The Canadian Ambient Air Quality Standards (CAAQS) are part of a collaborative national Air Quality Management System (AQMS), to better protect human health and the environment.
@@ -456,8 +457,8 @@ CAAQS_objectives = function(mgmt_levels){
 #' CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
 #'      o3_hourly = obs$o3, no2_hourly = obs$no2, so2_hourly = obs$so2)
 CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
-                 no2_hourly = NULL, so2_hourly = NULL){
-  # TODO: Ensure 3 years of data provided
+                 no2_hourly = NULL, so2_hourly = NULL,
+                 min_completeness = 0.5){
   # Define thresholds for each pollutant / avg / year
   thresholds = CAAQS_thesholds()
 
@@ -472,6 +473,31 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       lubridate::floor_date(min(.data$date), "years"),
       lubridate::ceiling_date(max(.data$date), "years") - lubridate::hours(1),
       "1 hours")) %>%
+  # Assess hours of data for each pollutant annually
+  has_enough_obs = obs %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::summarise(dplyr::across(-1, \(x) sum(!is.na(x)))) %>%
+    dplyr::mutate(dplyr::across(-1, \(x) x/ifelse(.data$year%%4==0, 8784, 8760))) %>%
+    dplyr::mutate(dplyr::across(-1, \(x) swap_na(x > min_completeness, F))) %>%
+    tidyr::complete(year = min(.data$year):max(.data$year))
+  # Check for 3 consecutive years for any pollutant
+  has_3_consecutive_years = has_enough_obs %>%
+    dplyr::summarise(
+      dplyr::across(-1, \(x) any((x + dplyr::lag(x) + dplyr::lag(x, 2)) >= 3)))
+  # Stop if not enough data provided
+  if(all(!has_3_consecutive_years))
+    stop("CAAQS requires at least 3 years with `min_completeness`x100% of hourly observations for at least one pollutant.")
+  # Drop data for years lacking enough data
+  for(pol in names(has_enough_obs)[-1]){
+    insufficient_years = has_enough_obs$year[unlist(!has_enough_obs[pol])]
+    if(length(insufficient_years)){
+      warning(paste("Insufficient data collected for pol:", pol,
+                    "for year(s):", paste(insufficient_years, collapse = ", "),
+                    "see argument `min_completeness`"))
+      obs[lubridate::year(obs$date) %in% insufficient_years, pol] = NA
+    }
+  }
+
     dplyr::arrange(.data$date)
 
   return(list(
