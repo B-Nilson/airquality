@@ -418,6 +418,17 @@ CAAQS_thesholds = function(){
   )
 }
 
+# TODO: implement
+CAAQS_objectives = function(mgmt_levels){
+  objectives = c(
+    Green = "To maintain good air quality through proactive air management measures to keep clean areas clean.",
+    Yellow = "To improve air quality using early and ongoing actions for continuous improvement.",
+    Orange = "To improve air quality through active air management and prevent exceedance of the CAAQS.",
+    Red = "To reduce pollutant levels below the CAAQS through advanced air management actions."
+  )
+}
+
+
 #' Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)
 #'
 #' @param datetimes Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
