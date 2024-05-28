@@ -462,17 +462,18 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   # Define thresholds for each pollutant / avg / year
   thresholds = CAAQS_thesholds()
 
+  # Get full record of dates for years provided
+  complete_datetimes = seq(
+    lubridate::floor_date(min(datetimes), "years"),
+    lubridate::ceiling_date(max(datetimes), "years") - lubridate::hours(1),
+    "1 hours")
+
   # Join inputs
   obs = dplyr::bind_cols(
     date = datetimes, pm25 = pm25_hourly,
     o3 = o3_hourly, no2 = no2_hourly,
-    so2 = so2_hourly
-  ) %>%
-    # Fill in missing hours with NAs
-    tidyr::complete(date = seq(
-      lubridate::floor_date(min(.data$date), "years"),
-      lubridate::ceiling_date(max(.data$date), "years") - lubridate::hours(1),
-      "1 hours")) %>%
+    so2 = so2_hourly)
+
   # Assess hours of data for each pollutant annually
   has_enough_obs = obs %>%
     dplyr::group_by(year = lubridate::year(.data$date)) %>%
@@ -498,13 +499,18 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
     }
   }
 
+  # Fill in missing hours with NAs
+  obs = obs %>%
+    tidyr::complete(date = complete_datetimes) %>%
     dplyr::arrange(.data$date)
 
-  return(list(
+  # Calculate CAAQS attainment where data provided
+  attainment = list(
     pm25 = if (!is.null(pm25_hourly)) CAAQS_pm25(obs, thresholds),
     o3   = if (!is.null(  o3_hourly)) CAAQS_o3(  obs, thresholds),
     no2  = if (!is.null( no2_hourly)) CAAQS_no2( obs, thresholds),
     so2  = if (!is.null( so2_hourly)) CAAQS_so2( obs, thresholds)
-  ))
+  )
+  return(attainment)
 }
 
