@@ -440,7 +440,10 @@ CAAQS_objectives = function(mgmt_levels){
 #'
 #' @description
 #' The Canadian Ambient Air Quality Standards (CAAQS) are part of a collaborative national Air Quality Management System (AQMS), to better protect human health and the environment.
-#' Standards are defined for fine particulate matter (PM2.5), ozone (O3), nitrogen dioxide (NO2), and sulphur dioxide (SO2), and are typically updated ever 5 years.
+#' Standards at various averaging periods are defined for fine particulate matter (PM2.5), ozone (O3), nitrogen dioxide (NO2), and sulphur dioxide (SO2), and are typically updated ever 5 years.
+#'
+#' Management levels (Green -> Yellow -> Orange -> Red) are defined for each pollutant standard.
+#' A "Red" level indicates exceedance of the CAAQS and management plans are typically developed for regions at "Orange" or worse levels.
 #'
 #' @references \link{https://ccme.ca/en/air-quality-report}
 #' @family Canadian Air Quality Standards
@@ -450,10 +453,11 @@ CAAQS_objectives = function(mgmt_levels){
 #'
 #' @examples
 #' obs = data.frame(
-#'   date = seq(lubridate::ymd_h("2024-01-01 00"),
-#'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-#'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24),
-#'   no2 = sample(1:150, 24), so2 = sample(1:150, 24))
+#'   date = seq(lubridate::ymd_h("2020-01-01 00"),
+#'              lubridate::ymd_h("2023-12-31 23"), "1 hours"),
+#'   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
+#'   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
+#' )
 #' CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
 #'      o3_hourly = obs$o3, no2_hourly = obs$no2, so2_hourly = obs$so2)
 CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,

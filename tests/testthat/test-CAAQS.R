@@ -11,3 +11,13 @@ test_that("Returns a list of proper size", {
   expect_type(output, "list")
   expect_length(output, 4)
 })
+
+# TODO: write test
+# test_that("Providing less than 3 years of consecutive data throws an error", {
+#
+# })
+
+# TODO: write test
+# test_that("Providing less than min_completeness*100% hours of data for a pol/year throws a warning", {
+#
+# })
