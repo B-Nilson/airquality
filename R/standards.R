@@ -250,6 +250,183 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 
 # CAAQS -------------------------------------------------------------------
 
+CAAQS_pm25 = function(obs, thresholds){
+  obs %>%
+    # Hourly mean -> daily mean
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) %>%
+    # Daily mean -> annual 98th percentile and annual mean
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::summarise(p_complete = round(sum(!is.na(.data$pm25_mean)) / dplyr::n(), 3)*100,
+                     perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
+                     mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
+    # +3 year averages, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages,
+      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_means, n = 3),
+      `3yr_mean_of_means` = get_lag_n_mean(.data$mean_of_daily_means, n = 3),
+      # +whether standards are met
+      management_level_daily = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+                            thresholds = thresholds$pm25$daily)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`3yr_mean_of_means`[.data$year == y],
+                            thresholds = thresholds$pm25$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_daily,
+                    .after = "3yr_mean_of_perc_98")%>%
+    dplyr::relocate(.data$mean_of_daily_means,
+                    .after = "management_level_daily") %>%
+    dplyr::relocate(.data$p_complete, .after = "year")
+}
+
+CAAQS_o3 = function(obs, thresholds){
+  obs %>%
+    # hourly mean -> 8 hourly mean
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
+    dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
+    # 8 hourly mean -> daily max
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
+    dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
+    # daily max -> annual 4th highest
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
+    dplyr::summarise(
+      p_complete = round(sum(!is.na(.data$daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
+      fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean` = get_lag_n_mean(.data$fourth_highest_daily_max_8hr_mean_o3, n = 3),
+      # +whether standard is met
+      management_level_8hr = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`3yr_mean`[.data$year == y],
+                            thresholds = thresholds$o3$`8hr`))
+    ) %>%
+    dplyr::relocate(.data$p_complete, .after = "year")
+}
+
+CAAQS_no2 = function(obs, thresholds){
+  obs %>%
+    # + annual mean
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
+    # hourly mean -> daily maxima
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
+                    .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") %>%
+    # daily maxima -> annual 98th percentile
+    dplyr::group_by(year = lubridate::year(date),
+                    .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(
+      p_complete = round(sum(!is.na(.data$daily_max_hourly_no2)) / dplyr::n(), 3)*100,
+      perc_98_of_daily_maxima = unname(stats::quantile(
+        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_maxima, n = 3),
+      # +whether standard is met
+      management_level_hourly = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`annual_mean_of_hourly`[.data$year == y],
+                            thresholds = thresholds$no2$hourly)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+                            thresholds = thresholds$no2$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_hourly,
+                    .after = "annual_mean_of_hourly") %>%
+    dplyr::relocate(.data$p_complete, .after = "year")
+}
+
+CAAQS_so2 = function(obs, thresholds){
+  obs %>%
+    # + annual mean
+    dplyr::group_by(year = lubridate::year(date)) %>%
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
+    # hourly mean -> daily maxima
+    dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") %>%
+    # daily maxima -> annual 98th percentile
+    dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(
+      p_complete = round(sum(!is.na(.data$daily_max_hourly_so2)) / dplyr::n(), 3)*100,
+      perc_99_of_daily_maxima = unname(stats::quantile(
+        .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean_of_perc_99` = get_lag_n_mean(.data$perc_99_of_daily_maxima, n = 3),
+      # +whether standard is met
+      management_level_hourly = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`annual_mean_of_hourly`[.data$year == y],
+                            thresholds = thresholds$so2$hourly)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                            metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
+                            thresholds = thresholds$so2$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_hourly,
+                    .after = "annual_mean_of_hourly") %>%
+    dplyr::relocate(.data$p_complete, .after = "year")
+}
+
+CAAQS_meets_standard = function(metric, thresholds, year){
+  . = NULL # so build check doesn't yell at me
+  mgmt_levels = thresholds %>%
+    .[as.numeric(names(.)) <= year] %>%
+    dplyr::last()
+  if(length(mgmt_levels) == 0) return(NA)
+
+  attainment = dplyr::bind_cols(lapply(mgmt_levels, \(lvl) metric > lvl))
+  attainment = apply(attainment, 1, \(x) min_no_na(which(x)))
+  attainment[!is.na(attainment)] = names(mgmt_levels)[
+    attainment[!is.na(attainment)]]
+
+  return(attainment)
+}
+
+CAAQS_thesholds = function(){
+  list(
+    pm25 = list(
+      daily  = list('2015' = c(Red = 28,  Orange = 19,   Yellow = 10.01, Green = 0),
+                    '2020' = c(Red = 27,  Orange = 19,   Yellow = 10.01, Green = 0)),
+      annual = list('2015' = c(Red = 10,  Orange = 6.41, Yellow = 4.01,  Green = 0),
+                    '2020' = c(Red = 8.8, Orange = 6.41, Yellow = 4.01,  Green = 0))
+    ),
+    o3 = list(
+      `8hr`  = list('2015' = c(Red = 63,  Orange = 56.01,   Yellow = 50.01, Green = 0),
+                    '2020' = c(Red = 62,  Orange = 56.01,   Yellow = 50.01, Green = 0),
+                    '2025' = c(Red = 60,  Orange = 56.01,   Yellow = 50.01, Green = 0))
+    ),
+    no2 = list(
+      hourly = list('2020' = c(Red = 60,  Orange = 31.01,   Yellow = 20.01, Green = 0),
+                    '2025' = c(Red = 42,  Orange = 31.01,   Yellow = 20.01, Green = 0)),
+      annual = list('2020' = c(Red = 17,  Orange = 7.01,   Yellow = 2.01, Green = 0),
+                    '2025' = c(Red = 12,  Orange = 7.01,   Yellow = 2.01, Green = 0))
+    ),
+    so2 = list(
+      hourly = list('2020' = c(Red = 70,  Orange = 50.01,   Yellow = 30.01, Green = 0),
+                    '2025' = c(Red = 65,  Orange = 50.01,   Yellow = 30.01, Green = 0)),
+      annual = list('2020' = c(Red = 5,  Orange = 3.01,   Yellow = 2.01, Green = 0),
+                    '2025' = c(Red = 4,  Orange = 3.01,   Yellow = 2.01, Green = 0))
+    )
+  )
+}
+
 #' Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)
 #'
 #' @param datetimes Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
@@ -279,42 +456,9 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
                  no2_hourly = NULL, so2_hourly = NULL){
   # TODO: Ensure 3 years of data provided
-  . = NULL # so build check doesn't yell at me
   # Define thresholds for each pollutant / avg / year
-  thresholds = list(
-    pm25 = list(
-      daily  = list('2015' = c(Red = 28,  Orange = 19,   Yellow = 10.01, Green = 0),
-                    '2020' = c(Red = 27,  Orange = 19,   Yellow = 10.01, Green = 0)),
-      annual = list('2015' = c(Red = 10,  Orange = 6.41, Yellow = 4.01,  Green = 0),
-                    '2020' = c(Red = 8.8, Orange = 6.41, Yellow = 4.01,  Green = 0))
-    ),
-    o3 = list(
-      `8hr`  = list('2015' = c(Red = 63,  Orange = 56.01,   Yellow = 50.01, Green = 0),
-                    '2020' = c(Red = 62,  Orange = 56.01,   Yellow = 50.01, Green = 0),
-                    '2025' = c(Red = 60,  Orange = 56.01,   Yellow = 50.01, Green = 0))
-    ),
-    no2 = list(
-      hourly = list('2020' = c(Red = 60,  Orange = 31.01,   Yellow = 20.01, Green = 0),
-                    '2025' = c(Red = 42,  Orange = 31.01,   Yellow = 20.01, Green = 0)),
-      annual = list('2020' = c(Red = 17,  Orange = 7.01,   Yellow = 2.01, Green = 0),
-                    '2025' = c(Red = 12,  Orange = 7.01,   Yellow = 2.01, Green = 0))
-    ),
-    so2 = list(
-      hourly = list('2020' = c(Red = 70,  Orange = 50.01,   Yellow = 30.01, Green = 0),
-                    '2025' = c(Red = 65,  Orange = 50.01,   Yellow = 30.01, Green = 0)),
-      annual = list('2020' = c(Red = 5,  Orange = 3.01,   Yellow = 2.01, Green = 0),
-                    '2025' = c(Red = 4,  Orange = 3.01,   Yellow = 2.01, Green = 0))
-    )
-  )
-  # helper function to make 3 year means
-  get_lag_n_mean = function(x, n = 3){
-    out = x
-    if(n <= 1) stop("`n` must be greater than one")
-    for(i in 1:(n-1)){
-      out = out + dplyr::lag(x, i)
-    }
-    return(out/n)
-  }
+  thresholds = CAAQS_thesholds()
+
   # Join inputs
   obs = dplyr::bind_cols(
     date = datetimes, pm25 = pm25_hourly,
@@ -328,164 +472,11 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
       "1 hours")) %>%
     dplyr::arrange(.data$date)
 
-  # Get daily mean and max
-  daily = obs %>%
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(dplyr::across(dplyr::everything(),
-                                   c(mean = mean_no_na, max = max_no_na)))
-  meets_standard = function(metric, thresholds, year){
-    mgmt_levels = thresholds %>%
-      .[as.numeric(names(.)) <= year] %>%
-      dplyr::last()
-    if(length(mgmt_levels) == 0) return(NA)
-
-    attainment = dplyr::bind_cols(lapply(mgmt_levels, \(lvl) metric > lvl))
-    attainment = apply(attainment, 1, \(x) min_no_na(which(x)))
-    attainment[!is.na(attainment)] = names(mgmt_levels)[
-      attainment[!is.na(attainment)]]
-
-    return(attainment)
-  }
-  # helper function to extract relevant thresholds
-  get_threshold = function(thresholds, year){
-    out = thresholds %>%
-      .[as.numeric(names(.)) <= year] %>%
-      dplyr::last()
-    if(length(out) == 0) out = NA
-    return(out)
-  }
-  met = list()
-  # Test pm25 if provided
-  if(!is.null(pm25_hourly)){
-    met$pm25 = daily %>%
-      # Daily mean -> annual 98th percentile and annual mean
-      dplyr::group_by(year = lubridate::year(.data$date)) %>%
-      dplyr::summarise(p_complete = round(sum(!is.na(.data$pm25_mean)) / dplyr::n(), 3)*100,
-                perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
-                mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
-      # +3 year averages, +whether standard is met
-      dplyr::mutate(
-        # +3 year averages,
-        `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_means, n = 3),
-        `3yr_mean_of_means` = get_lag_n_mean(.data$mean_of_daily_means, n = 3),
-        # +whether standards are met
-        management_level_daily = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-                              thresholds = thresholds$pm25$daily)),
-        management_level_annual = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`3yr_mean_of_means`[.data$year == y],
-                              thresholds = thresholds$pm25$annual))
-      ) %>%
-      dplyr::relocate(.data$management_level_daily,
-                      .after = "3yr_mean_of_perc_98")%>%
-      dplyr::relocate(.data$mean_of_daily_means,
-                      .after = "management_level_daily") %>%
-      dplyr::relocate(.data$p_complete, .after = "year")
-  }
-  # Test o3 if provided
-  if(!is.null(o3_hourly)){
-    met$o3 = obs %>%
-      # hourly mean -> 8 hourly mean
-      dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
-      dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
-      # 8 hourly mean -> daily max
-      dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-      dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
-      # daily max -> annual 4th highest
-      dplyr::group_by(year = lubridate::year(.data$date)) %>%
-      dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
-      dplyr::summarise(
-        p_complete = round(sum(!is.na(.data$daily_max_8hr_mean_o3)) / dplyr::n(), 3)*100,
-        fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
-      # +3 year averages, +standard for that year, +whether standard is met
-      dplyr::mutate(
-        # +3 year averages
-        `3yr_mean` = get_lag_n_mean(.data$fourth_highest_daily_max_8hr_mean_o3, n = 3),
-        # +whether standard is met
-        management_level_8hr = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`3yr_mean`[.data$year == y],
-                              thresholds = thresholds$o3$`8hr`))
-      ) %>%
-      dplyr::relocate(.data$p_complete, .after = "year")
-  }
-  # Test no2 if provided
-  if(!is.null(no2_hourly)){
-    met$no2 = obs %>%
-      # + annual mean
-      dplyr::group_by(year = lubridate::year(.data$date)) %>%
-      dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
-      # hourly mean -> daily maxima
-      dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
-                      .data$annual_mean_of_hourly) %>%
-      dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") %>%
-      # daily maxima -> annual 98th percentile
-      dplyr::group_by(year = lubridate::year(date),
-                      .data$annual_mean_of_hourly) %>%
-      dplyr::summarise(
-        p_complete = round(sum(!is.na(.data$daily_max_hourly_no2)) / dplyr::n(), 3)*100,
-        perc_98_of_daily_maxima = unname(stats::quantile(
-          .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
-      # +3 year averages, +standard for that year, +whether standard is met
-      dplyr::mutate(
-        # +3 year averages
-        `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_maxima, n = 3),
-        # +whether standard is met
-        management_level_hourly = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`annual_mean_of_hourly`[.data$year == y],
-                              thresholds = thresholds$no2$hourly)),
-        management_level_annual = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-                              thresholds = thresholds$no2$annual))
-      ) %>%
-      dplyr::relocate(.data$management_level_hourly,
-                      .after = "annual_mean_of_hourly") %>%
-      dplyr::relocate(.data$p_complete, .after = "year")
-  }
-  # Test so2 if provided
-  if(!is.null(so2_hourly)){
-    met$so2 = obs %>%
-      # + annual mean
-      dplyr::group_by(year = lubridate::year(date)) %>%
-      dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
-      # hourly mean -> daily maxima
-      dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
-      dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") %>%
-      # daily maxima -> annual 98th percentile
-      dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
-      dplyr::summarise(
-        p_complete = round(sum(!is.na(.data$daily_max_hourly_so2)) / dplyr::n(), 3)*100,
-        perc_99_of_daily_maxima = unname(stats::quantile(
-          .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
-      # +3 year averages, +standard for that year, +whether standard is met
-      dplyr::mutate(
-        # +3 year averages
-        `3yr_mean_of_perc_99` = get_lag_n_mean(.data$perc_99_of_daily_maxima, n = 3),
-        # +whether standard is met
-        management_level_hourly = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`annual_mean_of_hourly`[.data$year == y],
-                              thresholds = thresholds$so2$hourly)),
-        management_level_annual = sapply(
-          .data$year,
-          \(y) meets_standard(year = y,
-                              metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
-                              thresholds = thresholds$so2$annual))
-      ) %>%
-      dplyr::relocate(.data$management_level_hourly,
-                      .after = "annual_mean_of_hourly") %>%
-      dplyr::relocate(.data$p_complete, .after = "year")
-  }
-  return(met)
+  return(list(
+    pm25 = if (!is.null(pm25_hourly)) CAAQS_pm25(obs, thresholds),
+    o3   = if (!is.null(  o3_hourly)) CAAQS_o3(  obs, thresholds),
+    no2  = if (!is.null( no2_hourly)) CAAQS_no2( obs, thresholds),
+    so2  = if (!is.null( so2_hourly)) CAAQS_so2( obs, thresholds)
+  ))
 }
 
