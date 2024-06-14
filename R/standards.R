@@ -525,3 +525,93 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   return(attainment)
 }
 
+# US AQI ------------------------------------------------------------------
+
+aqi_levels = list(
+  "Good" = 0:50,
+  "Moderate" = 51:100,
+  "Unhealthy for Sensitive Groups" = 101:150,
+  "Unhealthy" = 151:200,
+  "Very Unhealthy" = 201:300,
+  "Hazardous" = 301:500
+)
+
+AQI_risk_category = function(AQI){
+  risk = factor(
+    AQI, unlist(aqi_levels),
+    unlist(
+      sapply(seq_along(aqi_levels), \(i){
+        rep(names(aqi_levels)[i], length(aqi_levels[[i]]))
+      })
+    )
+  )
+  return(risk)
+}
+
+AQI_ozone = function(datetimes, o3_8hr = NULL, o3_hourly = NULL){
+  if(is.null(o3_8hr) & is.null(o3_hourly)){
+    stop("At least one of `o3_8hr` or `o3_hourly` must be provided.")
+  }
+  # Calculate o3_8hr if only o3_hourly provided
+  if(is.null(o3_8hr)){
+    dat = data.frame(datetimes, o3_hourly) %>%
+      # Fill date gaps
+      tidyr::complete(
+        datetimes = seq(min(datetimes), max(datetimes), "1 hours")) %>%
+      # Calculate o3_8hr
+      dplyr::mutate(o3_8hr = roll_mean_8hr_min_5(o3_hourly))
+  }else{
+    dat = data.frame(datetimes, o3_8hr, o3_hourly)%>%
+      # Fill date gaps
+      tidyr::complete(
+        datetimes = seq(min(datetimes), max(datetimes), "1 hours"))
+  }
+  # Define breakpoints for AQI formulation
+  breakpoints = list(
+    o3_8hr = list(
+      "Good" = list(
+        con = c(0, 0.054), aqi = c(0, 50)
+      ),
+      "Moderate" = list(
+        con = c(0.055, 0.070), aqi = c(51, 100)
+      ),
+      "Unhealthy for Sensitive Groups" = list(
+        con = c(0.071, 0.085), aqi = c(101, 150)
+      ),
+      "Unhealthy" = list(
+        con = c(0.086, 0.105), aqi = c(151, 200)
+      ),
+      "Very Unhealthy" = list(
+        con = c(0.106, 0.2), aqi = c(201, 300)
+      ) # 8-hour O3 values do not define higher AQI values (≥ 301).
+      # AQI values of 301 or higher are calculated with 1-hour O3 concentrations.
+    ),
+    o3_1hr = list(
+      # 1-hour O3 values do not define Good-Moderate AQI values (< 101).
+      "Unhealthy for Sensitive Groups" = list(
+        con = c(0.125, 0.164), aqi = c(101, 150)
+      ),
+      "Unhealthy" = list(
+        con = c(0.165, 0.204), aqi = c(151, 200)
+      ),
+      "Very Unhealthy" = list(
+        con = c(0.205, 0.404), aqi = c(201, 300)
+      ),
+      "Hazardous" = list(
+        con = c(0.405, 0.504), aqi = c(301, 400)
+      ),
+      "Hazardous" = list(
+        con = c(0.505, 0.604), aqi = c(401, 500)
+      ),
+      "Beyond the AQI" = list(
+        con = c(0.604, Inf), aqi = c(401, 500)
+      )
+    )
+  )
+  # TODO: Find breakpoints and corresponding AQI values for each hour
+  # TODO: Calculate AQI for Ozone for each hour (for 8hr and for 1hr if provided)
+  # TODO: Create general AQI formulation function
+  # TODO: Round to nearest integer
+  # TODO: Add reference to https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
+}
+
