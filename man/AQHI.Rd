@@ -7,13 +7,13 @@
 AQHI(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE)
 }
 \arguments{
-\item{datetimes}{Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.}
+\item{datetimes}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
 
-\item{pm25_hourly}{Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
+\item{pm25_hourly}{Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
-\item{no2_hourly}{(Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
+\item{no2_hourly}{(Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
 
-\item{o3_hourly}{(Optional). Vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
+\item{o3_hourly}{(Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
 
 \item{quiet}{(Optional). A single logical (TRUE/FALSE) value indicating if AQHI+ warning (if o3 and no2 not provided) should be hidden. Default is FALSE}
 }
@@ -30,13 +30,14 @@ The AQHI is "the sum of excess mortality risk associated with individual polluta
 from a time-series analysis of air pollution and mortality in Canadian cities,
 adjusted to a 0–10 scale, and calculated hourly on the basis of trailing 3-hr average pollutant concentrations."
 
-The Canadian AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).
-AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM2.5, ozone (O3), and nitrogen dioxide (NO2)
-, and is calculated using hourly means instead of using 3 hour means.
-The AQHI+ overrides the AQHI if it exceeds the AQHI, which typically occurs during wildfire smoke events.
+The AQHI is overriden by the Canadian AQHI+ if the AQHI+ exceeds the AQHI for a particular hour.
+The AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).
+AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM2.5, ozone (O3), and nitrogen dioxide (NO2).
+Unlike the AQHI which uses 3-hour mean averages, AQHI+ is calculated using hourly means.
 
 The AQHI was originally published by Steib et. al in 2008,
- and has been adopted by all Canadian provinces/territories (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+and has been adopted by all Canadian provinces/territories
+(except Quebec where they use the AQI instead of the AQHI/AQHI+).
 }
 \examples{
 obs = data.frame(

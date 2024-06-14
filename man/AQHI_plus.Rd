@@ -18,29 +18,35 @@ and `length(pm25_hourly)` rows
 }
 \description{
 The Canadian AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).
-AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM2.5, ozone (O3), and nitrogen dioxide (NO2)
-, and is calculated using hourly means instead of using 3 hour means.
-The AQHI+ overrides the AQHI if it exceeds the AQHI, which typically occurs during wildfire smoke events.
+AQHI+ is meant for augmenting the AQHI to provide a more responsive health index during wildfire smoke events.
+AQHI+ only uses fine particulate matter (PM2.5) instead of the combination of PM2.5, ozone (O3), and nitrogen dioxide (NO2).
+In addition, AQHI+ is calculated using hourly mean averages instead of 3-hourly mean averages used by the AQHI.
+The AQHI+ overrides the AQHI if it exceeds the AQHI for a particular hour.
 
-Hourly PM2.5 is split into bins of 10 ug/m^3 up to 100 ug/m^3 (AQHI+ 1 - 10)
-, and values greater than 100 ug/m^3 have an AQHI+ of "+".
-The risk categories match the AQHI Low [1-3, or 0-30 ug/m^3], Moderate [4-6, or 30.1-60 ug/m^3]
-, High [7-10, or 60.1-100 ug/m^3], and Very High [+, or >100 ug/m^3] and share the same health messaging.
+AQHI+ splits hourly PM2.5 concentrations into bins of 10 ug/m^3 from 0 to 100 ug/m^3 (AQHI+ 1 - 10),
+and assigns "+" to values greater than 100 ug/m^3.
+The risk categories match the AQHI (Low [1-3, or 0-30 ug/m^3], Moderate [4-6, or 30.1-60 ug/m^3],
+High [7-10, or 60.1-100 ug/m^3], and Very High [+, or >100 ug/m^3]) and share the same health messaging.
 
 The AQHI+ was originally published by Yao et. al in 2019,
- and has been adopted by all Canadian provinces/territories as of 2024 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
+and has been adopted by all Canadian provinces/territories as of 2024
+(except Quebec where they use the AQI instead of the AQHI and AQHI+).
 }
 \examples{
+# Hourly pm2.5 concentrations
 obs = data.frame(
   date = seq(lubridate::ymd_h("2024-01-01 00"),
              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
   pm25 = sample(1:150, 24))
+# Calculate the AQHI+
 AQHI_plus(obs$pm25)
 
+# Hourly pm2.5 concentrations (with negative values)
 obs = data.frame(
   date = seq(lubridate::ymd_h("2024-01-01 00"),
              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
   pm25 = c(-2, -0.1, sample(1:150, 22)))
+# Calculate the AQHI+ for each hour, except for hours where pm2.5 is < -0.5
 AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 }
 \references{
