@@ -11,6 +11,13 @@ roll_mean_3hr_min_2 = function(x) {
     FUN = mean_if_enough, min_n = 2) %>%
     round(1)
 }
+# Calculate rolling 8 hour mean if at least 5 hours available
+roll_mean_8hr_min_5 = function(x) {
+  zoo::rollapply(
+    x, width = 8, align = "right", fill = NA,
+    FUN = mean_if_enough, min_n = 5) %>%
+    round(1)
+}
 
 # helper functions to replace NA/inf with val
 swap_na = function(x, val = -99) ifelse(is.na(x), val, x)
