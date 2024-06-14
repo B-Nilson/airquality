@@ -15,8 +15,7 @@ roll_mean_3hr_min_2 = function(x) {
 roll_mean_8hr_min_5 = function(x) {
   zoo::rollapply(
     x, width = 8, align = "right", fill = NA,
-    FUN = mean_if_enough, min_n = 5) %>%
-    round(1)
+    FUN = mean_if_enough, min_n = 5)
 }
 
 # helper functions to replace NA/inf with val
