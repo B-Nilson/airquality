@@ -17,12 +17,23 @@ roll_mean_8hr_min_5 = function(x) {
     x, width = 8, align = "right", fill = NA,
     FUN = mean_if_enough, min_n = 5)
 }
+# Calculate rolling 24 hour mean if at least 15 hours available
+roll_mean_24hr_min_15 = function(x) {
+  zoo::rollapply(
+    x, width = 24, align = "right", fill = NA,
+    FUN = mean_if_enough, min_n = 15)
+}
 
-# helper functions to replace NA/inf with val
+# Truncate to desired digits
+trunc_n = function(x, n = 0){
+  trunc(x*10^n)/10^n
+}
+
+# replace NA/inf with val
 swap_na = function(x, val = -99) ifelse(is.na(x), val, x)
 swap_inf = function(x, val = NA) ifelse(is.infinite(x), val, x)
 
-# helper functions to remove NA by default
+# remove NA by default
 mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
 min_no_na = function(x, ...) swap_inf(suppressWarnings(min(x, na.rm = T, ...)), NA)
 max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
