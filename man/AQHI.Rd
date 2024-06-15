@@ -2,7 +2,7 @@
 % Please edit documentation in R/standards.R
 \name{AQHI}
 \alias{AQHI}
-\title{Calculate Canadian AQHI from hourly PM2.5, NO2, and O3 observations}
+\title{Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations}
 \usage{
 AQHI(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE)
 }
@@ -53,12 +53,14 @@ AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
 \link{https://doi.org/10.3155/1047-3289.58.3.435}
 }
 \seealso{
-Other Canadian AQHI Functions: 
-\code{\link{AQHI_plus}()}
-
-Other Canadian Air Quality Standards: 
+Other Canadian Air Quality: 
 \code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()}
+
+Other Air Quality Standards: 
+\code{\link{AQHI_plus}()},
+\code{\link{AQI}()},
+\code{\link{CAAQS}()}
 }
-\concept{Canadian AQHI Functions}
-\concept{Canadian Air Quality Standards}
+\concept{Air Quality Standards}
+\concept{Canadian Air Quality}

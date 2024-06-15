@@ -78,7 +78,7 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
     )
 }
 
-#' Calculate Canadian AQHI from hourly PM2.5, NO2, and O3 observations
+#' Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations
 #'
 #' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
 #' @param pm25_hourly Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
@@ -104,8 +104,8 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #'
 #' @references \link{https://doi.org/10.3155/1047-3289.58.3.435}
 #'
-#' @family Canadian AQHI Functions
-#' @family Canadian Air Quality Standards
+#' @family Canadian Air Quality
+#' @family Air Quality Standards
 #'
 #' @return A tibble (data.frame) with columns (*if all 3 pollutants provided):
 #' date, pm25, o3*, no2*, pm25_rolling_3hr*, o3_rolling_3hr*, o3_rolling_3hr*,
@@ -198,8 +198,8 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #'
 #' @references \link{https://doi.org/10.17269/s41997-019-00237-w}
 #'
-#' @family Canadian AQHI Functions
-#' @family Canadian Air Quality Standards
+#' @family Canadian Air Quality
+#' @family Air Quality Standards
 #'
 #' @return A tibble (data.frame) with columns:
 #' hourly_pm25, AQHI_plus, risk, high_risk_pop_message, general_pop_message
@@ -453,7 +453,8 @@ CAAQS_objectives = function(mgmt_levels){
 #' A "Red" level indicates exceedance of the CAAQS and management plans are typically developed for regions at "Orange" or worse levels.
 #'
 #' @references \link{https://ccme.ca/en/air-quality-report}
-#' @family Canadian Air Quality Standards
+#' @family Canadian Air Quality
+#' @family Air Quality Standards
 #'
 #' @return a list of tibbles (data.frames), one tibble per pollutant provided with annual CAAQS metrics and management levels
 #' @export

@@ -50,8 +50,14 @@ CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
 \link{https://ccme.ca/en/air-quality-report}
 }
 \seealso{
-Other Canadian Air Quality Standards: 
+Other Canadian Air Quality: 
 \code{\link{AQHI}()},
 \code{\link{AQHI_plus}()}
+
+Other Air Quality Standards: 
+\code{\link{AQHI}()},
+\code{\link{AQHI_plus}()},
+\code{\link{AQI}()}
 }
-\concept{Canadian Air Quality Standards}
+\concept{Air Quality Standards}
+\concept{Canadian Air Quality}

@@ -53,12 +53,14 @@ AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 \link{https://doi.org/10.17269/s41997-019-00237-w}
 }
 \seealso{
-Other Canadian AQHI Functions: 
-\code{\link{AQHI}()}
-
-Other Canadian Air Quality Standards: 
+Other Canadian Air Quality: 
 \code{\link{AQHI}()},
 \code{\link{CAAQS}()}
+
+Other Air Quality Standards: 
+\code{\link{AQHI}()},
+\code{\link{AQI}()},
+\code{\link{CAAQS}()}
 }
-\concept{Canadian AQHI Functions}
-\concept{Canadian Air Quality Standards}
+\concept{Air Quality Standards}
+\concept{Canadian Air Quality}
