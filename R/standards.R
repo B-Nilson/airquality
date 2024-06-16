@@ -684,13 +684,29 @@ AQI_from_con = function(dat, pol){
 #' Calculate the US AQI from pollutant observations
 #'
 #' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
-#' @param o3_8hr_ppm (Optional) Numeric vector of hourly 1-hour mean ozone (O3) concentrations (ppm).
+#' @param o3_8hr_ppm (Optional) Numeric vector of hourly 1-hour mean ozone (O3) concentrations (ppm). Will be calculated from o3_1hr_ppm if provided and o3_8hr_ppm not provided.
 #' @param o3_1hr_ppm (Optional) Numeric vector of hourly 8-hour mean ozone (O3) concentrations (ppm).
 #' @param pm25_24hr_ugm3 (Optional) Numeric vector of hourly 24-hour mean fine particulate matter (PM2.5) concentrations (ug/m^3).
 #' @param pm10_24hr_ugm3 (Optional) Numeric vector of hourly 24-hour mean coarse particulate matter (PM10) concentrations (ug/m^3).
 #' @param co_8hr_ppm (Optional) Numeric vector of hourly 8-hour mean carbon monoxide (CO) concentrations (ppm).
-#' @param so2_1hr_ppb (Optional) Numeric vector of hourly 1-hour mean sulfur dioxide (SO2) concentrations (ppb).
+#' @param so2_1hr_ppb (Optional) Numeric vector of hourly 1-hour mean sulfur dioxide (SO2) concentrations (ppb). 24-hour averages will be calculated automatically.
 #' @param no2_1hr_ppb (Optional) Numeric vector of hourly 1-hour mean nitrogen dioxide (NO2) concentrations (ppb).
+#'
+#' @description
+#' The Air Quality Index (AQI) is used for reporting on air quality in the United States,
+#' and focuses on short term health effects as a result of breathing polluted air.
+#'
+#' The AQI is calculated separately for 5 pollutants: ozone (O3), particulate matter (PM2.5 and PM10),
+#' carbon monoxide (CO), sulfur dioxide (SO2), and nitrogen dioxide (NO2) based
+#' on maximum values (of various averaging periods) for a particular day.
+#' The highest AQI for the day is recorded as the AQI and the corresponding
+#' pollutant is reported as the principal pollutant.
+#'
+#' The US EPA has established risk categories and associated health messaging for AQI ranges including:
+#' "Good" (0-50), "Moderate" (51-100), "Unhealthy for Sensitive Groups" (101-150),
+#' "Unhealthy" (151-200), "Very Unhealthy" (200-300), and "Hazardous" (301-500).
+#' AQI values above 500 are considered "Beyond the AQI",
+#' but AQI values will still be calculated for relative comparisons.
 #'
 #' @return A tibble (data.frame) with columns:
 #' date, AQI, risk_category, principal_pol
@@ -698,7 +714,7 @@ AQI_from_con = function(dat, pol){
 #' @export
 #'
 #' @family Air Quality Standards
-#' @family American (USA) Air Quality
+#' @family USA Air Quality
 #'
 #' @examples
 #' AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
