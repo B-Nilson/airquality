@@ -4,24 +4,35 @@ mean_if_enough = function(x, min_n = 0, ...){
   ifelse(sum(!is.na(x)) >= min_n, mean(x, na.rm = T, ...), NA)
 }
 
-# Calculate rolling 3 hour mean if at least 2 hours available
-roll_mean_3hr_min_2 = function(x) {
+# Calculates rolling mean if enough non-na provided
+# TODO: code without zoo (use dplyr::lag/lead)
+# TODO: document, test, and export
+roll_mean = function(x, width, direction = "backward", fill = NA, min_n = 0){
+  align = ifelse(direction == "backward", "right",
+                 ifelse(direction == "forward", "left", "center"))
   zoo::rollapply(
-    x, width = 3, align = "right", fill = NA,
-    FUN = mean_if_enough, min_n = 2) %>%
+    x, width = width, align = align, fill = fill,
+    FUN = mean_if_enough, min_n = min_n) %>%
     round(1)
 }
+
+
+# TODO: do not use these - roll_mean is short enough now to use as is
+# Calculate rolling 3 hour mean if at least 2 hours available
+roll_mean_3hr_min_2 = function(x) {
+  round(roll_mean(x, 3, min_n = 2), 1)
+}
+
+# TODO: do not use these - roll_mean is short enough now to use as is
 # Calculate rolling 8 hour mean if at least 5 hours available
 roll_mean_8hr_min_5 = function(x) {
-  zoo::rollapply(
-    x, width = 8, align = "right", fill = NA,
-    FUN = mean_if_enough, min_n = 5)
+  roll_mean(x, 8, min_n = 5)
 }
+
+# TODO: do not use these - roll_mean is short enough now to use as is
 # Calculate rolling 24 hour mean if at least 15 hours available
 roll_mean_24hr_min_15 = function(x) {
-  zoo::rollapply(
-    x, width = 24, align = "right", fill = NA,
-    FUN = mean_if_enough, min_n = 15)
+  roll_mean(x, 24, min_n = 15)
 }
 
 # Truncate to desired digits
