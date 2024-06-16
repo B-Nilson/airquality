@@ -49,7 +49,8 @@ mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
 min_no_na = function(x, ...) swap_inf(suppressWarnings(min(x, na.rm = T, ...)), NA)
 max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
 
-# helper function to make 3 (or n) year means (NA NOT IGNORED)
+# helper function to make backward looking rolling means (NAs not ignored)
+# TODO: ignore NAs, make forward looking equivelant, incorp with roll_mean
 get_lag_n_mean = function(x, n = 3){
   out = x
   if(n <= 1) stop("`n` must be greater than one")
