@@ -6,23 +6,23 @@
 \usage{
 CAAQS(
   datetimes,
-  pm25_hourly = NULL,
-  o3_hourly = NULL,
-  no2_hourly = NULL,
-  so2_hourly = NULL,
+  pm25_1hr_ugm3 = NULL,
+  o3_1hr_ppb = NULL,
+  no2_1hr_ppb = NULL,
+  so2_1hr_ppb = NULL,
   min_completeness = 0.5
 )
 }
 \arguments{
 \item{datetimes}{Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.}
 
-\item{pm25_hourly}{(Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
+\item{pm25_1hr_ugm3}{(Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
-\item{o3_hourly}{(Optional). Vector of hourly mean ozone (O3) concentrations (ppb).}
+\item{o3_1hr_ppb}{(Optional). Vector of hourly mean ozone (O3) concentrations (ppb).}
 
-\item{no2_hourly}{(Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).}
+\item{no2_1hr_ppb}{(Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).}
 
-\item{so2_hourly}{(Optional). Vector of hourly mean sulphur dioxide (SO2) concentrations (ppb).}
+\item{so2_1hr_ppb}{(Optional). Vector of hourly mean sulphur dioxide (SO2) concentrations (ppb).}
 
 \item{min_completeness}{A single value from 0 to 1 indicating the required annual data completeness for a pollutant. Default is 0.5 (50 percent).}
 }
@@ -43,8 +43,8 @@ obs = data.frame(
   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
 )
-CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
-     o3_hourly = obs$o3, no2_hourly = obs$no2, so2_hourly = obs$so2)
+CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+     o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
 }
 \references{
 \link{https://ccme.ca/en/air-quality-report}

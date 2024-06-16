@@ -4,16 +4,22 @@
 \alias{AQHI}
 \title{Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations}
 \usage{
-AQHI(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE)
+AQHI(
+  datetimes,
+  pm25_1hr_ugm3,
+  no2_1hr_ppb = NA,
+  o3_1hr_ppb = NA,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{datetimes}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
 
-\item{pm25_hourly}{Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
+\item{pm25_1hr_ugm3}{Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
-\item{no2_hourly}{(Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
+\item{no2_1hr_ppb}{(Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
 
-\item{o3_hourly}{(Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
+\item{o3_1hr_ppb}{(Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.}
 
 \item{quiet}{(Optional). A single logical (TRUE/FALSE) value indicating if AQHI+ warning (if o3 and no2 not provided) should be hidden. Default is FALSE}
 }
@@ -44,10 +50,10 @@ obs = data.frame(
   date = seq(lubridate::ymd_h("2024-01-01 00"),
              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-AQHI(datetimes = obs$date, pm25_hourly = obs$pm25,
-     o3_hourly = obs$o3, no2_hourly = obs$no2)
+AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+     o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 
-AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
+AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
 }
 \references{
 \link{https://doi.org/10.3155/1047-3289.58.3.435}

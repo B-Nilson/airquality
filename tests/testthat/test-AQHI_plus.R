@@ -9,8 +9,8 @@ test_that("AQHI+ returns a dataframe of proper size", {
 test_that("Returned data.frame has expected column classes", {
   output = AQHI_plus(1:5)
   output2 = AQHI_plus(c(1.0, 2.4, 4.8))
-  expect_type(output$pm25_hourly, "integer")
-  expect_type(output2$pm25_hourly, "double")
+  expect_type(output$pm25_1hr_ugm3, "integer")
+  expect_type(output2$pm25_1hr_ugm3, "double")
   expect_s3_class(output$AQHI_plus, c("factor"))
   expect_s3_class(output$risk, c("factor"))
   expect_type(output$high_risk_pop_message, c("character"))
@@ -20,7 +20,7 @@ test_that("Returned data.frame has expected column classes", {
 test_that("There is a value for each non-NA input", {
   input = c(NA,1:5)
   output = AQHI_plus(input)
-  expect_identical(output[,1], input) # pm25_hourly should match inputs
+  expect_identical(output[,1], input) # pm25_1hr_ugm3 should match inputs
   expect_true(all(is.na(unlist(output[is.na(input),])))) # NAs for all NA inputs
   expect_true(all(!is.na(unlist(output[!is.na(input),])))) # non-NAs for all non-NA inputs
 })

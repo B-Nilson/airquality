@@ -4,17 +4,17 @@
 \alias{AQHI_plus}
 \title{Calculate the Canadian AQHI+ from hourly PM2.5 observations}
 \usage{
-AQHI_plus(pm25_hourly, min_allowed_pm25 = 0)
+AQHI_plus(pm25_1hr_ugm3, min_allowed_pm25 = 0)
 }
 \arguments{
-\item{pm25_hourly}{A numeric/integer vector with hourly mean PM2.5 concentrations (ug/m^3).}
+\item{pm25_1hr_ugm3}{A numeric/integer vector with hourly mean PM2.5 concentrations (ug/m^3).}
 
-\item{min_allowed_pm25}{A single numeric value indicating the minimum allowed concentration (Defaults to 0 ug/m^3). All values in `pm25_hourly` less than this will be replaced with NA.}
+\item{min_allowed_pm25}{A single numeric value indicating the minimum allowed concentration (Defaults to 0 ug/m^3). All values in `pm25_1hr_ugm3` less than this will be replaced with NA.}
 }
 \value{
 A tibble (data.frame) with columns:
 hourly_pm25, AQHI_plus, risk, high_risk_pop_message, general_pop_message
-and `length(pm25_hourly)` rows
+and `length(pm25_1hr_ugm3)` rows
 }
 \description{
 The Canadian AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).

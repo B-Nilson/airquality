@@ -4,9 +4,9 @@
 #' Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations
 #'
 #' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
-#' @param pm25_hourly Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
-#' @param no2_hourly (Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
-#' @param o3_hourly (Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
+#' @param pm25_1hr_ugm3 Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
+#' @param no2_1hr_ppb (Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
+#' @param o3_1hr_ppb (Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
 #' @param quiet (Optional). A single logical (TRUE/FALSE) value indicating if AQHI+ warning (if o3 and no2 not provided) should be hidden. Default is FALSE
 #'
 #' @description
@@ -41,11 +41,11 @@
 #'   date = seq(lubridate::ymd_h("2024-01-01 00"),
 #'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
 #'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-#' AQHI(datetimes = obs$date, pm25_hourly = obs$pm25,
-#'      o3_hourly = obs$o3, no2_hourly = obs$no2)
+#' AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+#'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 #'
-#' AQHI(datetimes = obs$date, pm25_hourly = obs$pm25) # Returns AQHI+
-AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet = FALSE){
+#' AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
+AQHI = function(datetimes, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE){
   # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
   . = NULL # so build check doesn't yell at me
   aqhi_breakpoints = stats::setNames(
@@ -54,8 +54,8 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
   )
   # Join inputs
   obs = dplyr::bind_cols(
-    date = datetimes, pm25 = pm25_hourly,
-    o3 = o3_hourly, no2 = no2_hourly
+    date = datetimes, pm25 = pm25_1hr_ugm3,
+    o3 = o3_1hr_ppb, no2 = no2_1hr_ppb
   ) %>%
     # Fill in missing hours with NAs
     tidyr::complete(date = seq(min(date), max(date), "1 hours")) %>%
@@ -68,8 +68,8 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
     dplyr::relocate(.data$AQHI, .before = "AQHI_plus")
 
   # Need all 3 pollutants to calculate AQHI
-  have_all_3_pol = !all(is.na(pm25_hourly)) &
-    !all(is.na(no2_hourly)) & !all(is.na(o3_hourly))
+  have_all_3_pol = !all(is.na(pm25_1hr_ugm3)) &
+    !all(is.na(no2_1hr_ppb)) & !all(is.na(o3_1hr_ppb))
   if (have_all_3_pol) {
     obs = obs %>%
       # +3hr rolling means, + AQHI, +risk levels
@@ -100,8 +100,8 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 
 #' Calculate the Canadian AQHI+ from hourly PM2.5 observations
 #'
-#' @param pm25_hourly A numeric/integer vector with hourly mean PM2.5 concentrations (ug/m^3).
-#' @param min_allowed_pm25 A single numeric value indicating the minimum allowed concentration (Defaults to 0 ug/m^3). All values in `pm25_hourly` less than this will be replaced with NA.
+#' @param pm25_1hr_ugm3 A numeric/integer vector with hourly mean PM2.5 concentrations (ug/m^3).
+#' @param min_allowed_pm25 A single numeric value indicating the minimum allowed concentration (Defaults to 0 ug/m^3). All values in `pm25_1hr_ugm3` less than this will be replaced with NA.
 #'
 #' @description
 #' The Canadian AQHI+ is a modification of the Canadian Air Quality Health Index (AQHI).
@@ -126,7 +126,7 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #'
 #' @return A tibble (data.frame) with columns:
 #' hourly_pm25, AQHI_plus, risk, high_risk_pop_message, general_pop_message
-#' and `length(pm25_hourly)` rows
+#' and `length(pm25_1hr_ugm3)` rows
 #' @export
 #'
 #' @examples
@@ -146,7 +146,7 @@ AQHI = function(datetimes, pm25_hourly, no2_hourly = NA, o3_hourly = NA, quiet =
 #' # Calculate the AQHI+ for each hour, except for hours where pm2.5 is < -0.5
 #' AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 #' @importFrom rlang .data
-AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
+AQHI_plus = function(pm25_1hr_ugm3, min_allowed_pm25 = 0){
 
   # Define breakpoint for AQHI levels
   aqhi_breakpoints = stats::setNames(
@@ -155,10 +155,10 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
   )
 
   # Remove values < min_allowed_pm25 (normally 0)
-  pm25_hourly[pm25_hourly < min_allowed_pm25] = NA
+  pm25_1hr_ugm3[pm25_1hr_ugm3 < min_allowed_pm25] = NA
 
   # Get AQHI+
-  aqhi_p = cut(pm25_hourly,
+  aqhi_p = cut(pm25_1hr_ugm3,
       breaks = aqhi_breakpoints,
       labels = names(aqhi_breakpoints)[-1])
 
@@ -170,7 +170,7 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 
   # Combine and return
   data.frame(
-    pm25_hourly = pm25_hourly,
+    pm25_1hr_ugm3 = pm25_1hr_ugm3,
     AQHI_plus = aqhi_p,
     risk = risk,
     health_messages
@@ -262,10 +262,10 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #' Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)
 #'
 #' @param datetimes Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
-#' @param pm25_hourly (Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
-#' @param o3_hourly (Optional). Vector of hourly mean ozone (O3) concentrations (ppb).
-#' @param no2_hourly (Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).
-#' @param so2_hourly (Optional). Vector of hourly mean sulphur dioxide (SO2) concentrations (ppb).
+#' @param pm25_1hr_ugm3 (Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
+#' @param o3_1hr_ppb (Optional). Vector of hourly mean ozone (O3) concentrations (ppb).
+#' @param no2_1hr_ppb (Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).
+#' @param so2_1hr_ppb (Optional). Vector of hourly mean sulphur dioxide (SO2) concentrations (ppb).
 #' @param min_completeness A single value from 0 to 1 indicating the required annual data completeness for a pollutant. Default is 0.5 (50 percent).
 #'
 #' @description
@@ -289,10 +289,10 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #'   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
 #'   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
 #' )
-#' CAAQS(datetimes = obs$date, pm25_hourly = obs$pm25,
-#'      o3_hourly = obs$o3, no2_hourly = obs$no2, so2_hourly = obs$so2)
-CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
-                 no2_hourly = NULL, so2_hourly = NULL,
+#' CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+#'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
+CAAQS = function(datetimes, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
+                 no2_1hr_ppb = NULL, so2_1hr_ppb = NULL,
                  min_completeness = 0.5){
   # Define thresholds for each pollutant / avg / year
   thresholds = CAAQS_thesholds()
@@ -305,9 +305,9 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
 
   # Join inputs
   obs = dplyr::bind_cols(
-    date = datetimes, pm25 = pm25_hourly,
-    o3 = o3_hourly, no2 = no2_hourly,
-    so2 = so2_hourly)
+    date = datetimes, pm25 = pm25_1hr_ugm3,
+    o3 = o3_1hr_ppb, no2 = no2_1hr_ppb,
+    so2 = so2_1hr_ppb)
 
   # Assess hours of data for each pollutant annually
   has_enough_obs = obs %>%
@@ -341,10 +341,10 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
 
   # Calculate CAAQS attainment where data provided
   attainment = list(
-    pm25 = if (!is.null(pm25_hourly)) CAAQS_pm25(obs, thresholds),
-    o3   = if (!is.null(  o3_hourly)) CAAQS_o3(  obs, thresholds),
-    no2  = if (!is.null( no2_hourly)) CAAQS_no2( obs, thresholds),
-    so2  = if (!is.null( so2_hourly)) CAAQS_so2( obs, thresholds)
+    pm25 = if (!is.null(pm25_1hr_ugm3)) CAAQS_pm25(obs, thresholds),
+    o3   = if (!is.null(  o3_1hr_ppb )) CAAQS_o3(  obs, thresholds),
+    no2  = if (!is.null( no2_1hr_ppb )) CAAQS_no2( obs, thresholds),
+    so2  = if (!is.null( so2_1hr_ppb )) CAAQS_so2( obs, thresholds)
   )
   return(attainment)
 }

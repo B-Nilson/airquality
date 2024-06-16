@@ -49,7 +49,7 @@ Will be calculated from co_1hr_ppm if provided and co_8hr_ppm not provided.}
 \value{
 A tibble (data.frame) with columns:
 date, AQI, risk_category, principal_pol
- and potentially more rows than `length(datetimes)` (due to any missing hours being filled with NA values).
+and 1 row for each day between the min and max values of the provided datetimes
 }
 \description{
 The Air Quality Index (AQI) is used for reporting on air quality in the United States,
@@ -58,8 +58,8 @@ and focuses on short term health effects as a result of breathing polluted air.
 The AQI is calculated separately for 5 pollutants: ozone (O3), particulate matter (PM2.5 and PM10),
 carbon monoxide (CO), sulfur dioxide (SO2), and nitrogen dioxide (NO2) based
 on maximum values (of various averaging periods) for a particular day.
-The highest AQI for the day is recorded as the AQI and the corresponding
-pollutant is reported as the principal pollutant.
+The highest AQI value among each pollutants value for that day is recorded
+as the AQI and the corresponding pollutant is reported as the principal pollutant.
 
 The US EPA has established risk categories and associated health messaging for AQI ranges including:
 "Good" (0-50), "Moderate" (51-100), "Unhealthy for Sensitive Groups" (101-150),
