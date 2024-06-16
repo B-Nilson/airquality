@@ -1,83 +1,6 @@
 
 # Canadian AQHI -----------------------------------------------------------
 
-AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr){
-  round(10/10.4 * 100 * (
-    (exp(0.000537 * o3_rolling_3hr) - 1) +
-      (exp(0.000871 * no2_rolling_3hr) - 1) +
-      (exp(0.000487 * pm25_rolling_3hr) - 1)
-  ))
-}
-
-AQHI_risk_category = function(AQHI){
-  aqhi_levels = list(
-    Low = 1:3,
-    Moderate = 4:6,
-    High = 7:10,
-    "Very High" = "+"
-  )
-  risk = factor(
-    AQHI, unlist(aqhi_levels),
-    unlist(
-      sapply(seq_along(aqhi_levels), \(i){
-        rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
-      })
-    )
-  )
-  return(risk)
-}
-
-AQHI_health_messaging = function(risk_categories){
-  aqhi_messaging = list(
-    Low = data.frame(
-      high_risk_pop_message = "Enjoy your usual activities.",
-      general_pop_message = "Ideal air quality for outdoor activities."
-    ),
-    Moderate = data.frame(
-      high_risk_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
-      general_pop_message = "No need to modify your usual activities unless you experience symptoms."
-    ),
-    High = data.frame(
-      high_risk_pop_message = "Reduce or reschedule activities outdoors.",
-      general_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
-    ),
-    "Very High" = data.frame(
-      high_risk_pop_message = "Avoid strenuous activity outdoors.",
-      general_pop_message = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
-    )
-  )
-
-  lapply(aqhi_messaging[risk_categories], \(x){
-    if (is.null(x)) {
-      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
-    }else return(x)
-  }) %>% dplyr::bind_rows()
-}
-
-# TODO: make sure AQHI is a column in obs
-AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
-  obs %>%
-    # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
-    dplyr::mutate(
-      # Check in AQHI+ > AQHI
-      AQHI_plus_exceeds_AQHI = swap_na(
-        as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI), TRUE),
-      # Replace AQHI levels if so
-      AQHI = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus, TRUE ~ .data$AQHI),
-      # And risk levels
-      risk = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ .data$risk),
-      # And health messaging
-      high_risk_pop_message = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop_message,
-        TRUE ~ .data$high_risk_pop_message),
-      general_pop_message = dplyr::case_when(
-        AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop_message,
-        TRUE ~ .data$general_pop_message)
-    )
-}
-
 #' Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations
 #'
 #' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
@@ -255,186 +178,86 @@ AQHI_plus = function(pm25_hourly, min_allowed_pm25 = 0){
 
 }
 
+## AQHI Helpers -----------------------------------------------------------
+AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr){
+  round(10/10.4 * 100 * (
+    (exp(0.000537 * o3_rolling_3hr) - 1) +
+      (exp(0.000871 * no2_rolling_3hr) - 1) +
+      (exp(0.000487 * pm25_rolling_3hr) - 1)
+  ))
+}
+
+AQHI_risk_category = function(AQHI){
+  aqhi_levels = list(
+    Low = 1:3,
+    Moderate = 4:6,
+    High = 7:10,
+    "Very High" = "+"
+  )
+  risk = factor(
+    AQHI, unlist(aqhi_levels),
+    unlist(
+      sapply(seq_along(aqhi_levels), \(i){
+        rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
+      })
+    )
+  )
+  return(risk)
+}
+
+AQHI_health_messaging = function(risk_categories){
+  aqhi_messaging = list(
+    Low = data.frame(
+      high_risk_pop_message = "Enjoy your usual activities.",
+      general_pop_message = "Ideal air quality for outdoor activities."
+    ),
+    Moderate = data.frame(
+      high_risk_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
+      general_pop_message = "No need to modify your usual activities unless you experience symptoms."
+    ),
+    High = data.frame(
+      high_risk_pop_message = "Reduce or reschedule activities outdoors.",
+      general_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
+    ),
+    "Very High" = data.frame(
+      high_risk_pop_message = "Avoid strenuous activity outdoors.",
+      general_pop_message = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
+    )
+  )
+
+  lapply(aqhi_messaging[risk_categories], \(x){
+    if (is.null(x)) {
+      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
+    }else return(x)
+  }) %>% dplyr::bind_rows()
+}
+
+# TODO: make sure AQHI is a column in obs
+AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
+  obs %>%
+    # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
+    dplyr::mutate(
+      # Check in AQHI+ > AQHI
+      AQHI_plus_exceeds_AQHI = swap_na(
+        as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI), TRUE),
+      # Replace AQHI levels if so
+      AQHI = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$AQHI_plus, TRUE ~ .data$AQHI),
+      # And risk levels
+      risk = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$risk, TRUE ~ .data$risk),
+      # And health messaging
+      high_risk_pop_message = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$high_risk_pop_message,
+        TRUE ~ .data$high_risk_pop_message),
+      general_pop_message = dplyr::case_when(
+        AQHI_plus_exceeds_AQHI ~ aqhi_plus$general_pop_message,
+        TRUE ~ .data$general_pop_message)
+    )
+}
+
+
 # CAAQS -------------------------------------------------------------------
-
-CAAQS_pm25 = function(obs, thresholds){
-  obs %>%
-    # Hourly mean -> daily mean
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) %>%
-    # Daily mean -> annual 98th percentile and annual mean
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::summarise(perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
-                     mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
-    # +3 year averages, +whether standard is met
-    dplyr::mutate(
-      # +3 year averages,
-      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_means, n = 3),
-      `3yr_mean_of_means` = get_lag_n_mean(.data$mean_of_daily_means, n = 3),
-      # +whether standards are met
-      management_level_daily = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-                            thresholds = thresholds$pm25$daily)),
-      management_level_annual = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`3yr_mean_of_means`[.data$year == y],
-                            thresholds = thresholds$pm25$annual))
-    ) %>%
-    dplyr::relocate(.data$management_level_daily,
-                    .after = "3yr_mean_of_perc_98")%>%
-    dplyr::relocate(.data$mean_of_daily_means,
-                    .after = "management_level_daily")
-}
-
-CAAQS_o3 = function(obs, thresholds){
-  obs %>%
-    # hourly mean -> 8 hourly mean
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
-    dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
-    # 8 hourly mean -> daily max
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
-    # daily max -> annual 4th highest
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
-    dplyr::summarise(fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
-    # +3 year averages, +standard for that year, +whether standard is met
-    dplyr::mutate(
-      # +3 year averages
-      `3yr_mean` = get_lag_n_mean(.data$fourth_highest_daily_max_8hr_mean_o3, n = 3),
-      # +whether standard is met
-      management_level_8hr = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`3yr_mean`[.data$year == y],
-                            thresholds = thresholds$o3$`8hr`))
-    )
-}
-
-CAAQS_no2 = function(obs, thresholds){
-  obs %>%
-    # + annual mean
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
-    # hourly mean -> daily maxima
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
-                    .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") %>%
-    # daily maxima -> annual 98th percentile
-    dplyr::group_by(year = lubridate::year(date),
-                    .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(
-      perc_98_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
-    # +3 year averages, +standard for that year, +whether standard is met
-    dplyr::mutate(
-      # +3 year averages
-      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_maxima, n = 3),
-      # +whether standard is met
-      management_level_hourly = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`annual_mean_of_hourly`[.data$year == y],
-                            thresholds = thresholds$no2$hourly)),
-      management_level_annual = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-                            thresholds = thresholds$no2$annual))
-    ) %>%
-    dplyr::relocate(.data$management_level_hourly,
-                    .after = "annual_mean_of_hourly")
-}
-
-CAAQS_so2 = function(obs, thresholds){
-  obs %>%
-    # + annual mean
-    dplyr::group_by(year = lubridate::year(date)) %>%
-    dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
-    # hourly mean -> daily maxima
-    dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") %>%
-    # daily maxima -> annual 98th percentile
-    dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(
-      perc_99_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
-    # +3 year averages, +standard for that year, +whether standard is met
-    dplyr::mutate(
-      # +3 year averages
-      `3yr_mean_of_perc_99` = get_lag_n_mean(.data$perc_99_of_daily_maxima, n = 3),
-      # +whether standard is met
-      management_level_hourly = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`annual_mean_of_hourly`[.data$year == y],
-                            thresholds = thresholds$so2$hourly)),
-      management_level_annual = sapply(
-        .data$year,
-        \(y) CAAQS_meets_standard(year = y,
-                            metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
-                            thresholds = thresholds$so2$annual))
-    ) %>%
-    dplyr::relocate(.data$management_level_hourly,
-                    .after = "annual_mean_of_hourly")
-}
-
-CAAQS_meets_standard = function(metric, thresholds, year){
-  . = NULL # so build check doesn't yell at me
-  mgmt_levels = thresholds %>%
-    .[as.numeric(names(.)) <= year] %>%
-    dplyr::last()
-  if(length(mgmt_levels) == 0) return(NA)
-
-  attainment = dplyr::bind_cols(lapply(mgmt_levels, \(lvl) metric > lvl))
-  attainment = apply(attainment, 1, \(x) min_no_na(which(x)))
-  attainment[!is.na(attainment)] = names(mgmt_levels)[
-    attainment[!is.na(attainment)]]
-
-  return(attainment)
-}
-
-CAAQS_thesholds = function(){
-  list(
-    pm25 = list(
-      daily  = list('2015' = c(Red = 28,  Orange = 19,   Yellow = 10.01, Green = 0),
-                    '2020' = c(Red = 27,  Orange = 19,   Yellow = 10.01, Green = 0)),
-      annual = list('2015' = c(Red = 10,  Orange = 6.41, Yellow = 4.01,  Green = 0),
-                    '2020' = c(Red = 8.8, Orange = 6.41, Yellow = 4.01,  Green = 0))
-    ),
-    o3 = list(
-      `8hr`  = list('2015' = c(Red = 63,  Orange = 56.01,   Yellow = 50.01, Green = 0),
-                    '2020' = c(Red = 62,  Orange = 56.01,   Yellow = 50.01, Green = 0),
-                    '2025' = c(Red = 60,  Orange = 56.01,   Yellow = 50.01, Green = 0))
-    ),
-    no2 = list(
-      hourly = list('2020' = c(Red = 60,  Orange = 31.01,   Yellow = 20.01, Green = 0),
-                    '2025' = c(Red = 42,  Orange = 31.01,   Yellow = 20.01, Green = 0)),
-      annual = list('2020' = c(Red = 17,  Orange = 7.01,   Yellow = 2.01, Green = 0),
-                    '2025' = c(Red = 12,  Orange = 7.01,   Yellow = 2.01, Green = 0))
-    ),
-    so2 = list(
-      hourly = list('2020' = c(Red = 70,  Orange = 50.01,   Yellow = 30.01, Green = 0),
-                    '2025' = c(Red = 65,  Orange = 50.01,   Yellow = 30.01, Green = 0)),
-      annual = list('2020' = c(Red = 5,  Orange = 3.01,   Yellow = 2.01, Green = 0),
-                    '2025' = c(Red = 4,  Orange = 3.01,   Yellow = 2.01, Green = 0))
-    )
-  )
-}
-
-# TODO: implement
-CAAQS_objectives = function(mgmt_levels){
-  objectives = c(
-    Green = "To maintain good air quality through proactive air management measures to keep clean areas clean.",
-    Yellow = "To improve air quality using early and ongoing actions for continuous improvement.",
-    Orange = "To improve air quality through active air management and prevent exceedance of the CAAQS.",
-    Red = "To reduce pollutant levels below the CAAQS through advanced air management actions."
-  )
-}
-
 
 #' Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)
 #'
@@ -526,154 +349,186 @@ CAAQS = function(datetimes, pm25_hourly = NULL, o3_hourly = NULL,
   return(attainment)
 }
 
-# US AQI ------------------------------------------------------------------
+## CAAQS Helpers ----------------------------------------------------------
+CAAQS_pm25 = function(obs, thresholds){
+  obs %>%
+    # Hourly mean -> daily mean
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) %>%
+    # Daily mean -> annual 98th percentile and annual mean
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::summarise(perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
+                     mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
+    # +3 year averages, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages,
+      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_means, n = 3),
+      `3yr_mean_of_means` = get_lag_n_mean(.data$mean_of_daily_means, n = 3),
+      # +whether standards are met
+      management_level_daily = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+                                  thresholds = thresholds$pm25$daily)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`3yr_mean_of_means`[.data$year == y],
+                                  thresholds = thresholds$pm25$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_daily,
+                    .after = "3yr_mean_of_perc_98")%>%
+    dplyr::relocate(.data$mean_of_daily_means,
+                    .after = "management_level_daily")
+}
 
-aqi_levels = list(
-  "Good" = 0:50,
-  "Moderate" = 51:100,
-  "Unhealthy for Sensitive Groups" = 101:150,
-  "Unhealthy" = 151:200,
-  "Very Unhealthy" = 201:300,
-  "Hazardous" = 301:400,
-  "Hazardous2" = 401:500, # Still called "Hazardous" but has different breakpoints
-  "Beyond the AQI" = 500:5000
-)
+CAAQS_o3 = function(obs, thresholds){
+  obs %>%
+    # hourly mean -> 8 hourly mean
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
+    dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
+    # 8 hourly mean -> daily max
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
+    dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
+    # daily max -> annual 4th highest
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
+    dplyr::summarise(fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean` = get_lag_n_mean(.data$fourth_highest_daily_max_8hr_mean_o3, n = 3),
+      # +whether standard is met
+      management_level_8hr = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`3yr_mean`[.data$year == y],
+                                  thresholds = thresholds$o3$`8hr`))
+    )
+}
 
-# Returns Risk category when AQI value provided
-AQI_risk_category = function(AQI){
-  risk = factor(
-    AQI, unlist(aqi_levels),
-    unlist(
-      sapply(seq_along(aqi_levels), \(i){
-        level = names(aqi_levels)[i] %>%
-          stringr::str_remove("2$")
-        rep(level, length(aqi_levels[[i]]))
-      })
+CAAQS_no2 = function(obs, thresholds){
+  obs %>%
+    # + annual mean
+    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
+    # hourly mean -> daily maxima
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
+                    .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") %>%
+    # daily maxima -> annual 98th percentile
+    dplyr::group_by(year = lubridate::year(date),
+                    .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(
+      perc_98_of_daily_maxima = unname(stats::quantile(
+        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean_of_perc_98` = get_lag_n_mean(.data$perc_98_of_daily_maxima, n = 3),
+      # +whether standard is met
+      management_level_hourly = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`annual_mean_of_hourly`[.data$year == y],
+                                  thresholds = thresholds$no2$hourly)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+                                  thresholds = thresholds$no2$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_hourly,
+                    .after = "annual_mean_of_hourly")
+}
+
+CAAQS_so2 = function(obs, thresholds){
+  obs %>%
+    # + annual mean
+    dplyr::group_by(year = lubridate::year(date)) %>%
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
+    # hourly mean -> daily maxima
+    dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") %>%
+    # daily maxima -> annual 98th percentile
+    dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
+    dplyr::summarise(
+      perc_99_of_daily_maxima = unname(stats::quantile(
+        .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
+    # +3 year averages, +standard for that year, +whether standard is met
+    dplyr::mutate(
+      # +3 year averages
+      `3yr_mean_of_perc_99` = get_lag_n_mean(.data$perc_99_of_daily_maxima, n = 3),
+      # +whether standard is met
+      management_level_hourly = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`annual_mean_of_hourly`[.data$year == y],
+                                  thresholds = thresholds$so2$hourly)),
+      management_level_annual = sapply(
+        .data$year,
+        \(y) CAAQS_meets_standard(year = y,
+                                  metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
+                                  thresholds = thresholds$so2$annual))
+    ) %>%
+    dplyr::relocate(.data$management_level_hourly,
+                    .after = "annual_mean_of_hourly")
+}
+
+CAAQS_meets_standard = function(metric, thresholds, year){
+  . = NULL # so build check doesn't yell at me
+  mgmt_levels = thresholds %>%
+    .[as.numeric(names(.)) <= year] %>%
+    dplyr::last()
+  if(length(mgmt_levels) == 0) return(NA)
+
+  attainment = dplyr::bind_cols(lapply(mgmt_levels, \(lvl) metric > lvl))
+  attainment = apply(attainment, 1, \(x) min_no_na(which(x)))
+  attainment[!is.na(attainment)] = names(mgmt_levels)[
+    attainment[!is.na(attainment)]]
+
+  return(attainment)
+}
+
+CAAQS_thesholds = function(){
+  list(
+    pm25 = list(
+      daily  = list('2015' = c(Red = 28,  Orange = 19,   Yellow = 10.01, Green = 0),
+                    '2020' = c(Red = 27,  Orange = 19,   Yellow = 10.01, Green = 0)),
+      annual = list('2015' = c(Red = 10,  Orange = 6.41, Yellow = 4.01,  Green = 0),
+                    '2020' = c(Red = 8.8, Orange = 6.41, Yellow = 4.01,  Green = 0))
+    ),
+    o3 = list(
+      `8hr`  = list('2015' = c(Red = 63,  Orange = 56.01,   Yellow = 50.01, Green = 0),
+                    '2020' = c(Red = 62,  Orange = 56.01,   Yellow = 50.01, Green = 0),
+                    '2025' = c(Red = 60,  Orange = 56.01,   Yellow = 50.01, Green = 0))
+    ),
+    no2 = list(
+      hourly = list('2020' = c(Red = 60,  Orange = 31.01,   Yellow = 20.01, Green = 0),
+                    '2025' = c(Red = 42,  Orange = 31.01,   Yellow = 20.01, Green = 0)),
+      annual = list('2020' = c(Red = 17,  Orange = 7.01,   Yellow = 2.01, Green = 0),
+                    '2025' = c(Red = 12,  Orange = 7.01,   Yellow = 2.01, Green = 0))
+    ),
+    so2 = list(
+      hourly = list('2020' = c(Red = 70,  Orange = 50.01,   Yellow = 30.01, Green = 0),
+                    '2025' = c(Red = 65,  Orange = 50.01,   Yellow = 30.01, Green = 0)),
+      annual = list('2020' = c(Red = 5,  Orange = 3.01,   Yellow = 2.01, Green = 0),
+                    '2025' = c(Red = 4,  Orange = 3.01,   Yellow = 2.01, Green = 0))
     )
   )
-  return(risk)
 }
 
-# Define breakpoints for AQI formulation
-AQI_breakpoints = list(
-  ## 8 hour mean ozone
-  # 8-hour O3 values do not define higher AQI values (≥ 301).
-  # AQI values of 301 or higher are calculated with 1-hour O3 concentrations.
-  # The highest of the 1hr/8hr AQI for ozone is used
-  # (1 hour is only really used for some areas)
-  o3_8hr_ppm = data.frame(
-    risk_category = names(aqi_levels)[1:5],
-    bp_low   = c(0    , 0.055, 0.071, 0.086, 0.106),
-    bp_high  = c(0.054, 0.07 , 0.085, 0.105, 0.2  ),
-    aqi_low  = c(0    , 51   , 101  , 151  , 201  ),
-    aqi_high = c(50   , 100  , 150  , 200  , 300  )
-  ),
-  ## 1 Hour Mean Ozone
-  # 1-hour O3 values do not define Good-Moderate AQI values (< 101).
-  o3_1hr_ppm = data.frame(
-    risk_category = names(aqi_levels)[3:8],
-    bp_low   = c(0.125, 0.165, 0.205, 0.405, 0.505, 0.605),
-    bp_high  = c(0.164, 0.204, 0.404, 0.504, 0.604, Inf  ),
-    aqi_low  = c(101  , 151  , 201  , 301  , 401  , 401  ),
-    aqi_high = c(150  , 200  , 300  , 400  , 500  , 500  )
-  ),
-  ## 24 Hour Mean Fine Particulate Matter
-  # If a different SHL for PM2.5 is promulgated, Unhealthy and above will change accordingly.
-  pm25_24hr_ugm3 = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0   , 12.1, 35.5, 55.5 , 150.5, 250.5, 350.5, 500.5),
-    bp_high  = c(12  , 35.4, 55.4, 150.4, 250.4, 350.4, 500.4, Inf  ),
-    aqi_low  = c(0   , 51  , 101 , 151  , 201  , 301  , 401  , 401  ),
-    aqi_high = c(50  , 100 , 150 , 200  , 300  , 400  , 500  , 500  )
-  ),
-  ## 24 Hour Mean Fine-Coarse Particulate Matter
-  pm10_24hr_ugm3 = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 55 , 155, 255, 355, 425, 505, 605),
-    bp_high  = c(54, 154, 254, 354, 424, 504, 604, Inf),
-    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
-    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
-  ),
-  ## 8 Hour Mean Carbon Monoxide
-  co_8hr_ppm = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 4.5 , 9.5, 12.5, 15.5, 30.5, 40.5, 50.5),
-    bp_high  = c(4.4, 9.4, 12.4, 15.4, 30.4, 40.4, 50.4, Inf),
-    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
-    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
-  ),
-  ## 1 Hour Mean Sulfur Dioxide
-  # 1-hour SO2 values do not define higher AQI values (≥ 200).
-  so2_1hr_ppb = data.frame(
-    risk_category = names(aqi_levels)[c(1:4)],
-    bp_low   = c(0 , 36 , 76 , 186),
-    bp_high  = c(35, 75 , 185, 304),
-    aqi_low  = c(0 , 51 , 101, 151),
-    aqi_high = c(50, 100, 150, 200)
-  ),
-  ## 24 Hour Mean Sulfur Dioxide
-  # AQI values of 200 or greater are calculated with 24-hour SO2 concentrations.
-  so2_24hr_ppb = data.frame(
-    risk_category = names(aqi_levels)[5:8],
-    bp_low   = c(305, 605, 805 , 1005),
-    bp_high  = c(604, 804, 1004, Inf ),
-    aqi_low  = c(201, 301, 401 , 401),
-    aqi_high = c(300, 400, 500 , 500)
-  ),
-  ## 1 Hour Mean Nitrogen Dioxide
-  no2_1hr_ppb = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 55 , 101, 361, 650 , 1250, 1650, 2050),
-    bp_high  = c(54, 100, 360, 649, 1249, 1649, 2049, Inf ),
-    aqi_low  = c(0 , 51 , 101, 151, 201 , 301 , 401 , 401 ),
-    aqi_high = c(50, 100, 150, 200, 300 , 400 , 500 , 500 )
-  )
-)
-
-# Get risk category for breakpoint determination for AQI formulation
-AQI_bp_cat = function(obs, bps){
-  suppressMessages(
-    bps$risk_category %>%
-      lapply(\(cat) {
-        bp = bps[bps$risk_category == cat, ]
-        ifelse(obs >= bp$bp_low & obs <= bp$bp_high, rep(cat, length(obs)), NA)
-      }) %>%
-      dplyr::bind_cols() %>%
-      apply(1, \(row){
-        ifelse(all(is.na(row)), NA, row[!is.na(row)])
-      }) %>%
-      unlist())
-}
-
-# When provided concentrations and corresponding breakpoints, return AQI
-AQI_formulation = function(obs, bp_low, bp_high, aqi_low, aqi_high){
-  ceiling(
-    (aqi_high - aqi_low) / (bp_high - bp_low) * (obs - bp_low) + aqi_low
+# TODO: implement
+CAAQS_objectives = function(mgmt_levels){
+  objectives = c(
+    Green = "To maintain good air quality through proactive air management measures to keep clean areas clean.",
+    Yellow = "To improve air quality using early and ongoing actions for continuous improvement.",
+    Orange = "To improve air quality through active air management and prevent exceedance of the CAAQS.",
+    Red = "To reduce pollutant levels below the CAAQS through advanced air management actions."
   )
 }
 
-# Workhorse function to determine risk category, append breakponints, then calc AQI
-AQI_from_con = function(dat, pol){
-  . = NULL # so build check doesn't yell at me
-  dat[paste0("cat_",pol)] = NA
-  dat[paste0("AQI_",pol)] = NA
-  dat %>%
-    # Determine the risk category based on the concentrations and break points
-    dplyr::mutate_at(., paste0("cat_",pol),
-                     \(x) AQI_bp_cat(.[[pol]], AQI_breakpoints[[pol]])) %>%
-    # Append the corresponding break points and AQI breaks for each hour
-    dplyr::left_join(AQI_breakpoints[[pol]] %>%
-                       dplyr::rename_with(.cols = 2:5, \(x)paste0(x,"_", pol)),
-                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) %>%
-    # Calculate AQI for each hour based on those
-    dplyr::mutate_at(., paste0("AQI_",pol),
-                     \(x) AQI_formulation(
-                       .[[pol]],
-                       .[[paste0("bp_low_", pol)]],
-                       .[[paste0("bp_high_", pol)]],
-                       .[[paste0("aqi_low_", pol)]],
-                       .[[paste0("aqi_high_", pol)]]))
-}
+# US AQI ------------------------------------------------------------------
 
 # TODO: Include AQI health messaging
 # TODO: add @description, @family
@@ -840,4 +695,151 @@ AQI = function(datetimes = Sys.time(),
                        .data$risk_category, .data$principal_pol))
 }
 
+## AQI Helpers ------------------------------------------------------------
+aqi_levels = list(
+  "Good" = 0:50,
+  "Moderate" = 51:100,
+  "Unhealthy for Sensitive Groups" = 101:150,
+  "Unhealthy" = 151:200,
+  "Very Unhealthy" = 201:300,
+  "Hazardous" = 301:400,
+  "Hazardous2" = 401:500, # Still called "Hazardous" but has different breakpoints
+  "Beyond the AQI" = 500:5000
+)
+
+# Returns Risk category when AQI value provided
+AQI_risk_category = function(AQI){
+  risk = factor(
+    AQI, unlist(aqi_levels),
+    unlist(
+      sapply(seq_along(aqi_levels), \(i){
+        level = names(aqi_levels)[i] %>%
+          stringr::str_remove("2$")
+        rep(level, length(aqi_levels[[i]]))
+      })
+    )
+  )
+  return(risk)
+}
+
+# Define breakpoints for AQI formulation
+AQI_breakpoints = list(
+  ## 8 hour mean ozone
+  # 8-hour O3 values do not define higher AQI values (≥ 301).
+  # AQI values of 301 or higher are calculated with 1-hour O3 concentrations.
+  # The highest of the 1hr/8hr AQI for ozone is used
+  # (1 hour is only really used for some areas)
+  o3_8hr_ppm = data.frame(
+    risk_category = names(aqi_levels)[1:5],
+    bp_low   = c(0    , 0.055, 0.071, 0.086, 0.106),
+    bp_high  = c(0.054, 0.07 , 0.085, 0.105, 0.2  ),
+    aqi_low  = c(0    , 51   , 101  , 151  , 201  ),
+    aqi_high = c(50   , 100  , 150  , 200  , 300  )
+  ),
+  ## 1 Hour Mean Ozone
+  # 1-hour O3 values do not define Good-Moderate AQI values (< 101).
+  o3_1hr_ppm = data.frame(
+    risk_category = names(aqi_levels)[3:8],
+    bp_low   = c(0.125, 0.165, 0.205, 0.405, 0.505, 0.605),
+    bp_high  = c(0.164, 0.204, 0.404, 0.504, 0.604, Inf  ),
+    aqi_low  = c(101  , 151  , 201  , 301  , 401  , 401  ),
+    aqi_high = c(150  , 200  , 300  , 400  , 500  , 500  )
+  ),
+  ## 24 Hour Mean Fine Particulate Matter
+  # If a different SHL for PM2.5 is promulgated, Unhealthy and above will change accordingly.
+  pm25_24hr_ugm3 = data.frame(
+    risk_category = names(aqi_levels)[1:8],
+    bp_low   = c(0   , 12.1, 35.5, 55.5 , 150.5, 250.5, 350.5, 500.5),
+    bp_high  = c(12  , 35.4, 55.4, 150.4, 250.4, 350.4, 500.4, Inf  ),
+    aqi_low  = c(0   , 51  , 101 , 151  , 201  , 301  , 401  , 401  ),
+    aqi_high = c(50  , 100 , 150 , 200  , 300  , 400  , 500  , 500  )
+  ),
+  ## 24 Hour Mean Fine-Coarse Particulate Matter
+  pm10_24hr_ugm3 = data.frame(
+    risk_category = names(aqi_levels)[1:8],
+    bp_low   = c(0 , 55 , 155, 255, 355, 425, 505, 605),
+    bp_high  = c(54, 154, 254, 354, 424, 504, 604, Inf),
+    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
+    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
+  ),
+  ## 8 Hour Mean Carbon Monoxide
+  co_8hr_ppm = data.frame(
+    risk_category = names(aqi_levels)[1:8],
+    bp_low   = c(0 , 4.5 , 9.5, 12.5, 15.5, 30.5, 40.5, 50.5),
+    bp_high  = c(4.4, 9.4, 12.4, 15.4, 30.4, 40.4, 50.4, Inf),
+    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
+    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
+  ),
+  ## 1 Hour Mean Sulfur Dioxide
+  # 1-hour SO2 values do not define higher AQI values (≥ 200).
+  so2_1hr_ppb = data.frame(
+    risk_category = names(aqi_levels)[c(1:4)],
+    bp_low   = c(0 , 36 , 76 , 186),
+    bp_high  = c(35, 75 , 185, 304),
+    aqi_low  = c(0 , 51 , 101, 151),
+    aqi_high = c(50, 100, 150, 200)
+  ),
+  ## 24 Hour Mean Sulfur Dioxide
+  # AQI values of 200 or greater are calculated with 24-hour SO2 concentrations.
+  so2_24hr_ppb = data.frame(
+    risk_category = names(aqi_levels)[5:8],
+    bp_low   = c(305, 605, 805 , 1005),
+    bp_high  = c(604, 804, 1004, Inf ),
+    aqi_low  = c(201, 301, 401 , 401),
+    aqi_high = c(300, 400, 500 , 500)
+  ),
+  ## 1 Hour Mean Nitrogen Dioxide
+  no2_1hr_ppb = data.frame(
+    risk_category = names(aqi_levels)[1:8],
+    bp_low   = c(0 , 55 , 101, 361, 650 , 1250, 1650, 2050),
+    bp_high  = c(54, 100, 360, 649, 1249, 1649, 2049, Inf ),
+    aqi_low  = c(0 , 51 , 101, 151, 201 , 301 , 401 , 401 ),
+    aqi_high = c(50, 100, 150, 200, 300 , 400 , 500 , 500 )
+  )
+)
+
+# Get risk category for breakpoint determination for AQI formulation
+AQI_bp_cat = function(obs, bps){
+  suppressMessages(
+    bps$risk_category %>%
+      lapply(\(cat) {
+        bp = bps[bps$risk_category == cat, ]
+        ifelse(obs >= bp$bp_low & obs <= bp$bp_high, rep(cat, length(obs)), NA)
+      }) %>%
+      dplyr::bind_cols() %>%
+      apply(1, \(row){
+        ifelse(all(is.na(row)), NA, row[!is.na(row)])
+      }) %>%
+      unlist())
+}
+
+# When provided concentrations and corresponding breakpoints, return AQI
+AQI_formulation = function(obs, bp_low, bp_high, aqi_low, aqi_high){
+  ceiling(
+    (aqi_high - aqi_low) / (bp_high - bp_low) * (obs - bp_low) + aqi_low
+  )
+}
+
+# Workhorse function to determine risk category, append breakponints, then calc AQI
+AQI_from_con = function(dat, pol){
+  . = NULL # so build check doesn't yell at me
+  dat[paste0("cat_",pol)] = NA
+  dat[paste0("AQI_",pol)] = NA
+  dat %>%
+    # Determine the risk category based on the concentrations and break points
+    dplyr::mutate_at(., paste0("cat_",pol),
+                     \(x) AQI_bp_cat(.[[pol]], AQI_breakpoints[[pol]])) %>%
+    # Append the corresponding break points and AQI breaks for each hour
+    dplyr::left_join(AQI_breakpoints[[pol]] %>%
+                       dplyr::rename_with(.cols = 2:5, \(x)paste0(x,"_", pol)),
+                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) %>%
+    # Calculate AQI for each hour based on those
+    dplyr::mutate_at(., paste0("AQI_",pol),
+                     \(x) AQI_formulation(
+                       .[[pol]],
+                       .[[paste0("bp_low_", pol)]],
+                       .[[paste0("bp_high_", pol)]],
+                       .[[paste0("aqi_low_", pol)]],
+                       .[[paste0("aqi_high_", pol)]]))
+}
 
