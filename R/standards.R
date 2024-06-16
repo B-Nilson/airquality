@@ -562,8 +562,8 @@ CAAQS_objectives = function(mgmt_levels){
 #' The AQI is calculated separately for 5 pollutants: ozone (O3), particulate matter (PM2.5 and PM10),
 #' carbon monoxide (CO), sulfur dioxide (SO2), and nitrogen dioxide (NO2) based
 #' on maximum values (of various averaging periods) for a particular day.
-#' The highest AQI for the day is recorded as the AQI and the corresponding
-#' pollutant is reported as the principal pollutant.
+#' The highest AQI value among each pollutants value for that day is recorded
+#' as the AQI and the corresponding pollutant is reported as the principal pollutant.
 #'
 #' The US EPA has established risk categories and associated health messaging for AQI ranges including:
 #' "Good" (0-50), "Moderate" (51-100), "Unhealthy for Sensitive Groups" (101-150),
@@ -573,7 +573,7 @@ CAAQS_objectives = function(mgmt_levels){
 #'
 #' @return A tibble (data.frame) with columns:
 #' date, AQI, risk_category, principal_pol
-#'  and potentially more rows than `length(datetimes)` (due to any missing hours being filled with NA values).
+#' and 1 row for each day between the min and max values of the provided datetimes
 #' @export
 #'
 #' @family Air Quality Standards
