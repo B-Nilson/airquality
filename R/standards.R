@@ -719,14 +719,19 @@ AQI_from_con = function(dat, pol){
 #' @examples
 #' AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #' AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
-AQI = function(datetimes = Sys.time(), o3_8hr_ppm = NA, o3_1hr_ppm = NA,
-               pm25_24hr_ugm3 = NA, pm10_24hr_ugm3 = NA,
-               co_8hr_ppm = NA, so2_1hr_ppb = NA,
-               no2_1hr_ppb = NA){
+AQI = function(datetimes = Sys.time(),
+               o3_8hr_ppm = NA, o3_1hr_ppm = NA,
+               pm25_24hr_ugm3 = NA, pm25_1hr_ugm3 = NA,
+               pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
+               co_8hr_ppm = NA, co_1hr_ppm = NA,
+               so2_1hr_ppb = NA, no2_1hr_ppb = NA){
   . = NULL # so build check doesn't yell at me
   # Determine which non-na pollutants provided
-  pols = c("o3_8hr_ppm", "o3_1hr_ppm", "pm25_24hr_ugm3", "pm10_24hr_ugm3",
-           "co_8hr_ppm", "so2_1hr_ppb", "no2_1hr_ppb")
+  pols = c("o3_8hr_ppm", "o3_1hr_ppm",
+           "pm25_24hr_ugm3", "pm25_1hr_ugm3",
+           "pm10_24hr_ugm3", "pm10_1hr_ugm3",
+           "co_8hr_ppm", "co_1hr_ppm",
+           "so2_1hr_ppb", "no2_1hr_ppb")
   all_missing = lapply(stats::setNames(pols, pols), \(pol){
     all(is.na(get(pol)))
   })
@@ -740,7 +745,9 @@ AQI = function(datetimes = Sys.time(), o3_8hr_ppm = NA, o3_1hr_ppm = NA,
   # Combine inputs and fill date gaps
   dat = data.frame(date = datetimes,
                    o3_8hr_ppm, o3_1hr_ppm,
-                   pm25_24hr_ugm3, pm10_24hr_ugm3, co_8hr_ppm,
+                   pm25_24hr_ugm3, pm25_1hr_ugm3,
+                   pm10_24hr_ugm3, pm10_1hr_ugm3,
+                   co_8hr_ppm, co_1hr_ppm,
                    so2_1hr_ppb, no2_1hr_ppb) %>%
     tidyr::complete(date = seq(min(.data$date), max(.data$date), "1 hours"))
 
@@ -748,6 +755,21 @@ AQI = function(datetimes = Sys.time(), o3_8hr_ppm = NA, o3_1hr_ppm = NA,
   if(all_missing$o3_8hr_ppm & !all_missing$o3_1hr_ppm){
     # Calculate o3_8hr_ppm from o3_1hr_ppm
     dat$o3_8hr_ppm = roll_mean_8hr_min_5(dat$o3_1hr_ppm)
+  }
+  # If no non-NA pm25_24hr_ugm3 values provided, but 1hr pm25 is provided
+  if(all_missing$pm25_24hr_ugm3 & !all_missing$pm25_1hr_ugm3){
+    # Calculate pm25_24hr_ugm3 from pm25_1hr_ugm3
+    dat$pm25_24hr_ugm3 = roll_mean_24hr_min_15(dat$pm25_1hr_ugm3)
+  }
+  # If no non-NA pm10_24hr_ugm3 values provided, but 1hr pm10 is provided
+  if(all_missing$pm10_24hr_ugm3 & !all_missing$pm10_1hr_ugm3){
+    # Calculate pm10_24hr_ugm3 from pm10_1hr_ugm3
+    dat$pm10_24hr_ugm3 = roll_mean_24hr_min_15(dat$pm10_1hr_ugm3)
+  }
+  # If no non-NA co_8hr_ppm values provided, but 1hr CO is provided
+  if(all_missing$co_8hr_ppm & !all_missing$co_1hr_ppm){
+    # Calculate co_8hr_ppm from co_1hr_ppm
+    dat$co_8hr_ppm = roll_mean_8hr_min_5(dat$co_1hr_ppm)
   }
 
   # If non-NA so2_1hr_ppb values provided
