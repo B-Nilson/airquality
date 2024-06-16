@@ -9,8 +9,11 @@ AQI(
   o3_8hr_ppm = NA,
   o3_1hr_ppm = NA,
   pm25_24hr_ugm3 = NA,
+  pm25_1hr_ugm3 = NA,
   pm10_24hr_ugm3 = NA,
+  pm10_1hr_ugm3 = NA,
   co_8hr_ppm = NA,
+  co_1hr_ppm = NA,
   so2_1hr_ppb = NA,
   no2_1hr_ppb = NA
 )
@@ -18,17 +21,28 @@ AQI(
 \arguments{
 \item{datetimes}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
 
-\item{o3_8hr_ppm}{(Optional) Numeric vector of hourly 1-hour mean ozone (O3) concentrations (ppm). Will be calculated from o3_1hr_ppm if provided and o3_8hr_ppm not provided.}
+\item{o3_8hr_ppm}{(Optional) Numeric vector of hourly 8-hour mean ozone (O3) concentrations (ppm).
+Will be calculated from o3_1hr_ppm if provided and o3_8hr_ppm not provided.}
 
-\item{o3_1hr_ppm}{(Optional) Numeric vector of hourly 8-hour mean ozone (O3) concentrations (ppm).}
+\item{o3_1hr_ppm}{(Optional) Numeric vector of hourly 1-hour mean ozone (O3) concentrations (ppm).}
 
-\item{pm25_24hr_ugm3}{(Optional) Numeric vector of hourly 24-hour mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
+\item{pm25_24hr_ugm3}{(Optional) Numeric vector of hourly 24-hour mean fine particulate matter (PM2.5) concentrations (ug/m^3).
+Will be calculated from pm25_1hr_ugm3 if provided and pm25_24hr_ugm3 not provided.}
 
-\item{pm10_24hr_ugm3}{(Optional) Numeric vector of hourly 24-hour mean coarse particulate matter (PM10) concentrations (ug/m^3).}
+\item{pm25_1hr_ugm3}{(Optional) Numeric vector of hourly 1-hour mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
-\item{co_8hr_ppm}{(Optional) Numeric vector of hourly 8-hour mean carbon monoxide (CO) concentrations (ppm).}
+\item{pm10_24hr_ugm3}{(Optional) Numeric vector of hourly 24-hour mean coarse particulate matter (PM10) concentrations (ug/m^3).
+Will be calculated from pm10_1hr_ugm3 if provided and pm10_24hr_ugm3 not provided.}
 
-\item{so2_1hr_ppb}{(Optional) Numeric vector of hourly 1-hour mean sulfur dioxide (SO2) concentrations (ppb). 24-hour averages will be calculated automatically.}
+\item{pm10_1hr_ugm3}{(Optional) Numeric vector of hourly 1-hour mean coarse particulate matter (PM10) concentrations (ug/m^3).}
+
+\item{co_8hr_ppm}{(Optional) Numeric vector of hourly 8-hour mean carbon monoxide (CO) concentrations (ppm).
+Will be calculated from co_1hr_ppm if provided and co_8hr_ppm not provided.}
+
+\item{co_1hr_ppm}{(Optional) Numeric vector of hourly 1-hour mean carbon monoxide (CO) concentrations (ppm).}
+
+\item{so2_1hr_ppb}{(Optional) Numeric vector of hourly 1-hour mean sulfur dioxide (SO2) concentrations (ppb).
+24-hour averages will be calculated automatically.}
 
 \item{no2_1hr_ppb}{(Optional) Numeric vector of hourly 1-hour mean nitrogen dioxide (NO2) concentrations (ppb).}
 }
