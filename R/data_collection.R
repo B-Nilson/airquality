@@ -1,13 +1,149 @@
 
 # [Canada] BC MoE Data ----------------------------------------------------
 
-# TODO: setup loading in and parsing station metadata
-get_bcmoe_meta = function(){
-  meta_file = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Hourly_Raw_Air_Data/Year_to_Date/bc_air_monitoring_stations.csv"
-  # ORRR
-  meta_file = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/AnnualSummary/{year}/bc_air_monitoring_stations.csv"
+get_bcmoe_data = function(stations, date_range){
+  . = NULL # so build check doesn't yell at me
+  # Get list of years currently QA/QC'ed
+  qaqc_years = get_bcmoe_qaqc_years()
+
+  # Get all years in desired date range
+  desired_years = date_range[1] %>%
+    # sequence of all days in period
+    seq(to = date_range[2], by = "1 days") %>%
+    # convert to timezone of BCMoE data
+    lubridate::with_tz("Etc/GMT+8") %>%
+    # extract unique years
+    unique(lubridate::year(.))
+
+  # Get data for each year for each station
+  stations_data = desired_years %>%
+    # Loop through years and get data for stations
+    lapply(\(year){
+      # There is only a single file for non-qaqc_years
+      # After getting that once, we don't need to again
+      collected_raw_data_already = !(year - 1) %in% qaqc_years # TODO: fails if no years in qaqc years?
+      if (collected_raw_data_already){
+        return(NULL)
+      }else get_annual_bcmoe_data(stations, year, qaqc_years)
+    }) %>%
+    # Combine annual datasets
+    dplyr::bind_rows()
+
+  if(nrow(stations_data) == 0){
+    warning("No data available for provided stations and date_range")
+    return(NULL)
+  }
+
+  # Reformat data
+  stations_data = stations_data %>%
+    # Filter to desired date range
+    dplyr::filter(.data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+    # Drop duplicated dates for a particular station
+    dplyr::filter(!duplicated(DATE_PST), .by = "EMS_ID") %>%
+    # Rename and select desired columns
+    # TODO: dont do this if arg raw == TRUE in case people want raw data files
+    standardize_colnames(bcmoe_col_names)
+
+  return(stations_data)
 }
 
+# TODO: clean up and document
+# stations = get_bcmoe_stations(years = 1998:2024)
+get_bcmoe_stations = function(years = lubridate::year(Sys.time())){
+  # Define metadata file locations
+  stations_file ="bc_air_monitoring_stations.csv"
+  ftp_site_qaqc = paste0(bcmoe_ftm_site, "AnnualSummary/{year}/")
+  ftp_site_raw  = paste0(bcmoe_ftm_site, "Hourly_Raw_Air_Data/Year_to_Date/")
+
+  # Get list of years currently QA/QC'ed
+  qaqc_years = get_bcmoe_qaqc_years()
+
+  # TODO: drop all years not in qaqc_years except the first (and do the same above)
+  stations = lapply(years, \(year){
+    if(year %in% qaqc_years){
+      meta_path = stringr::str_replace(ftp_site_qaqc, "\\{year\\}",
+                                       as.character(year)) %>%
+        paste0(stations_file)
+    }else{
+      if(raw_downloaded) return(NULL)
+      raw_downloaded = TRUE
+      meta_path = paste0(ftp_site_raw, stations_file)
+    }
+    data.table::fread(meta_path, data.table = FALSE,
+                      colClasses = c("OPENED" = "character", "CLOSED" = "character"))
+  }) %>%
+    dplyr::bind_rows()
+
+  stations %>%
+    dplyr::select(
+      site_name = STATION_NAME, site_id = EMS_ID,
+      city = CITY, lat = LAT, lng = LONG, elev = ELEVATION,
+      date_created = OPENED, date_removed = CLOSED
+    ) %>%
+    dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
+    dplyr::mutate_at(c('date_created', 'date_removed'),
+                     \(x) stringr::str_sub(x, end = 10)) %>%
+    dplyr::arrange(site_name) %>%
+    unique()
+
+}
+
+## BC MoE Helpers ---------------------------------------------------------
+
+bcmoe_ftm_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+
+bcmoe_col_names = c(
+  # Meta
+  date_local = "DATE_PST",
+  site_id = "EMS_ID",
+  site_name = "STATION_NAME",
+  quality_assured = "quality_assured", # Added by get_annual_bcmoe_data()
+  # Particulate Matter
+  pm25_1hr_ugm3 = "PM25",
+  pm25_1hr_ugm3_instrument = "PM25_INSTRUMENT",
+  pm10_1hr_ugm3 = "PM10",
+  pm10_1hr_ugm3_instrument = "PM10_INSTRUMENT",
+  # Ozone
+  o3_1hr_ppb = "O3",
+  o3_1hr_ppb_instrument = "O3_INSTRUMENT",
+  # Nitrogen Pollutants
+  no_1hr_ppb = "NO",
+  no_1hr_ppb_instrument = "NO_INSTRUMENT",
+  no2_1hr_ppb = "NO2",
+  no2_1hr_ppb_instrument = "NO2_INSTRUMENT",
+  nox_1hr_ppb = "NOx",
+  nox_1hr_ppb_instrument = "NOx_INSTRUMENT",
+  # Sulfur Pollutants
+  so2_1hr_ppb = "SO2",
+  so2_1hr_ppb_instrument = "SO2_INSTRUMENT",
+  trs_1hr_ppb = "TRS",
+  trs_1hr_ppb_instrument = "TRS_INSTRUMENT",
+  h2s_1hr_ppb = "H2S",
+  h2s_1hr_ppb_instrument = "H2S_INSTRUMENT",
+  # Carbon Monoxide
+  co_1hr_ppb = "CO",
+  co_1hr_ppb_instrument = "CO_INSTRUMENT",
+  # Met data
+  rh_1hr_percent = "HUMIDITY",
+  rh_1hr_percent_instrument = "HUMIDITY_INSTRUMENT",
+  t_1hr_celcius = "TEMP_MEAN",
+  t_1hr_celcius_instrument = "TEMP_MEAN_INSTRUMENT",
+  wd_1hr_degrees = "WDIR_VECT",
+  wd_1hr_degrees_instrument = "WDIR_VECT_INSTRUMENT",
+  ws_1hr_ms = "WSPD_SCLR",
+  ws_1hr_ms_instrument = "WSPD_SCLR_INSTRUMENT",
+  precip_1hr_mm = "PRECIP",
+  precip_1hr_mm_instrument = "PRECIP_INSTRUMENT",
+  snowDepth_1hr_cm = "SNOW",
+  snowDepth_1hr_cm_instrument = "SNOW_INSTRUMENT",
+  pressure_1hr_kpa = "PRESSURE", # TODO: Ensure pressure proper units ....
+  pressure_1hr_kpa_instrument = "PRESSURE_INSTRUMENT",
+  vapourPressure_1hr_kpa = "VAPOUR",
+  vapourPressure_1hr_kpa_instrument = "VAPOUR_INSTRUMENT"#,
+)
+
+# Checks the years in the QA/QC'ed data archive for BC MoE data
+# (usually 1-2 years out of date)
 get_bcmoe_qaqc_years = function(){
   . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
@@ -28,36 +164,6 @@ get_bcmoe_qaqc_years = function(){
     .[!is.na(.)]
 
   return(years)
-}
-
-get_bcmoe_data = function(stations, date_range){
-  # Timezone of data on ftp site
-  tzone = "Etc/GMT+8"
-
-  # Get list of available years in loc_qaqc
-  qaqc_years = get_bcmoe_qaqc_years()
-
-  # Get data for each year for each station
-  stations_data = date_range[1] %>%
-    # Get all years in desired date range
-    seq(to = date_range[2], by = "1 days") %>%
-    lubridate::with_tz(tzone) %>%
-    lubridate::year() %>%
-    unique() %>%
-    # Loop through years and get data for stations
-    lapply(\(year){
-      # After getting the loc_raw data we don't need to again
-      if (!(year - 1) %in% qaqc_years) return(NULL)
-      get_annual_bcmoe_data(stations, year, qaqc_years)
-    }) %>%
-    # Combine annual datasets
-    dplyr::bind_rows() %>%
-    # Filter to desired date range
-    dplyr::filter(.data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
-    # Drop columns with all NAs
-    dplyr::select(dplyr::where(~!all(is.na(.x))))
-
-  return(stations_data)
 }
 
 get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
@@ -94,16 +200,23 @@ get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
   stations_data = stations %>%
      # Insert station ids into file location
      stringr::str_replace(loc, "\\{station\\}", .) %>%
-     # Load each stations data and combine
-     lapply(data.table::fread, colClasses = colClasses) %>%
-     dplyr::bind_rows() %>%
-     # Format date time properly
-     dplyr::mutate(DATE_PST = tryCatch(
-       lubridate::ymd_hms(.data$DATE_PST, tz = tzone),
-       warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = tzone))
+     # Load each stations data if it exists and combine
+     lapply(\(p) tryCatch(suppressWarnings(data.table::fread(p, colClasses = colClasses)),
+              error = \(...) NULL)) %>%
+     dplyr::bind_rows()
+
+  if(nrow(stations_data) == 0){
+    warning(paste("No data available for provided stations for", year))
+    return(NULL)
+  }else stations_data  %>%
+     # Format date time properly and add a flag for if data are qa/qc'ed
+     dplyr::mutate(
+       DATE_PST = tryCatch(
+         lubridate::ymd_hms(.data$DATE_PST, tz = tzone),
+         warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = tzone)),
+       quality_assured = loc != loc_raw
      ) %>%
      # Drop DATE and TIME columns (erroneous)
-     dplyr::select(-.data$DATE, -.data$TIME)
+     dplyr::select(-DATE, -TIME)
 
-  return(stations_data)
 }

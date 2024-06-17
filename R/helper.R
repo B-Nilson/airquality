@@ -49,7 +49,7 @@ mean_no_na = function(x, ...) mean(x, na.rm = T, ...)
 min_no_na = function(x, ...) swap_inf(suppressWarnings(min(x, na.rm = T, ...)), NA)
 max_no_na = function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
 
-# helper function to make backward looking rolling means (NAs not ignored)
+# make backward looking rolling means (NAs not ignored)
 # TODO: ignore NAs, make forward looking equivelant, incorp with roll_mean
 get_lag_n_mean = function(x, n = 3){
   out = x
@@ -59,3 +59,15 @@ get_lag_n_mean = function(x, n = 3){
   }
   return(out/n)
 }
+
+standardize_colnames = function(df, all_col_names){
+  col_names = all_col_names[all_col_names %in% names(df)]
+  df %>%
+    dplyr::rename_at(col_names, \(x) names(col_names)[col_names == x]) %>%
+    dplyr::select_at(names(col_names))
+}
+
+
+
+
+
