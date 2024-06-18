@@ -1,31 +1,64 @@
 
 # [Canada] BC MoE Data ----------------------------------------------------
 
+#' Gather air quality station observations from the British Columbia (Canada) Government
+#'
+#' @param stations A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()
+#' @param date_range A datetime vector with two values indicating the start and end dates of desired data window. Will be converted to PST.
+#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.
+#'
+#' @description
+#' A short description...
+#'
+#' @seealso [get_bc_stations()]
+#' @return
+#' A tibble of hourly observation data for desired (a) station(s) and date range where available.
+#' Columns available will vary depending on available data from station(s).
+#'
+#' @family Data Collection
+#' @family Canadian Air Quality
+#'
+#' @examples
+#' # For a single station
+#' station = "0450307" # EMS IDs - see get_bc_stations()
+#' # For the years 2019 and 2020
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
+#' get_bc_data(station, date_range)
+#'
+#' # For multiple stations
+#' stations = c("0450307", "E206898") # EMS IDs - see get_bc_stations()
+#' # For January 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-31 23"), tz = "Etc/GMT+8")
+#' get_bc_data(stations, date_range)
 get_bc_data = function(stations, date_range, raw = FALSE){
+  # TODO: stop/warn if date range not date or datetime
+  # TODO: add description
+  # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
+
   . = NULL # so build check doesn't yell at me
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bc_qaqc_years()
 
   # Get all years in desired date range
-  desired_years = date_range[1] %>%
-    # sequence of all days in period
-    seq(to = date_range[2], by = "1 days") %>%
+  desired_years = seq( date_range[1], date_range[2], by = "1 days") %>%
     # convert to timezone of BCMoE data
-    lubridate::with_tz("Etc/GMT+8") %>%
+    lubridate::with_tz(bcmoe_tzone) %>%
     # extract unique years
-    unique(lubridate::year(.))
+    lubridate::year(.) %>%
+    unique() %>%
+    sort()
+
+  # Drop all years not in qaqc_years except the first
+  is_qaqc_year = desired_years %in% qaqc_years # find years that are qa/qc'ed years
+  # Only need to get each qa/qc year plus one for all non qa/qc years
+  years_to_get = c(desired_years[is_qaqc_year], desired_years[!is_qaqc_year][1])
+  # drop NA from case when no non qa/qced years provided
+  years_to_get = years_to_get[!is.na(years_to_get)]
 
   # Get data for each year for each station
-  stations_data = desired_years %>%
+  stations_data = years_to_get %>%
     # Loop through years and get data for stations
-    lapply(\(year){
-      # There is only a single file for non-qaqc_years
-      # After getting that once, we don't need to again
-      collected_raw_data_already = !(year - 1) %in% qaqc_years # TODO: fails if no years in qaqc years?
-      if (collected_raw_data_already){
-        return(NULL)
-      }else get_annual_bcmoe_data(stations, year, qaqc_years)
-    }) %>%
+    lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
     # Combine annual datasets
     dplyr::bind_rows()
 
@@ -34,12 +67,13 @@ get_bc_data = function(stations, date_range, raw = FALSE){
     return(NULL)
   }
 
-  # Reformat data
-  stations_data = stations_data %>%
-    # Filter to desired date range
-    dplyr::filter(.data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+  # Filter to desired date range
+  stations_data = dplyr::filter(stations_data,
+      .data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(DATE_PST), .by = "EMS_ID") %>%
+    # Replace blank values with NA
+    dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
     standardize_colnames(bcmoe_col_names, raw = raw)
 
