@@ -91,32 +91,45 @@ get_bc_stations = function(years = lubridate::year(Sys.time())){
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bc_qaqc_years()
 
-  # TODO: drop all years not in qaqc_years except the first (and do the same above)
-  stations = lapply(years, \(year){
+  # Drop all years not in qaqc_years except the first
+  years = sort(years) # ensure years are in order
+  is_qaqc_year = years %in% qaqc_years # find years that are qa/qc'ed years
+  # Only need to get each qa/qc year plus one for all non qa/qc years
+  years_to_get = c(years[is_qaqc_year], years[!is_qaqc_year][1])
+  # drop NA from case when no non qa/qced years provided
+  years_to_get = years_to_get[!is.na(years_to_get)
+                              ]
+  # For each year to get station info for
+  stations = lapply(years_to_get, \(year){
+    # Use ftp_site_qaqc path for qa/qc years
     if(year %in% qaqc_years){
-      meta_path = stringr::str_replace(ftp_site_qaqc, "\\{year\\}",
-                                       as.character(year)) %>%
-        paste0(stations_file)
-    }else{
-      if(raw_downloaded) return(NULL)
-      raw_downloaded = TRUE
-      meta_path = paste0(ftp_site_raw, stations_file)
-    }
-    data.table::fread(meta_path, data.table = FALSE,
+      ftp_site = stringr::str_replace(
+        ftp_site_qaqc, "\\{year\\}", as.character(year))
+    # And ftp_site_raw otherwise
+    }else ftp_site = ftp_site_raw
+    # download and read in meta file for this year
+    data.table::fread(paste0(ftp_site, stations_file), data.table = FALSE,
                       colClasses = c("OPENED" = "character", "CLOSED" = "character"))
   }) %>%
+    # Combine meta files for each desired year
     dplyr::bind_rows()
 
+  # Clean up and export
   stations %>%
+    # Choose and rename columns
     dplyr::select(
       site_name = STATION_NAME, site_id = EMS_ID,
       city = CITY, lat = LAT, lng = LONG, elev = ELEVATION,
       date_created = OPENED, date_removed = CLOSED
     ) %>%
+    # Replace blank values with NA
     dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
+    # Convert date_created and date_removed to date objects
     dplyr::mutate_at(c('date_created', 'date_removed'),
-                     \(x) stringr::str_sub(x, end = 10)) %>%
+      \(x) lubridate::ymd(stringr::str_sub(x, end = 10))) %>%
+    # Sort alphabetically
     dplyr::arrange(site_name) %>%
+    # Drop duplicated meta entries
     unique()
 
 }
@@ -124,6 +137,8 @@ get_bc_stations = function(years = lubridate::year(Sys.time())){
 ## BC MoE Helpers ---------------------------------------------------------
 
 bc_ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+
+bcmoe_tzone = "Etc/GMT+8"
 
 bcmoe_col_names = c(
   # Meta
@@ -210,8 +225,6 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
   loc_raw = ftp_site %>% # actually since qa/qc to date, not just this year
     paste0("Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/{station}.csv")
 
-  # Timezone of data on ftp site
-  tzone = "Etc/GMT+8"
   # Classes of specific columns found in all files
   colClasses = c(
     DATE_PST = "character", # will be converted to date
@@ -234,7 +247,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
      # Insert station ids into file location
      stringr::str_replace(loc, "\\{station\\}", .) %>%
      # Load each stations data if it exists and combine
-     lapply(\(p) tryCatch(suppressWarnings(data.table::fread(p, colClasses = colClasses)),
+     lapply(\(p) tryCatch(suppressWarnings(data.table::fread(file = p, colClasses = colClasses)),
               error = \(...) NULL)) %>%
      dplyr::bind_rows()
 
@@ -245,8 +258,8 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
      # Format date time properly and add a flag for if data are qa/qc'ed
      dplyr::mutate(
        DATE_PST = tryCatch(
-         lubridate::ymd_hms(.data$DATE_PST, tz = tzone),
-         warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = tzone)),
+         lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
+         warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
        quality_assured = loc != loc_raw
      ) %>%
      # Drop DATE and TIME columns (erroneous)
