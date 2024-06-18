@@ -60,11 +60,15 @@ get_lag_n_mean = function(x, n = 3){
   return(out/n)
 }
 
-standardize_colnames = function(df, all_col_names){
-  col_names = all_col_names[all_col_names %in% names(df)]
-  df %>%
-    dplyr::rename_at(col_names, \(x) names(col_names)[col_names == x]) %>%
-    dplyr::select_at(names(col_names))
+standardize_colnames = function(df, all_col_names, raw = FALSE){
+  if(raw){
+    return(df)
+  }else{
+    col_names = all_col_names[all_col_names %in% names(df)]
+    df %>%
+      dplyr::rename_at(col_names, \(x) names(col_names)[col_names == x]) %>%
+      dplyr::select_at(names(col_names))
+  }
 }
 
 

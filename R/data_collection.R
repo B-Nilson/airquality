@@ -1,10 +1,10 @@
 
 # [Canada] BC MoE Data ----------------------------------------------------
 
-get_bcmoe_data = function(stations, date_range){
+get_bc_data = function(stations, date_range, raw = FALSE){
   . = NULL # so build check doesn't yell at me
   # Get list of years currently QA/QC'ed
-  qaqc_years = get_bcmoe_qaqc_years()
+  qaqc_years = get_bc_qaqc_years()
 
   # Get all years in desired date range
   desired_years = date_range[1] %>%
@@ -41,22 +41,21 @@ get_bcmoe_data = function(stations, date_range){
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(DATE_PST), .by = "EMS_ID") %>%
     # Rename and select desired columns
-    # TODO: dont do this if arg raw == TRUE in case people want raw data files
-    standardize_colnames(bcmoe_col_names)
+    standardize_colnames(bcmoe_col_names, raw = raw)
 
   return(stations_data)
 }
 
 # TODO: clean up and document
-# stations = get_bcmoe_stations(years = 1998:2024)
-get_bcmoe_stations = function(years = lubridate::year(Sys.time())){
+# stations = get_bc_stations(years = 1998:2024)
+get_bc_stations = function(years = lubridate::year(Sys.time())){
   # Define metadata file locations
   stations_file ="bc_air_monitoring_stations.csv"
-  ftp_site_qaqc = paste0(bcmoe_ftm_site, "AnnualSummary/{year}/")
-  ftp_site_raw  = paste0(bcmoe_ftm_site, "Hourly_Raw_Air_Data/Year_to_Date/")
+  ftp_site_qaqc = paste0(bc_ftp_site, "AnnualSummary/{year}/")
+  ftp_site_raw  = paste0(bc_ftp_site, "Hourly_Raw_Air_Data/Year_to_Date/")
 
   # Get list of years currently QA/QC'ed
-  qaqc_years = get_bcmoe_qaqc_years()
+  qaqc_years = get_bc_qaqc_years()
 
   # TODO: drop all years not in qaqc_years except the first (and do the same above)
   stations = lapply(years, \(year){
@@ -90,14 +89,14 @@ get_bcmoe_stations = function(years = lubridate::year(Sys.time())){
 
 ## BC MoE Helpers ---------------------------------------------------------
 
-bcmoe_ftm_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+bc_ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
 
 bcmoe_col_names = c(
   # Meta
   date_local = "DATE_PST",
   site_id = "EMS_ID",
   site_name = "STATION_NAME",
-  quality_assured = "quality_assured", # Added by get_annual_bcmoe_data()
+  quality_assured = "quality_assured", # Added by get_annual_bc_data()
   # Particulate Matter
   pm25_1hr_ugm3 = "PM25",
   pm25_1hr_ugm3_instrument = "PM25_INSTRUMENT",
@@ -144,7 +143,7 @@ bcmoe_col_names = c(
 
 # Checks the years in the QA/QC'ed data archive for BC MoE data
 # (usually 1-2 years out of date)
-get_bcmoe_qaqc_years = function(){
+get_bc_qaqc_years = function(){
   . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
 
@@ -166,7 +165,7 @@ get_bcmoe_qaqc_years = function(){
   return(years)
 }
 
-get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
+get_annual_bc_data = function(stations, year, qaqc_years = NULL){
   . = NULL # so build check doesn't yell at me
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
@@ -186,7 +185,7 @@ get_annual_bcmoe_data = function(stations, year, qaqc_years = NULL){
     STATION_NAME = "character")
 
   # Get list of years that have been qaqc'ed if needed
-  if (is.null(qaqc_years)) qaqc_years = get_bcmoe_qaqc_years()
+  if (is.null(qaqc_years)) qaqc_years = get_bc_qaqc_years()
 
   # If year has qaqc'ed data
   if (year %in% qaqc_years) {
