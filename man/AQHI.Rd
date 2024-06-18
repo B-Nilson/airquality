@@ -61,7 +61,8 @@ AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
 \seealso{
 Other Canadian Air Quality: 
 \code{\link{AQHI_plus}()},
-\code{\link{CAAQS}()}
+\code{\link{CAAQS}()},
+\code{\link{get_bc_data}()}
 
 Other Air Quality Standards: 
 \code{\link{AQHI_plus}()},
