@@ -18,6 +18,7 @@
 #' @family Data Collection
 #' @family Canadian Air Quality
 #'
+#' @export
 #' @examples
 #' # For a single station
 #' station = "0450307" # EMS IDs - see get_bc_stations()
@@ -71,9 +72,9 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   stations_data = dplyr::filter(stations_data,
       .data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
     # Drop duplicated dates for a particular station
-    dplyr::filter(!duplicated(DATE_PST), .by = "EMS_ID") %>%
+    dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") %>%
     # Replace blank values with NA
-    dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
+    dplyr::mutate_at(-1, \(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
     standardize_colnames(bcmoe_col_names, raw = raw)
 
@@ -118,9 +119,9 @@ get_bc_stations = function(years = lubridate::year(Sys.time())){
   stations %>%
     # Choose and rename columns
     dplyr::select(
-      site_name = STATION_NAME, site_id = EMS_ID,
-      city = CITY, lat = LAT, lng = LONG, elev = ELEVATION,
-      date_created = OPENED, date_removed = CLOSED
+      site_name = .data$STATION_NAME, site_id = .data$EMS_ID,
+      city = .data$CITY, lat = .data$LAT, lng = .data$LONG, elev = .data$ELEVATION,
+      date_created = .data$OPENED, date_removed = .data$CLOSED
     ) %>%
     # Replace blank values with NA
     dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
@@ -128,7 +129,7 @@ get_bc_stations = function(years = lubridate::year(Sys.time())){
     dplyr::mutate_at(c('date_created', 'date_removed'),
       \(x) lubridate::ymd(stringr::str_sub(x, end = 10))) %>%
     # Sort alphabetically
-    dplyr::arrange(site_name) %>%
+    dplyr::arrange(.data$site_name) %>%
     # Drop duplicated meta entries
     unique()
 
@@ -263,6 +264,11 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
        quality_assured = loc != loc_raw
      ) %>%
      # Drop DATE and TIME columns (erroneous)
-     dplyr::select(-DATE, -TIME)
+     dplyr::select(-.data$DATE, -.data$TIME)
 
 }
+
+
+# AirNow Data -------------------------------------------------------------
+
+
