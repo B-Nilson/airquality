@@ -104,8 +104,7 @@ get_bc_stations = function(dates = Sys.time()){
   # Only need to get each qa/qc year plus one for all non qa/qc years
   years_to_get = c(years[is_qaqc_year], years[!is_qaqc_year][1])
   # drop NA from case when no non qa/qced years provided
-  years_to_get = years_to_get[!is.na(years_to_get)
-                              ]
+  years_to_get = years_to_get[!is.na(years_to_get)]
   # For each year to get station info for
   stations = lapply(years_to_get, \(year){
     # Use ftp_site_qaqc path for qa/qc years
@@ -116,6 +115,7 @@ get_bc_stations = function(dates = Sys.time()){
     }else ftp_site = ftp_site_raw
     # download and read in meta file for this year
     data.table::fread(paste0(ftp_site, stations_file), data.table = FALSE,
+                      showProgress = FALSE,
                       colClasses = c("OPENED" = "character", "CLOSED" = "character"))
   }) %>%
     # Combine meta files for each desired year
@@ -137,8 +137,9 @@ get_bc_stations = function(dates = Sys.time()){
     # Sort alphabetically
     dplyr::arrange(.data$site_name) %>%
     # Drop duplicated meta entries
-    unique()
-
+    unique() %>%
+    # Drop missing lat/lng rows
+    dplyr::filter(!is.na(lat), !is.na(lng))
 }
 
 ## BC MoE Helpers ---------------------------------------------------------
@@ -255,7 +256,9 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
     stringr::str_replace(loc, "\\{station\\}", .) %>%
     # Load each stations data if it exists and combine
     lapply(\(p) on_error(return =  NULL,
-      suppressWarnings(data.table::fread(file = p, colClasses = colClasses))
+      suppressWarnings(data.table::fread(file = p,
+                                         showProgress = FALSE,
+                                         colClasses = colClasses))
     )) %>%
     # Combine rowise into a single dataframe
     dplyr::bind_rows()
