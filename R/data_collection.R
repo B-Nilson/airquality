@@ -74,11 +74,11 @@ get_bc_data = function(stations, date_range, raw = FALSE){
 
   # Filter to desired date range
   stations_data = dplyr::filter(stations_data,
-      .data$DATE_PST %>% dplyr::between(date_range[1], date_range[2])) %>%
+      .data$date_utc %>% dplyr::between(date_range[1], date_range[2])) %>%
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") %>%
     # Replace blank values with NA
-    dplyr::mutate_at(-1, \(x) ifelse(x == "", NA, x)) %>%
+    dplyr::mutate_at(-(1:2), \(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
     standardize_colnames(bcmoe_col_names, raw = raw)
 
@@ -278,6 +278,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
         DATE_PST = format(DATE_PST, "%F %H:%M -8"),
         quality_assured = loc != loc_raw
       ) %>%
+      dplyr::relocate(date_utc, .before = "DATE_PST") %>%
       # Drop DATE and TIME columns (erroneous)
       dplyr::select(-'DATE', -'TIME') %>%
       return()
