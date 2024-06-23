@@ -1,8 +1,104 @@
 # TODO: Add data citation message to each main function call
 # TODO: Add optional dependence on future.apply - if installed, allow for parallel data collection (responsibly)
 # TODO: Add station localization (country - prov/terr/state - county? region? - nearest community?)
+# TODO: update get_station_data() as additional functions added
 
-# [Canada] BC MoE Data ----------------------------------------------------
+# General -----------------------------------------------------------------
+
+get_station_data = function(locations, date_range, buffer_dist = 10,
+                            networks = c("FEM"), sources = c("BC", "AirNow")){
+  if(is.character(locations)){
+    if("North America" %in% locations){
+      locations = c(locations[locations != "North America"],
+                    "Canada", "United States", "Mexico")
+    }
+    # Get polygons from OSM for desired locations
+    search_area = on_error(return = NULL,
+      locations %>%
+        lapply(\(location) osmdata::getbb(location, format_out = "sf_polygon")) %>%
+        dplyr::bind_rows() %>%
+        sf::st_as_sf())
+    # Error if that fails
+    if(is.null(search_area))
+      stop(paste0("Unable to find a polygonal boundary for specified location."))
+  }else if("sf" %in% class(locations)){
+    # TODO: Warn buffer being applied unless buffer_km == 0
+    search_area = locations
+  }else{
+    # TODO: improve messaging
+    stop("Not sure how to handle provided `locations`")
+  }
+  # Avoid warning about assuming attributes are spatially constant
+  sf::st_agr(search_area) = "constant"
+  # Add buffer to search if desired
+  if(buffer_dist > 0) search_area = sf::st_buffer(search_area, buffer_dist)
+
+  # Data collection functions for each network and each source for that network
+  data_funs = data_collection_funs(networks, sources)
+
+  # Get station metadata during period
+  dates = seq(date_range[1], date_range[2], "30 days")
+  stations = lapply(names(data_funs), \(net){ # For each network
+    network_funs = data_funs[[net]] # Get this networks functions
+    lapply(names(network_funs), \(src){ # For each data source in this network
+      source_funs = network_funs[[src]] # Get this sources functions
+      # Get stations for desired date range
+      source_funs$meta(dates) %>%
+        dplyr::mutate(source = src, network = net) # flag as from this source & network
+    }) %>% dplyr::bind_rows() # Combine data from all sources for this network
+  }) %>% dplyr::bind_rows() # Combine data from all networks
+
+  # Filter to stations in our search area
+  stations = sf::st_as_sf(stations, coords = c("lng", "lat"), crs = "WGS84")
+  sf::st_agr(stations) = "constant" # Avoid warning about assuming attributes are spatially constant
+  stations = stations %>%
+    sf::st_intersection(search_area) %>%
+    dplyr::select(site_id, network, source, geometry)
+
+  # If no stations, warn and end the function here, returning NULL
+  if(nrow(stations) == 0){
+    warning("No stations in location(s) and date range for selected networks/sources.")
+    return(NULL)
+  }
+
+  # Get data for our stations/date_range
+  data = lapply(unique(stations$network), \(net){ # For each network
+    network_funs = data_funs[[net]] # Get this networks functions
+    lapply(names(network_funs), \(src){ # For each data source in this network
+      source_funs = network_funs[[src]] # Get this sources functions
+      # Get unique site_ids for stations in this source & network
+      site_ids = unique(subset(stations, source == src & network == net)$site_id)
+      # Skip if no stations
+      if(length(site_ids)==0) return(NULL)
+      # Update user on state of data grab
+      message(paste(net, "-", src, ":", length(site_ids), "station(s) to check for data"))
+      # Get data for these stations and desired date range
+      source_funs$data(stations = site_ids, date_range) %>%
+        dplyr::mutate(source = src, network = net) # flag as from this source & network
+    }) %>% dplyr::bind_rows() # Combine data from all sources for this network
+  }) %>% dplyr::bind_rows() # Combine data from all networks
+
+  # Return a list with metadata and observations
+  return(list(stations = stations, data = data))
+}
+
+data_collection_funs = function(networks, sources){
+  data_funs = list(
+    # Federal Equivalent Method monitors
+    FEM = list(
+      # Canada Province of BC
+      BC = list(data = get_bc_data, meta = get_bc_stations),
+      # USA (and elsewhere...) AirNow
+      AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
+    )
+  )
+  data_funs = data_funs[networks] %>%
+    lapply(\(srcs) srcs[names(srcs) %in% sources])
+
+  return(data_funs)
+}
+
+# BC MoE Data ----------------------------------------------------------
 
 #' Download air quality station observations from the British Columbia (Canada) Government
 #'
