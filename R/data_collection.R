@@ -30,8 +30,8 @@
 #'
 #' # For multiple stations
 #' stations = c("0450307", "E206898") # EMS IDs - see get_bc_stations()
-#' # For January 2019
-#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-31 23"), tz = "Etc/GMT+8")
+#' # For first week of January 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bc_data(stations, date_range)
 get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: date_utc and date_local
