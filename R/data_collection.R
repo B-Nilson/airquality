@@ -150,6 +150,7 @@ bcmoe_tzone = "Etc/GMT+8"
 
 bcmoe_col_names = c(
   # Meta
+  date_utc = "date_utc", # Added by get_annual_bc_data()
   date_local = "DATE_PST",
   site_id = "EMS_ID",
   site_name = "STATION_NAME",
@@ -273,6 +274,8 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
         DATE_PST = tryCatch(
           lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
           warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
+        date_utc = lubridate::with_tz(DATE_PST, "UTC"),
+        DATE_PST = format(DATE_PST, "%F %H:%M -8"),
         quality_assured = loc != loc_raw
       ) %>%
       # Drop DATE and TIME columns (erroneous)
@@ -414,13 +417,14 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
         lubridate::hours(1), # from forward -> backward looking averages,
       # Add local time column (STANDARD TIME) - format as character due to timezone variations
       # (datetimes only support a single timezone in a column)
-      date_local = format(date + lubridate::hours(.data$tz_offset), "%F %H:%M")) %>%
+      date_local = format(date + lubridate::hours(.data$tz_offset), "%F %H:%M ") %>%
+        paste0(ifelse(.data$tz_offset >= 0, "+", "-"), abs(.data$tz_offset))) %>%
     # drop now erroneous time and tz_offset columns
     dplyr::select(-"time", -"tz_offset")
 
   # Filter for desired stations if "all" not supplied
   if(! "all" %in% stations){
-    airnow_data = subset(airnow_data, .data$siteID %in% stations)
+    airnow_data = dplyr::filter(airnow_data, .data$siteID %in% stations)
   }
 
   # If raw data desired, end function and return data
