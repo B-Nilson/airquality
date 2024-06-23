@@ -441,6 +441,43 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   return(airnow_data)
 }
 
+# TODO: document
+get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours")){
+  # Make path to each supplied hours meta file
+  dates = sort(dates, decreasing = TRUE) # Newest first
+  airnow_paths = make_airnow_metapaths(dates)
+  names(airnow_paths) = dates
+
+  # For each path
+  airnow_meta = lapply(
+      dates, \(d){
+        p = airnow_paths[names(airnow_paths) == as.character(d)]
+        # Download meta file, returning NULL if failed
+        on_error(return = NULL,
+          data.table::fread(file = p, showProgress = FALSE) %>%
+            # Flag file date for later
+            dplyr::mutate(file_date = d))
+      }) %>%
+    # Combine rowise into a single dataframe
+    dplyr::bind_rows() %>%
+    # Set header names
+    stats::setNames(
+      c('siteID', 'param', 'site_location_code', 'site', 'status', 'operator_code',
+        'operator', 'usa_region', 'lat', 'lon', 'elev', 'tz_offset', 'country',
+        'UNKNOWN', 'UNKNOWN', 'location_code', 'location', 'UNKNOWN', 'region',
+        'UNKNOWN', 'city', 'UNKNOWN', 'UNKNOWN', "file_date")) %>%
+    # Choose and reorder colummns, standardizing names
+    dplyr::select(
+      site_id = 'siteID', site_name = "site", 'city', 'lat', lng = 'lon', 'elev',
+      'status', 'operator', 'tz_offset', as_of = "file_date") %>%
+    # Replace placeholders with proper NA values
+    dplyr::mutate(dplyr::across(
+      dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) %>%
+    # Drop duplicated entries
+    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE)
+  return(airnow_meta)
+}
+
 ## AirNow Helpers ----------------------------------------------------------
 
 airnow_col_names = c(
@@ -486,4 +523,10 @@ make_airnow_filepaths = function(dates){
   airnow_files = paste0("HourlyData_", format(dates, "%Y%m%d%H.dat"))
   file.path(airnow_site, lubridate::year(dates),
             format(dates, "%Y%m%d"), airnow_files)
+}
+
+make_airnow_metapaths = function(dates){
+  airnow_site = 'https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow'
+  file.path(airnow_site, lubridate::year(dates),
+            format(dates, "%Y%m%d"), "monitoring_site_locations.dat")
 }
