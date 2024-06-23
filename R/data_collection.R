@@ -284,30 +284,64 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 # See https://docs.airnowapi.org/docs/HourlyDataFactSheet.pdf
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 
-  # AirNow hourly data only available for 2014 onwards - warn user if
+  ## Handle date_range inputs ---
+  # If only a single value provided, repeat it
+  if(length(date_range) == 1){
+    date_range = c(date_range, date_range)
+  }
+  # If not 1/2 values provided, stop and say why
+  if(length(date_range) != 2){
+    stop("`date_range` must have a length of either 1 or 2.")
+  }
+  # If characters provided for date range, try to convert and stop if that fails
+  if(is.character(date_range)){
+    date_range = lubridate::ymd_h(date_range, tz = "UTC")
+    if(any(is.na(date_range)))
+      stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
+  }
+  # AirNow hourly data only available for 2014 onwards - warn user if date_range before
   min_date = lubridate::ymd_h("2014-01-01 00", tz = "UTC")
   if(any(date_range < min_date)){
     warning(paste0(
       "No hourly data available on AirNow prior to 2014.\n",
       "Set the `date_range` to a period from 2014-01-01 (UTC) onwards to stop this warning."))
+    # End the function here and return NULL if all requested data before min date
     if(all(date_range < min_date)) return(NULL)
+    # Otherwise set the one that is before min date to the min date
+    # (i.e. still try to get data from min_date onwards if the provided period straddles it)
     date_range[date_range < min_date] = min_date
   }
-
+  # AirNow hourly data only available for the current hour and prior - warn user if date_range in the future
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
   if(any(date_range > max_date)){
     warning(paste0(
       "No hourly data available on AirNow beyond the current hour (UTC).\n",
       "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
       " (UTC) and earlier to stop this warning."))
+    # End the function here and return NULL if all requested data after max date
     if(all(date_range > max_date)) return(NULL)
+    #
     date_range[date_range > max_date] = max_date
   }
+  # Data may be missing for most recent hourly files - depending on data transfer delays
+  # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
+  if(max(date_range) - max_date > lubridate::hours(-48)){ # if date_range in past 48 hours
+    if(max(date_range) - max_date > lubridate::minutes(-55)){ # if date_range in past 55 minutes
+      warning(paste("The current hour AirNow files is updated twice per hour",
+                    "(at 25 and 55 minutes past the hour) or more frequently if possible.",
+                    "All hourly files for the preceding 48 hours will be updated every hour",
+                    "to ensure data completeness and quality.",
+                    "Data may be missing from stations for any hours in the past 48, especially for the current hour."))
+    }else{ # if date_range in past 48 hours but not past 55 minutes
+      warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
+                    "to ensure data completeness and quality.",
+                    "Data may be missing from stations for any hours in the past 48, especially for the current hour."))
+    }
+  }
 
-  # Ensure date_range is correct order
-  date_range = sort(date_range)
-
+  ## Main ---
   # Make hourly file paths
+  date_range = sort(date_range) # Ensure date_range is correct order
   dates = seq(date_range[1], date_range[2], "1 hours") +
     lubridate::hours(-1) # files are forward looking averages
   airnow_paths = make_airnow_filepaths(dates)
