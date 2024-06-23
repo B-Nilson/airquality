@@ -346,41 +346,39 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
     lubridate::hours(-1) # files are forward looking averages
   airnow_paths = make_airnow_filepaths(dates)
 
-  # Try downloading data for each hour
   airnow_data = lapply(airnow_paths, \(pth){
-    on_error(data.table::fread(file = pth, verbose = FALSE),
-      # Return NULL if that fails (usually means file not made yet)
-      return = NULL)}) %>%
+    # Try downloading data for each hour, returning NULL if failed (no file)
+    on_error(return = NULL, data.table::fread(file = pth, showProgress = FALSE))}) %>%
     # Combine rowise into a single dataframe
     dplyr::bind_rows() %>%
     # Set the file header
     stats::setNames(
       c('date','time','siteID','site',
-        'tz_offset','param','unit','value','operator')
-    )
+        'tz_offset','param','unit','value','operator'))
 
   # If no data (should not happen unless AirNow is offline and requesting current data)
   if(nrow(airnow_data) == 0){
     # Warn user and end the function here, returning NULL
     warning(paste("No data available for provided date range.",
             "Ensure `date_range` is valid and AirNow is not offline",
-            "(see: https://www.airnowtech.org/)."))
+            "(see: https://www.airnowtech.org/ for AirNow status)."))
     return(NULL)
   }
 
   # Basic formatting
   airnow_data = airnow_data %>%
-    # Drop duplicates
+    # Drop duplicate rows if any
     unique() %>%
     # Datetime formatting
     dplyr::mutate(
       # Join date and time columns, convert to datetime
       date = lubridate::mdy_hm(paste(.data$date, .data$time), tz = "UTC") +
         lubridate::hours(1), # from forward -> backward looking averages,
-      # Add local time column (STANDARD TIME)
-      date_local = date + lubridate::hours(.data$tz_offset)) %>%
-    # drop now erroneous time column
-    dplyr::select(-"time")
+      # Add local time column (STANDARD TIME) - format as character due to timezone variations
+      # (datetimes only support a single timezone in a column)
+      date_local = format(date + lubridate::hours(.data$tz_offset), "%F %H:%M")) %>%
+    # drop now erroneous time and tz_offset columns
+    dplyr::select(-"time", -"tz_offset")
 
   # Filter for desired stations if "all" not supplied
   if(! "all" %in% stations){
