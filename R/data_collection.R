@@ -87,7 +87,9 @@ get_bc_data = function(stations, date_range, raw = FALSE){
 
 # TODO: clean up and document
 # stations = get_bc_stations(years = 1998:2024)
-get_bc_stations = function(years = lubridate::year(Sys.time())){
+get_bc_stations = function(dates = Sys.time()){
+  years = unique(lubridate::year(dates))
+
   # Define metadata file locations
   stations_file ="bc_air_monitoring_stations.csv"
   ftp_site_qaqc = paste0(bc_ftp_site, "AnnualSummary/{year}/")
