@@ -248,26 +248,31 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 
   # Get each stations data for this year
   stations_data = stations %>%
-     # Insert station ids into file location
-     stringr::str_replace(loc, "\\{station\\}", .) %>%
-     # Load each stations data if it exists and combine
-     lapply(\(p) tryCatch(suppressWarnings(data.table::fread(file = p, colClasses = colClasses)),
-              error = \(...) NULL)) %>%
-     dplyr::bind_rows()
+    # Insert station ids into file location
+    stringr::str_replace(loc, "\\{station\\}", .) %>%
+    # Load each stations data if it exists and combine
+    lapply(\(p) on_error(return =  NULL,
+      suppressWarnings(data.table::fread(file = p, colClasses = colClasses))
+    )) %>%
+    # Combine rowise into a single dataframe
+    dplyr::bind_rows()
 
   if(nrow(stations_data) == 0){
     warning(paste("No data available for provided stations for", year))
     return(NULL)
-  }else stations_data  %>%
-     # Format date time properly and add a flag for if data are qa/qc'ed
-     dplyr::mutate(
-       DATE_PST = tryCatch(
-         lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
-         warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
-       quality_assured = loc != loc_raw
-     ) %>%
-     # Drop DATE and TIME columns (erroneous)
-     dplyr::select(-.data$DATE, -.data$TIME)
+  }else {
+    stations_data  %>%
+      # Format date time properly and add a flag for if data are qa/qc'ed
+      dplyr::mutate(
+        DATE_PST = tryCatch(
+          lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
+          warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
+        quality_assured = loc != loc_raw
+      ) %>%
+      # Drop DATE and TIME columns (erroneous)
+      dplyr::select(-'DATE', -'TIME') %>%
+      return()
+  }
 
 }
 
