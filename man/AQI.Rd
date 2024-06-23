@@ -76,6 +76,9 @@ Other Air Quality Standards:
 \code{\link{AQHI}()},
 \code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()}
+
+Other USA Air Quality: 
+\code{\link{get_airnow_data}()}
 }
 \concept{Air Quality Standards}
 \concept{USA Air Quality}

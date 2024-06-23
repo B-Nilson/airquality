@@ -1,9 +1,10 @@
 # TODO: Add data citation message to each main function call
 # TODO: Add optional dependence on future.apply - if installed, allow for parallel data collection (responsibly)
+# TODO: Add station localization (country - prov/terr/state - county? region? - nearest community?)
 
 # [Canada] BC MoE Data ----------------------------------------------------
 
-#' Gather air quality station observations from the British Columbia (Canada) Government
+#' Download air quality station observations from the British Columbia (Canada) Government
 #'
 #' @param stations A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()
 #' @param date_range A datetime vector with two values indicating the start and end dates of desired data window. Will be converted to PST.
@@ -14,7 +15,7 @@
 #'
 #' @seealso [get_bc_stations()]
 #' @return
-#' A tibble of hourly observation data for desired (a) station(s) and date range where available.
+#' A tibble of hourly observation data for desired station(s) and date range where available.
 #' Columns available will vary depending on available data from station(s).
 #'
 #' @family Data Collection
@@ -122,7 +123,7 @@ get_bc_stations = function(years = lubridate::year(Sys.time())){
   stations %>%
     # Choose and rename columns
     dplyr::select(
-      site_name = .data$STATION_NAME, site_id = .data$EMS_ID,
+      site_id = .data$EMS_ID, site_name = .data$STATION_NAME,
       city = .data$CITY, lat = .data$LAT, lng = .data$LONG, elev = .data$ELEVATION,
       date_created = .data$OPENED, date_removed = .data$CLOSED
     ) %>%

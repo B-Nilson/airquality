@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_collection.R
 \name{get_bc_data}
 \alias{get_bc_data}
-\title{Gather air quality station observations from the British Columbia (Canada) Government}
+\title{Download air quality station observations from the British Columbia (Canada) Government}
 \usage{
 get_bc_data(stations, date_range, raw = FALSE)
 }
@@ -14,7 +14,7 @@ get_bc_data(stations, date_range, raw = FALSE)
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.}
 }
 \value{
-A tibble of hourly observation data for desired (a) station(s) and date range where available.
+A tibble of hourly observation data for desired station(s) and date range where available.
 Columns available will vary depending on available data from station(s).
 }
 \description{
@@ -29,12 +29,15 @@ get_bc_data(station, date_range)
 
 # For multiple stations
 stations = c("0450307", "E206898") # EMS IDs - see get_bc_stations()
-# For January 2019
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-31 23"), tz = "Etc/GMT+8")
+# For first week of January 2019
+date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bc_data(stations, date_range)
 }
 \seealso{
 [get_bc_stations()]
+
+Other Data Collection: 
+\code{\link{get_airnow_data}()}
 
 Other Canadian Air Quality: 
 \code{\link{AQHI}()},
