@@ -279,9 +279,41 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 
 # AirNow Data -------------------------------------------------------------
 
-# date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 23"), tz = "Etc/GMT+8")
-# t = get_airnow_data(date_range = date_range)
 # See https://docs.airnowapi.org/docs/HourlyDataFactSheet.pdf
+#' Download air quality station observations from the US EPA "AirNow" platform
+#'
+#' @param stations (Optional) Either "all" or a character vector specifying AQS IDs for stations to filter data to.
+#' If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
+#' but only data for desired stations is returned. Default is "all".
+#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+#' Providing a single value will return data for that hour only,
+#' whereas two values will return data between (and including) those times
+#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
+#' raw data files desired (i.e. without standardized column names). Default is FALSE.
+#'
+#' @description
+#' A short description...
+#'
+#' @return
+#' A tibble of hourly observation data for desired station(s) and date range where available.
+#' Columns available will vary depending on available data from station(s).
+#' @export
+#'
+#' @family Data Collection
+#' @family USA Air Quality
+#'
+#' @examples
+#' # Get data for all stations for first 3 hours of Jan 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
+#' get_airnow_data("all", date_range)
+#'
+#' # Get data for two specific stations for first 3 hours of Jan 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
+#' get_airnow_data(c("000010102", "000010401"), date_range)
+#'
+#' # Get non-standardized data for all stations for first 3 hours of Jan 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
+#' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 
   ## Handle date_range inputs ---
