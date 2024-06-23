@@ -1,3 +1,5 @@
+# TODO: Add data citation message to each main function call
+# TODO: Add optional dependence on future.apply - if installed, allow for parallel data collection (responsibly)
 
 # [Canada] BC MoE Data ----------------------------------------------------
 
@@ -32,6 +34,7 @@
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-31 23"), tz = "Etc/GMT+8")
 #' get_bc_data(stations, date_range)
 get_bc_data = function(stations, date_range, raw = FALSE){
+  # TODO: date_utc and date_local
   # TODO: stop/warn if date range not date or datetime
   # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
@@ -271,4 +274,146 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 
 # AirNow Data -------------------------------------------------------------
 
+# date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 23"), tz = "Etc/GMT+8")
+# t = get_airnow_data(date_range = date_range)
+# See https://docs.airnowapi.org/docs/HourlyDataFactSheet.pdf
+get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 
+  # AirNow hourly data only available for 2014 onwards - warn user if
+  min_date = lubridate::ymd_h("2014-01-01 00", tz = "UTC")
+  if(any(date_range < min_date)){
+    warning(paste0(
+      "No hourly data available on AirNow prior to 2014.\n",
+      "Set the `date_range` to a period from 2014-01-01 (UTC) onwards to stop this warning."))
+    if(all(date_range < min_date)) return(NULL)
+    date_range[date_range < min_date] = min_date
+  }
+
+  max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
+  if(any(date_range > max_date)){
+    warning(paste0(
+      "No hourly data available on AirNow beyond the current hour (UTC).\n",
+      "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
+      " (UTC) and earlier to stop this warning."))
+    if(all(date_range > max_date)) return(NULL)
+    date_range[date_range > max_date] = max_date
+  }
+
+  # Ensure date_range is correct order
+  date_range = sort(date_range)
+
+  # Make hourly file paths
+  dates = seq(date_range[1], date_range[2], "1 hours") +
+    lubridate::hours(-1) # files are forward looking averages
+  airnow_paths = make_airnow_filepaths(dates)
+
+  # Try downloading data for each hour
+  airnow_data = lapply(airnow_paths, \(pth){
+    on_error(data.table::fread(file = pth, verbose = FALSE),
+      # Return NULL if that fails (usually means file not made yet)
+      return = NULL)}) %>%
+    # Combine rowise into a single dataframe
+    dplyr::bind_rows() %>%
+    # Set the file header
+    stats::setNames(
+      c('date','time','siteID','site',
+        'tz_offset','param','unit','value','operator')
+    )
+
+  # If no data (should not happen unless AirNow is offline and requesting current data)
+  if(nrow(airnow_data) == 0){
+    # Warn user and end the function here, returning NULL
+    warning(paste("No data available for provided date range.",
+            "Ensure `date_range` is valid and AirNow is not offline",
+            "(see: https://www.airnowtech.org/)."))
+    return(NULL)
+  }
+
+  # Basic formatting
+  airnow_data = airnow_data %>%
+    # Drop duplicates
+    unique() %>%
+    # Datetime formatting
+    dplyr::mutate(
+      # Join date and time columns, convert to datetime
+      date = lubridate::mdy_hm(paste(.data$date, .data$time), tz = "UTC") +
+        lubridate::hours(1), # from forward -> backward looking averages,
+      # Add local time column (STANDARD TIME)
+      date_local = date + lubridate::hours(.data$tz_offset)) %>%
+    # drop now erroneous time column
+    dplyr::select(-"time")
+
+  # Filter for desired stations if "all" not supplied
+  if(! "all" %in% stations){
+    airnow_data = subset(airnow_data, .data$siteID %in% stations)
+  }
+
+  # If raw data desired, end function and return data
+  if(raw) return(airnow_data)
+  ## Otherwise
+  # Convert from long format to wide format ("param_unit" column for each param/unit)
+  airnow_data = tidyr::pivot_wider(
+    airnow_data, names_from = c("param", "unit"), values_from = "value")
+
+  # Standardize units if needed
+  if("BARPR_MILLIBAR" %in% names(airnow_data))
+    airnow_data$barpr_1hr_kpa = airnow_data$BARPR_MILLIBAR / 10
+  if("CO_PPM" %in% names(airnow_data))
+    airnow_data$co_1hr_ppb = airnow_data$CO_PPM * 1000
+
+  # Standardize column names/order
+  airnow_data = airnow_data %>%
+    # All AirNow data is not QA/QC'ed - mark it as such
+    dplyr::mutate(quality_assured = FALSE) %>%
+    # Rename and select desired columns
+    standardize_colnames(airnow_col_names)
+
+  return(airnow_data)
+}
+
+## AirNow Helpers ----------------------------------------------------------
+
+airnow_col_names = c(
+  # Meta
+  date_utc = "date",
+  date_local = "date_local", # Added by get_airnow_data()
+  site_id = "siteID",
+  site_name = "site",
+  quality_assured = "quality_assured", # Added by get_airnow_data()
+  # Particulate Matter
+  pm25_1hr_ugm3 = "PM2.5_UG/M3",
+  pm10_1hr_ugm3 = "PM10_UG/M3",
+  bc_1hr_ugm3 = "BC_UG/M3",
+  # Ozone
+  o3_1hr_ppb = "OZONE_PPB",
+  # Nitrogen Pollutants
+  no_1hr_ppb = "NO_PPB",
+  no2t_1hr_ppb = "NO2T_PPB", # t == "true measure"
+  no2_1hr_ppb = "NO2_PPB",
+  no2y_1hr_ppb = "NO2Y_PPB", # y == "reactive"
+  nox_1hr_ppb = "NOX_PPB",
+  noy_1hr_ppb = "NOY_PPB", # y == "reactive"
+  no3_1hr_ugm3 = "NO3_UG/M3",
+  # Sulfur Pollutants
+  so4_1hr_ugm3 = "SO4_UG/M3",
+  so2_1hr_ppb = "SO2_PPB",
+  so2t_1hr_ppb = "SO2T_PPB", # t == "trace"
+  # Carbon Monoxide
+  co_1hr_ppb = "co_ppb", # Converted from ppm by get_airnow_data()
+  cot_1hr_ppb = "COT_PPB", # t == "trace"
+  # Met data
+  rh_1hr_percent = "RHUM_PERCENT",
+  t_1hr_celcius = "TEMP_C",
+  wd_1hr_degrees = "WD_DEGREES",
+  ws_1hr_ms = "WS_MS",
+  precip_1hr_mm = "PRECIP_MM",
+  pressure_1hr_kpa = "barpr_kpa", # Converted from mb by get_airnow_data()
+  solar_1hr_wm2 = "SRAD_WATTS/M2"
+)
+
+make_airnow_filepaths = function(dates){
+  airnow_site = 'https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow'
+  airnow_files = paste0("HourlyData_", format(dates, "%Y%m%d%H.dat"))
+  file.path(airnow_site, lubridate::year(dates),
+            format(dates, "%Y%m%d"), airnow_files)
+}

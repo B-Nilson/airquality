@@ -588,6 +588,7 @@ AQI = function(datetimes = Sys.time(),
                pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
                co_8hr_ppm = NA, co_1hr_ppm = NA,
                so2_1hr_ppb = NA, no2_1hr_ppb = NA){
+  # TODO: Review https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
   . = NULL # so build check doesn't yell at me
   # Determine which non-na pollutants provided
   pols = c("o3_8hr_ppm", "o3_1hr_ppm",
