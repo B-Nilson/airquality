@@ -43,6 +43,8 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
   if(any(networks == "all")) networks = c("FEM")
   if(any(sources == "all")) sources = c("BC", "AirNow")
 
+  . = NULL # so build check doesn't yell at me
+
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
 
