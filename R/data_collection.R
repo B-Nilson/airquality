@@ -53,7 +53,7 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
   sf::st_agr(stations) = "constant" # Avoid warning about assuming attributes are spatially constant
   stations = stations %>%
     sf::st_intersection(search_area) %>%
-    dplyr::select(site_id, network, source, geometry)
+    dplyr::select('site_id', 'network', 'source', 'geometry')
 
   # If no stations, warn and end the function here, returning NULL
   if(nrow(stations) == 0){
@@ -67,7 +67,7 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
     lapply(names(network_funs), \(src){ # For each data source in this network
       source_funs = network_funs[[src]] # Get this sources functions
       # Get unique site_ids for stations in this source & network
-      site_ids = unique(subset(stations, source == src & network == net)$site_id)
+      site_ids = unique(dplyr::filter(stations, .data$source == src & .data$network == net)$site_id)
       # Skip if no stations
       if(length(site_ids)==0) return(NULL)
       # Update user on state of data grab
@@ -235,7 +235,7 @@ get_bc_stations = function(dates = Sys.time()){
     # Drop duplicated meta entries
     unique() %>%
     # Drop missing lat/lng rows
-    dplyr::filter(!is.na(lat), !is.na(lng))
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng))
 }
 
 ## BC MoE Helpers ---------------------------------------------------------
@@ -370,11 +370,11 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
         DATE_PST = tryCatch(
           lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
           warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
-        date_utc = lubridate::with_tz(DATE_PST, "UTC"),
-        DATE_PST = format(DATE_PST, "%F %H:%M -8"),
+        date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
+        DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
         quality_assured = loc != loc_raw
       ) %>%
-      dplyr::relocate(date_utc, .before = "DATE_PST") %>%
+      dplyr::relocate("date_utc", .before = "DATE_PST") %>%
       # Drop DATE and TIME columns (erroneous)
       dplyr::select(-'DATE', -'TIME') %>%
       return()
