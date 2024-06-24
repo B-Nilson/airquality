@@ -9,7 +9,9 @@ get_bc_data(stations, date_range, raw = FALSE)
 \arguments{
 \item{stations}{A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()}
 
-\item{date_range}{A datetime vector with two values indicating the start and end dates of desired data window. Will be converted to PST.}
+\item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+Providing a single value will return data for that hour only,
+whereas two values will return data between (and including) those times}
 
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.}
 }

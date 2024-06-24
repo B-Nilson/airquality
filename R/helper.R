@@ -77,6 +77,22 @@ standardize_colnames = function(df, all_col_names, raw = FALSE){
 }
 
 
-
+handle_date_range = function(date_range){
+  # If only a single value provided, repeat it
+  if(length(date_range) == 1){
+    date_range = c(date_range, date_range)
+  }
+  # If not 1/2 values provided, stop and say why
+  if(length(date_range) != 2){
+    stop("`date_range` must have a length of either 1 or 2.")
+  }
+  # If characters provided for date range, try to convert and stop if that fails
+  if(is.character(date_range)){
+    date_range = lubridate::ymd_h(date_range, tz = "UTC")
+    if(any(is.na(date_range)))
+      stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
+  }
+  return(date_range)
+}
 
 

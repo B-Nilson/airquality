@@ -7,6 +7,9 @@
 
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = c("FEM"), sources = c("BC", "AirNow")){
+  ## Handle date_range inputs ---
+  date_range = handle_date_range(date_range)
+
   if(is.character(locations)){
     if("North America" %in% locations){
       locations = c(locations[locations != "North America"],
@@ -103,7 +106,9 @@ data_collection_funs = function(networks, sources){
 #' Download air quality station observations from the British Columbia (Canada) Government
 #'
 #' @param stations A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()
-#' @param date_range A datetime vector with two values indicating the start and end dates of desired data window. Will be converted to PST.
+#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+#' Providing a single value will return data for that hour only,
+#' whereas two values will return data between (and including) those times
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.
 #'
 #' @description
@@ -135,6 +140,9 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: stop/warn if date range not date or datetime
   # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
+
+  ## Handle date_range inputs ---
+  date_range = handle_date_range(date_range)
 
   . = NULL # so build check doesn't yell at me
   # Get list of years currently QA/QC'ed
@@ -421,22 +429,8 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
-
   ## Handle date_range inputs ---
-  # If only a single value provided, repeat it
-  if(length(date_range) == 1){
-    date_range = c(date_range, date_range)
-  }
-  # If not 1/2 values provided, stop and say why
-  if(length(date_range) != 2){
-    stop("`date_range` must have a length of either 1 or 2.")
-  }
-  # If characters provided for date range, try to convert and stop if that fails
-  if(is.character(date_range)){
-    date_range = lubridate::ymd_h(date_range, tz = "UTC")
-    if(any(is.na(date_range)))
-      stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
-  }
+  date_range = handle_date_range(date_range)
   # AirNow hourly data only available for 2014 onwards - warn user if date_range before
   min_date = lubridate::ymd_h("2014-01-01 00", tz = "UTC")
   if(any(date_range < min_date)){
