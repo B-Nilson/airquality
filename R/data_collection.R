@@ -2,11 +2,47 @@
 # TODO: Add optional dependence on future.apply - if installed, allow for parallel data collection (responsibly)
 # TODO: Add station localization (country - prov/terr/state - county? region? - nearest community?)
 # TODO: update get_station_data() as additional functions added
+# TODO: add warning to get_airnow_data() for long time ranges (need to download each hour)
 
 # General -----------------------------------------------------------------
 
+#' Gather air quality observations from multiple data sources
+#'
+#' @param locations A character vector with at least one value that indicates a
+#' location on Open Street Map that data is desired for (ie. "Prince George, BC, Canada"),
+#' OR an sf object with polygon(s) indicating area of interest.
+#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+#' Providing a single value will return data for that hour only,
+#' whereas two values will return data between (and including) those times
+#' @param buffer_dist (Optional) A single numeric value indicating the distance to buffer the station search location by (typically units of km). Default is 10.
+#' @param networks (Optional) A character vector indicating which monitoring networks to get data for. Default is "all".
+#' @param sources (Optional) A character vector indicating which data sources to get data from. Default is "all".
+#'
+#' @return
+#' A tibble of hourly observation data for the specified date range and for
+#' stations within a specified location + buffer from specified monitoring networks
+#' and data sources where available.
+#' Columns available will vary depending on available data from station(s) and data sources.
+#' @export
+#'
+#' @examples
+#' # Get data for all stations within 10 km of Fort St. John, BC for first 1 hour of Jan 2019
+#' get_station_data("Fort St. John, BC, Canada", "2019-01-01 00")
+#'
+#' # Get data for all stations within 25 km of Kentucky, USA or Edmonton, AB, Canada
+#' #  for first 1 hour of Jan 2019
+#' get_station_data(c("Kentucky, USA", "Edmonton, AB, Canada"),
+#'                    "2019-01-01 00", buffer_dist = 25)
+#'
+#' # Get data for all FEM stations in Kamloops, BC, Canada from the BC Gov't only
+#' #  for first 1 hour of Jan 2019
+#' get_station_data(c("Kamloops, BC, Canada"), "2019-01-01 00", buffer_dist = 0,
+#'                  networks = "FEM", sources = "BC")
 get_station_data = function(locations, date_range, buffer_dist = 10,
-                            networks = c("FEM"), sources = c("BC", "AirNow")){
+                            networks = "all", sources = "all"){
+  if(any(networks == "all")) networks = c("FEM")
+  if(any(sources == "all")) sources = c("BC", "AirNow")
+
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
 
