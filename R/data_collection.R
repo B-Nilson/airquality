@@ -54,9 +54,11 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
     # Get polygons from OSM for desired locations
     search_area = on_error(return = NULL,
       locations %>%
-        lapply(\(location) osmdata::getbb(location, format_out = "sf_polygon")) %>%
-        dplyr::bind_rows() %>%
-        sf::st_as_sf())
+        lapply(\(location) osmdata::getbb(location, format_out = "sf_polygon") %>%
+                 .[!sapply(., is.null)] %>%
+                 dplyr::bind_rows() %>%
+                 sf::st_cast("POLYGON")) %>%
+        dplyr::bind_rows())
     # Error if that fails
     if(is.null(search_area))
       stop(paste0("Unable to find a polygonal boundary for specified location."))
