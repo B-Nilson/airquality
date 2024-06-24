@@ -181,12 +181,38 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
 
+  . = NULL # so build check doesn't yell at me
+
+  # Get list of years currently QA/QC'ed
+  qaqc_years = get_bc_qaqc_years()
+
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
 
-  . = NULL # so build check doesn't yell at me
-  # Get list of years currently QA/QC'ed
-  qaqc_years = get_bc_qaqc_years()
+  min_date = lubridate::ym(paste(min(qaqc_years),"01"))
+  if(any(date_range < min_date)){
+    if(all(date_range < min_date)) stop(paste("At least one date_range value must be on or after", format(min_date, "%F"),"(PST)."))
+    warning(paste0(
+      "No hourly data available on BC Gov FTP site prior to 1990.\n",
+      "Set the `date_range` to a period from 1990-01-01 (PST) onwards to stop this warning."))
+    # End the function here and throw error if all requested data before min date
+    # Otherwise set the one that is before min date to the min date
+    # (i.e. still try to get data from min_date onwards if the provided period straddles it)
+    date_range[date_range < min_date] = min_date
+  }
+  # hourly data only available for the current hour and prior - warn user if date_range in the future
+  max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
+  if(any(date_range > max_date)){
+    # End the function here and throw error if all requested data after max date
+    if(all(date_range > max_date))  stop("At least one date_range value must not be in the future.")
+    warning(paste0(
+      "No hourly data available on BC Gov FTP site beyond the current hour (UTC).\n",
+      "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
+      " (UTC) and earlier to stop this warning."))
+    #
+    date_range[date_range > max_date] = max_date
+  }
+
 
   # Get all years in desired date range
   desired_years = seq( date_range[1], date_range[2], by = "1 days") %>%
@@ -210,6 +236,17 @@ get_bc_data = function(stations, date_range, raw = FALSE){
     lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
     # Combine annual datasets
     dplyr::bind_rows()
+
+  # Warn if any stations unknown
+  unknown_stations = years_to_get %>%
+    lapply(\(year) get_bc_stations(lubridate::ym(paste0(year, "06")))) %>%
+    dplyr::bind_rows() %>%
+    dplyr::pull(.data$site_id) %>%
+    {stations[! stations %in% .]}
+  if(length(unknown_stations)){
+    warning(paste("Some station IDs provided not found on the BC FTP site:",
+                  paste0(unknown_stations, collapse = ", ")))
+  }
 
   if(nrow(stations_data) == 0){
     warning("No data available for provided stations and date_range")
@@ -477,8 +514,8 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
     warning(paste0(
       "No hourly data available on AirNow prior to 2014.\n",
       "Set the `date_range` to a period from 2014-01-01 (UTC) onwards to stop this warning."))
-    # End the function here and return NULL if all requested data before min date
-    if(all(date_range < min_date)) return(NULL)
+    # End the function here and throw error if all requested data before min date
+    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 (UTC).")
     # Otherwise set the one that is before min date to the min date
     # (i.e. still try to get data from min_date onwards if the provided period straddles it)
     date_range[date_range < min_date] = min_date
@@ -490,8 +527,8 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
       "No hourly data available on AirNow beyond the current hour (UTC).\n",
       "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
       " (UTC) and earlier to stop this warning."))
-    # End the function here and return NULL if all requested data after max date
-    if(all(date_range > max_date)) return(NULL)
+    # End the function here and throw error if all requested data after max date
+    if(all(date_range > max_date)) stop("At least one date_range value must not be in the future.")
     #
     date_range[date_range > max_date] = max_date
   }

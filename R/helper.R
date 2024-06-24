@@ -88,7 +88,7 @@ handle_date_range = function(date_range){
   }
   # If characters provided for date range, try to convert and stop if that fails
   if(is.character(date_range)){
-    date_range = lubridate::ymd_h(date_range, tz = "UTC")
+    date_range = suppressWarnings(lubridate::ymd_h(date_range, tz = "UTC"))
     if(any(is.na(date_range)))
       stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
   }
