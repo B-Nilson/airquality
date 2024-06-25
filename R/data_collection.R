@@ -505,6 +505,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
+  . = NULL # so build check doesn't yell at me
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
   # AirNow hourly data only available for 2014 onwards - warn user if date_range before
