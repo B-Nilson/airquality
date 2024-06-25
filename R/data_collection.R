@@ -265,7 +265,8 @@ get_bc_data = function(stations, date_range, raw = FALSE){
     # Replace blank values with NA
     dplyr::mutate_at(-(1:2), \(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
-    standardize_colnames(bcmoe_col_names, raw = raw)
+    standardize_colnames(bcmoe_col_names, raw = raw) %>%
+    tibble::as_tibble()
 
   return(stations_data)
 }

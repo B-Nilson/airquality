@@ -81,3 +81,16 @@ test_that("date_local converts to date_utc correctly", {
   # Case: date_utc the same as converting date_local to UTC
   expect_equal(obs$date_utc, obs$date_utc_from_local)
 })
+
+# Outputs: data -----------------------------------------------------------
+
+test_that("expected data returned", {
+  date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
+  obs = get_bc_data("0450307", date_range)
+  # Case: tibble is returned
+  expect_true("tbl_df" %in% class(obs))
+  # Case: data.frame has rows
+  expect_true(nrow(obs) > 0)
+  # Case: data.frame has cols
+  expect_true(ncol(obs) > 0)
+})

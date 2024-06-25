@@ -5,8 +5,9 @@ on_error = function(..., return = NULL){
 }
 
 # General function for loading in data quickly and quietly
-read_data = function(..., showProgress = FALSE, verbose = FALSE){
-  suppressWarnings(data.table::fread(..., showProgress = showProgress, verbose = verbose))
+read_data = function(..., showProgress = FALSE, verbose = FALSE, data.table = FALSE){
+  suppressWarnings(data.table::fread(..., showProgress = showProgress,
+                                     verbose = verbose, data.table = data.table))
 }
 
 # Calculates the mean if enough values are provided
