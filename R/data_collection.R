@@ -231,13 +231,6 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # drop NA from case when no non qa/qced years provided
   years_to_get = years_to_get[!is.na(years_to_get)]
 
-  # Get data for each year for each station
-  stations_data = years_to_get %>%
-    # Loop through years and get data for stations
-    lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
-    # Combine annual datasets
-    dplyr::bind_rows()
-
   # Warn if any stations unknown
   unknown_stations = years_to_get %>%
     lapply(\(year) get_bc_stations(lubridate::ym(paste0(year, "06")))) %>%
@@ -246,11 +239,18 @@ get_bc_data = function(stations, date_range, raw = FALSE){
     {stations[! stations %in% .]}
   if(length(unknown_stations) == length(stations)){
     stop(paste("All station IDs provided not found on the BC FTP site for provided date_range:",
-                  paste0(unknown_stations, collapse = ", ")))
+               paste0(unknown_stations, collapse = ", ")))
   }else if(length(unknown_stations) > 0){
     warning(paste("Some station IDs provided not found on the BC FTP site for provided date_range:",
                   paste0(unknown_stations, collapse = ", ")))
   }
+
+  # Get data for each year for each station
+  stations_data = years_to_get %>%
+    # Loop through years and get data for stations
+    lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
+    # Combine annual datasets
+    dplyr::bind_rows()
 
   if(nrow(stations_data) == 0){
     warning("No data available for provided stations and date_range")
