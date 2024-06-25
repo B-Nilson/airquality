@@ -4,6 +4,11 @@ on_error = function(..., return = NULL){
   tryCatch(..., error = \(...) return(return))
 }
 
+# General function for loading in data quickly and quietly
+read_data = function(..., showProgress = FALSE, verbose = FALSE){
+  suppressWarnings(data.table::fread(..., showProgress = showProgress, verbose = verbose))
+}
+
 # Calculates the mean if enough values are provided
 mean_if_enough = function(x, min_n = 0, ...){
   ifelse(sum(!is.na(x)) >= min_n, mean(x, na.rm = T, ...), NA)

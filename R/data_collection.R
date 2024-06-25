@@ -296,9 +296,8 @@ get_bc_stations = function(dates = Sys.time()){
     # And ftp_site_raw otherwise
     }else ftp_site = ftp_site_raw
     # download and read in meta file for this year
-    data.table::fread(paste0(ftp_site, stations_file), data.table = FALSE,
-                      showProgress = FALSE,
-                      colClasses = c("OPENED" = "character", "CLOSED" = "character"))
+    read_data(file = paste0(ftp_site, stations_file), data.table = FALSE,
+              colClasses = c("OPENED" = "character", "CLOSED" = "character"))
   }) %>%
     # Combine meta files for each desired year
     dplyr::bind_rows()
@@ -438,11 +437,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
     # Insert station ids into file location
     stringr::str_replace(loc, "\\{station\\}", .) %>%
     # Load each stations data if it exists and combine
-    lapply(\(p) on_error(return =  NULL,
-      suppressWarnings(data.table::fread(file = p,
-                                         showProgress = FALSE,
-                                         colClasses = colClasses))
-    )) %>%
+    lapply(\(p) on_error(return =  NULL, read_data(file = p, colClasses = colClasses))) %>%
     # Combine rowise into a single dataframe
     dplyr::bind_rows()
 
@@ -558,7 +553,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 
   airnow_data = lapply(airnow_paths, \(pth){
     # Try downloading data for each hour, returning NULL if failed (no file)
-    on_error(return = NULL, data.table::fread(file = pth, showProgress = FALSE))}) %>%
+    on_error(return = NULL, read_data(file = pth))}) %>%
     # Combine rowise into a single dataframe
     dplyr::bind_rows() %>%
     # Set the file header
@@ -634,7 +629,7 @@ get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours"
         p = airnow_paths[names(airnow_paths) == as.character(d)]
         # Download meta file, returning NULL if failed
         on_error(return = NULL,
-          data.table::fread(file = p, showProgress = FALSE) %>%
+          read_data(file = p) %>%
             # Flag file date for later
             dplyr::mutate(file_date = d))
       }) %>%
