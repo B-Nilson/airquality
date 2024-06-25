@@ -180,6 +180,7 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: stop/warn if date range not date or datetime
   # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
+  # TODO: handle multiple instruments for same pollutant
 
   . = NULL # so build check doesn't yell at me
 
