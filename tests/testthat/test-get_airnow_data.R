@@ -8,7 +8,8 @@ test_that("returns requested stations only", {
 test_that("all dates non-na and within requested period", {
   date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 01"), tz = "America/Toronto")
   obs = get_airnow_data("000010102", date_range)
-  expect_true(all(!is.na(obs$date_utc) & !is.na(obs$date_local)))
+  expect_true(all(!is.na(obs$date_utc)))
+  expect_true(all(!is.na(obs$date_local)))
   # TODO: Fix dates being filtered by utc not daterange timezone
   expect_true(all(obs$date_utc %>% dplyr::between(date_range[1], date_range[2])))
 })
