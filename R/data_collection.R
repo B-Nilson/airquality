@@ -697,6 +697,7 @@ airnow_col_names = c(
 )
 
 make_airnow_filepaths = function(dates){
+  dates = lubridate::with_tz(dates, "UTC")
   airnow_site = 'https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow'
   airnow_files = paste0("HourlyData_", format(dates, "%Y%m%d%H.dat"))
   file.path(airnow_site, lubridate::year(dates),

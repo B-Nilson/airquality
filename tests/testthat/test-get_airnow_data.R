@@ -10,7 +10,6 @@ test_that("all dates non-na and within requested period", {
   obs = get_airnow_data("000010102", date_range)
   expect_true(all(!is.na(obs$date_utc)))
   expect_true(all(!is.na(obs$date_local)))
-  # TODO: Fix dates being filtered by utc not daterange timezone
   expect_true(all(obs$date_utc %>% dplyr::between(date_range[1], date_range[2])))
 })
 
