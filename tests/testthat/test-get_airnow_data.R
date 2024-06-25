@@ -36,7 +36,7 @@ test_that("invalid date_range causes error/warning", {
   expect_error(get_airnow_data("000010102", "2029-01-01 00"))
   expect_warning(get_airnow_data("000010102", date_range = c("1919-01-01 00","2014-01-01 02")))
   date_range = c(format(Sys.time() - lubridate::hours(2), "%F %H"), "2029-01-01 00")
-  expect_warning(expect_warning(get_airnow_data("000010102", date_range)))
+  expect_warning(expect_warning(get_airnow_data("000020104", date_range)))
 })
 
 test_that("unknown stations cause warning", {
