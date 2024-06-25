@@ -509,13 +509,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
   # AirNow hourly data only available for 2014 onwards - warn user if date_range before
-  min_date = lubridate::ymd_h("2014-01-01 00", tz = "UTC")
+  min_date = lubridate::ymd_h("2014-01-01 01", tz = "UTC")
   if(any(date_range < min_date)){
     # End the function here and throw error if all requested data before min date
-    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 (UTC).")
+    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 01:00 (UTC).")
     warning(paste0(
       "No hourly data available on AirNow prior to 2014.\n",
-      "Set the `date_range` to a period from 2014-01-01 (UTC) onwards to stop this warning."))
+      "Set the `date_range` to a period from 2014-01-01 01:00 (UTC) onwards to stop this warning."))
     # Otherwise set the one that is before min date to the min date
     # (i.e. still try to get data from min_date onwards if the provided period straddles it)
     date_range[date_range < min_date] = min_date
