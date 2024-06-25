@@ -40,7 +40,6 @@ test_that("invalid date_range causes error/warning", {
 })
 
 test_that("unknown stations cause warning", {
-  # TODO: Improve messaging so tests pass
-  expect_warning(get_airnow_data("bananas", date_range = "2019-01-02 00"))
+  expect_error(get_airnow_data("bananas", date_range = "2019-01-02 00"))
   expect_warning(get_airnow_data(c("bananas", "000010102"), date_range = "2019-01-02 00"))
 })

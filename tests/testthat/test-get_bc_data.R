@@ -39,6 +39,6 @@ test_that("invalid date_range causes error/warning", {
 })
 
 test_that("unknown stations cause warning", {
-  expect_warning(get_bc_data("bananas", date_range = "2019-02-02 00"))
+  expect_error(get_bc_data("bananas", date_range = "2019-02-02 00"))
   expect_warning(get_bc_data(c("bananas", "0450307"), date_range = "2019-02-02 00"))
 })
