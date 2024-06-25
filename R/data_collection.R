@@ -638,11 +638,10 @@ get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours"
   # Make path to each supplied hours meta file
   dates = sort(dates, decreasing = TRUE) # Newest first
   airnow_paths = make_airnow_metapaths(dates)
-  names(airnow_paths) = dates
 
   # For each path
   airnow_meta = lapply(
-      dates, \(d){
+      names(airnow_paths), \(d){
         p = airnow_paths[names(airnow_paths) == as.character(d)]
         # Download meta file, returning NULL if failed
         on_error(return = NULL,
@@ -721,7 +720,17 @@ make_airnow_filepaths = function(dates){
 }
 
 make_airnow_metapaths = function(dates){
+  min_date = lubridate::ymd_h("2016-06-21 00", tz = "UTC")
+  if(any(dates < min_date)){
+    warning(paste("Metadata files on AirNow only available from",
+            format(min_date, "%F %H (UTC)"), "onwards.",
+            "Station information returned may be inaccurate for dates before this."))
+    dates = c(min_date, dates[dates > min_date])
+  }
   airnow_site = 'https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow'
-  file.path(airnow_site, lubridate::year(dates),
-            format(dates, "%Y%m%d"), "monitoring_site_locations.dat")
+  file_name = "monitoring_site_locations.dat"
+  paths = file.path(airnow_site, lubridate::year(dates),
+            format(dates, "%Y%m%d"), file_name)
+  names(paths) = dates
+  return(paths)
 }
