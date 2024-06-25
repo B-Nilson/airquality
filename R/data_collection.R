@@ -309,9 +309,9 @@ get_bc_stations = function(dates = Sys.time()){
   stations %>%
     # Choose and rename columns
     dplyr::select(
-      site_id = .data$EMS_ID, site_name = .data$STATION_NAME,
-      city = .data$CITY, lat = .data$LAT, lng = .data$LONG, elev = .data$ELEVATION,
-      date_created = .data$OPENED, date_removed = .data$CLOSED
+      site_id = "EMS_ID", site_name = "STATION_NAME",
+      city = "CITY", lat = "LAT", lng = "LONG", elev = "ELEVATION",
+      date_created = "OPENED", date_removed = "CLOSED"
     ) %>%
     # Replace blank values with NA
     dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
@@ -660,8 +660,10 @@ get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours"
         'UNKNOWN', 'city', 'UNKNOWN', 'UNKNOWN', "file_date")) %>%
     # Choose and reorder colummns, standardizing names
     dplyr::select(
-      site_id = 'siteID', site_name = "site", 'city', 'lat', lng = 'lon', 'elev',
-      'status', 'operator', 'tz_offset', as_of = "file_date") %>%
+      site_id = 'siteID', site_name = "site", city = 'city',
+      lat = 'lat', lng = 'lon', elev = 'elev',
+      status = 'status', operator = 'operator',
+      tz_offset = 'tz_offset', as_of = "file_date") %>%
     # Replace placeholders with proper NA values
     dplyr::mutate(dplyr::across(
       dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) %>%

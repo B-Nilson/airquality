@@ -65,7 +65,7 @@ AQHI = function(datetimes, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, qui
   aqhi_plus = AQHI_plus(obs$pm25) %>%
     # Add columns in case only PM2.5 provided
     dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) %>%
-    dplyr::relocate(.data$AQHI, .before = "AQHI_plus")
+    dplyr::relocate('AQHI', .before = "AQHI_plus")
 
   # Need all 3 pollutants to calculate AQHI
   have_all_3_pol = !all(is.na(pm25_1hr_ugm3)) &
@@ -376,9 +376,9 @@ CAAQS_pm25 = function(obs, thresholds){
                                   metric = .data$`3yr_mean_of_means`[.data$year == y],
                                   thresholds = thresholds$pm25$annual))
     ) %>%
-    dplyr::relocate(.data$management_level_daily,
+    dplyr::relocate("management_level_daily",
                     .after = "3yr_mean_of_perc_98")%>%
-    dplyr::relocate(.data$mean_of_daily_means,
+    dplyr::relocate("mean_of_daily_means",
                     .after = "management_level_daily")
 }
 
@@ -438,7 +438,7 @@ CAAQS_no2 = function(obs, thresholds){
                                   metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
                                   thresholds = thresholds$no2$annual))
     ) %>%
-    dplyr::relocate(.data$management_level_hourly,
+    dplyr::relocate("management_level_hourly",
                     .after = "annual_mean_of_hourly")
 }
 
@@ -471,7 +471,7 @@ CAAQS_so2 = function(obs, thresholds){
                                   metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
                                   thresholds = thresholds$so2$annual))
     ) %>%
-    dplyr::relocate(.data$management_level_hourly,
+    dplyr::relocate("management_level_hourly",
                     .after = "annual_mean_of_hourly")
 }
 
@@ -692,8 +692,8 @@ AQI = function(datetimes = Sys.time(),
         factor(unique(names(AQI_cols)))) # make it a factor
 
   # Return a tibble with datetimes and corresponding AQI
-  return(dplyr::select(dat, .data$date, .data$AQI,
-                       .data$risk_category, .data$principal_pol))
+  return(dplyr::select(dat, "date", "AQI",
+                       "risk_category", "principal_pol"))
 }
 
 ## AQI Helpers ------------------------------------------------------------
