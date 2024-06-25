@@ -548,18 +548,21 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   }
 
   # Warn if any stations unknown
-  unknown_stations = seq(date_range[1], date_range[2], "25 days")  %>%
-    lapply(get_airnow_stations) %>%
-    dplyr::bind_rows() %>%
-    dplyr::pull(.data$site_id) %>%
-    {stations[! stations %in% .]}
-  if(length(unknown_stations) == length(stations)){
-    stop(paste("All station IDs provided not found on AirNow for provided date_range:",
-                  paste0(unknown_stations, collapse = ", ")))
-  }else if(length(unknown_stations) > 0){
-    warning(paste("Some station IDs provided not found on Airnow for provided date_range:",
-                  paste0(unknown_stations, collapse = ", ")))
+  if(! "all" %in% stations){
+    unknown_stations = seq(date_range[1], date_range[2], "25 days")  %>%
+      lapply(get_airnow_stations) %>%
+      dplyr::bind_rows() %>%
+      dplyr::pull(.data$site_id) %>%
+      {stations[! stations %in% .]}
+    if(length(unknown_stations) == length(stations)){
+      stop(paste("All station IDs provided not found on AirNow for provided date_range:",
+                    paste0(unknown_stations, collapse = ", ")))
+    }else if(length(unknown_stations) > 0){
+      warning(paste("Some station IDs provided not found on Airnow for provided date_range:",
+                    paste0(unknown_stations, collapse = ", ")))
+    }
   }
+
 
   ## Main ---
   # Make hourly file paths
