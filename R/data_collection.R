@@ -510,11 +510,11 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   # AirNow hourly data only available for 2014 onwards - warn user if date_range before
   min_date = lubridate::ymd_h("2014-01-01 00", tz = "UTC")
   if(any(date_range < min_date)){
+    # End the function here and throw error if all requested data before min date
+    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 (UTC).")
     warning(paste0(
       "No hourly data available on AirNow prior to 2014.\n",
       "Set the `date_range` to a period from 2014-01-01 (UTC) onwards to stop this warning."))
-    # End the function here and throw error if all requested data before min date
-    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 (UTC).")
     # Otherwise set the one that is before min date to the min date
     # (i.e. still try to get data from min_date onwards if the provided period straddles it)
     date_range[date_range < min_date] = min_date
@@ -522,12 +522,12 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   # AirNow hourly data only available for the current hour and prior - warn user if date_range in the future
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
   if(any(date_range > max_date)){
+    # End the function here and throw error if all requested data after max date
+    if(all(date_range > max_date)) stop("At least one date_range value must not be in the future.")
     warning(paste0(
       "No hourly data available on AirNow beyond the current hour (UTC).\n",
       "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
       " (UTC) and earlier to stop this warning."))
-    # End the function here and throw error if all requested data after max date
-    if(all(date_range > max_date)) stop("At least one date_range value must not be in the future.")
     #
     date_range[date_range > max_date] = max_date
   }
@@ -539,11 +539,11 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
                     "(at 25 and 55 minutes past the hour) or more frequently if possible.",
                     "All hourly files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
-                    "Data may be missing from stations for any hours in the past 48, especially for the current hour."))
+                    "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }else{ # if date_range in past 48 hours but not past 55 minutes
       warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
-                    "Data may be missing from stations for any hours in the past 48, especially for the current hour."))
+                    "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }
   }
 

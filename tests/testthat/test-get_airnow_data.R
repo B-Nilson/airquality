@@ -30,13 +30,13 @@ test_that("date_local converts to date_utc correctly", {
 })
 
 test_that("invalid date_range causes error/warning", {
-  # TODO: Improve messaging so tests pass
   expect_error(get_airnow_data("000010102", "bananas"))
   expect_error(get_airnow_data("000010102", c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02")))
   expect_error(get_airnow_data("000010102", "2010-01-01 00"))
   expect_error(get_airnow_data("000010102", "2029-01-01 00"))
-  expect_warning(get_airnow_data("000010102", date_range = c("1919-01-01 00","2014-01-01 01")))
-  expect_warning(get_airnow_data("000010102", c(format(Sys.time() - lubridate::hours(4), "%F %H"), "2029-01-01 00")))
+  expect_warning(get_airnow_data("000010102", date_range = c("1919-01-01 00","2014-01-01 02")))
+  date_range = c(format(Sys.time() - lubridate::hours(2), "%F %H"), "2029-01-01 00")
+  expect_warning(expect_warning(get_airnow_data("000010102", date_range)))
 })
 
 test_that("unknown stations cause warning", {
