@@ -190,7 +190,7 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
 
-  min_date = lubridate::ym(paste(min(qaqc_years),"01"))
+  min_date = lubridate::ym(paste(min(qaqc_years),"01"), tz = bcmoe_tzone)
   if(any(date_range < min_date)){
     if(all(date_range < min_date)) stop(paste("At least one date_range value must be on or after", format(min_date, "%F"),"(PST)."))
     warning(paste0(
