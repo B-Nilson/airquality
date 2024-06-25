@@ -13,6 +13,22 @@ test_that("all dates non-na and within requested period", {
   expect_true(all(obs$date_utc %>% dplyr::between(date_range[1], date_range[2])))
 })
 
+test_that("date_local converts to date_utc correctly", {
+  date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"), tz = "America/Vancouver")
+  obs = get_bc_data("0450307", date_range)
+  obs = obs %>% dplyr::mutate(
+    # Extract tz offset from end of local date string
+    tz_offset = stringr::str_extract(.data$date_local, "[+,-]\\d\\d?$") %>%
+      as.numeric(),
+    # Convert local date string to a datetime
+    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d?$") %>%
+      lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
+    # Convert from local to UTC by subtracting timezone offset
+    date_utc_from_local = .data$date_local - lubridate::hours(tz_offset))
+
+  expect_equal(obs$date_utc, obs$date_utc_from_local)
+})
+
 test_that("invalid date_range causes error/warning", {
   expect_error(get_bc_data("0450307", "bananas"))
   expect_error(get_bc_data("0450307", c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02")))
