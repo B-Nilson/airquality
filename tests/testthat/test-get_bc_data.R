@@ -52,6 +52,24 @@ test_that("too late date_range causes warning/error", {
   expect_warning(get_bc_data(station, date_range))
 })
 
+# Inputs: raw -------------------------------------------------------------
+
+test_that("raw data returned", {
+  obs_raw = get_bc_data("0450307", "2018-02-01 00", raw = TRUE)
+
+  expect_snapshot(obs_raw)
+})
+
+test_that("raw data differs", {
+  obs = get_bc_data("0450307", "2018-02-01 00", raw = FALSE)
+  obs_raw = get_bc_data("0450307", "2018-02-01 00", raw = TRUE)
+
+  # Case: column counts should differ
+  expect_true(ncol(obs) != ncol(obs_raw))
+  # Case: column names should differ
+  expect_true(!all(names(obs_raw) %in% names(obs)))
+})
+
 # Outputs: dates ---------------------------------------------------------
 
 test_that("all dates non-na and within requested period", {
