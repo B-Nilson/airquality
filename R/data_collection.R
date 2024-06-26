@@ -148,11 +148,22 @@ data_collection_funs = function(networks, sources){
 #' @param stations A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()
 #' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
-#' whereas two values will return data between (and including) those times
+#' whereas two values will return data between (and including) those times.
+#' Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.
 #'
 #' @description
-#' A short description...
+#' Air pollution monitoring is done by individial Provinces/Territories in Canada.
+#' The Province of British Columbia provides hourly observations (both QA/QC'ed and real-time raw data) through a public FTP site.
+#' Annual QA/QC'ed files are available for each monitoring station, usually 1-2 years out of date due to the QA/QC process.
+#' A single file is available for each station for all data following the QA/QC'ed years
+#' (with potentially 2+ years of data depending on the time since the last QA/QC'ed dataset was created).
+#'
+#' `get_bc_data()` provides an easy way to retrieve data for stations managed by the BC Government (using BC's "EMS IDs" - see `get_bc_stations()`) and a specified date or date range.
+#'
+#' Due to the FTP site's file structure, data retrieval time is proportional to the number of stations requested
+#' as well as the number of years (PST timezone) desired, with potentially longer retrieval times
+#' for non-QA/QC'ed years depending on the number of years of data in the stations raw data file.
 #'
 #' @seealso [get_bc_stations()]
 #' @return
@@ -176,8 +187,6 @@ data_collection_funs = function(networks, sources){
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bc_data(stations, date_range)
 get_bc_data = function(stations, date_range, raw = FALSE){
-  # TODO: date_utc and date_local
-  # TODO: stop/warn if date range not date or datetime
   # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
@@ -271,7 +280,7 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   return(stations_data)
 }
 
-# TODO: clean up and document
+# TODO: clean up and document and test
 # stations = get_bc_stations(years = 1998:2024)
 get_bc_stations = function(dates = Sys.time()){
   years = unique(lubridate::year(dates))
@@ -479,6 +488,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 #' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times
+#' Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
 #' raw data files desired (i.e. without standardized column names). Default is FALSE.
 #'
@@ -506,6 +516,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
+  # TODO: add description
   . = NULL # so build check doesn't yell at me
   ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)

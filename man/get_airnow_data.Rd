@@ -13,7 +13,8 @@ but only data for desired stations is returned. Default is "all".}
 
 \item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
-whereas two values will return data between (and including) those times}
+whereas two values will return data between (and including) those times
+Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
 
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if
 raw data files desired (i.e. without standardized column names). Default is FALSE.}
