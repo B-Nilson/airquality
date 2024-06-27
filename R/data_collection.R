@@ -3,6 +3,8 @@
 # TODO: Add station localization (country - prov/terr/state - county? region? - nearest community?)
 # TODO: update get_station_data() as additional functions added
 # TODO: add warning to get_airnow_data() for long time ranges (need to download each hour)
+# TODO: add an argument `quietly = FALSE` to silence warnings
+# TODO: add option to include meta data with observations
 
 # General -----------------------------------------------------------------
 
@@ -196,6 +198,7 @@ data_collection_funs = function(networks, sources){
 get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
+  # TODO: warn if returning non qa/qced data and add a test to check for that
 
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bc_qaqc_years()
