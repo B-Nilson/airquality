@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_collection.R
 \name{get_station_data}
 \alias{get_station_data}
-\title{Gather air quality observations from multiple data sources}
+\title{Gather air quality observations from multiple networks and data sources}
 \usage{
 get_station_data(
   locations,
@@ -19,7 +19,7 @@ OR an sf object with polygon(s) indicating area of interest.}
 
 \item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
-whereas two values will return data between (and including) those times}
+whereas two values will return data between (and including) those times.}
 
 \item{buffer_dist}{(Optional) A single numeric value indicating the distance to buffer the station search location by (typically units of km). Default is 10.}
 
@@ -28,20 +28,25 @@ whereas two values will return data between (and including) those times}
 \item{sources}{(Optional) A character vector indicating which data sources to get data from. Default is "all".}
 }
 \value{
-A tibble of hourly observation data over the date range for all
+A list with two elements, the first called "stations" is an sf POINT object with all
 stations from the specified monitoring networks and data sources
 within a specified location + buffer.
+The second is a tibble of hourly observation data over the date range for those
+stations IDs / networks / sources.
 
-Columns returned will vary depending on available data from station(s) and data sources.
+The columns date_utc, date_local, site_id, site_named, and quality_assured will always be returned
+Observation columns will be named "pollutant_averagingTime_unit", and
+will be present depending on available data from station(s) and data sources.
+Some sources may have additional columns included not found in others.
 }
 \description{
 This is the general use function for gathering air quality observation data in a
 standardized format for all desired monitoring networks and data sources available in this package.
 
 It either uses OpenStreetMap to look up a polygon for (a) specified location(s) or user-provided polygons to
-searche for monitoring stations within a buffer distance of the polygon(s) from
+search for monitoring stations within a buffer distance of the polygon(s) from
 the specified networks/sources. The data from those stations for the desired period
-are then downloaded, standardized and combined.
+are then downloaded, standardized, combined, and returned.
 
 Currently the following monitoring networks and data sources are available:
 
