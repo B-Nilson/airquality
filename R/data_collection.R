@@ -197,45 +197,20 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
 
-  . = NULL # so build check doesn't yell at me
-
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bc_qaqc_years()
 
-  ## Handle date_range inputs ---
-  date_range = handle_date_range(date_range)
-
+  # Handle date_range inputs
   min_date = lubridate::ym(paste(min(qaqc_years),"01"), tz = bcmoe_tzone)
-  if(any(date_range < min_date)){
-    if(all(date_range < min_date)) stop(paste("At least one date_range value must be on or after", format(min_date, "%F"),"(PST)."))
-    warning(paste0(
-      "No hourly data available on BC Gov FTP site prior to 1990.\n",
-      "Set the `date_range` to a period from 1990-01-01 (PST) onwards to stop this warning."))
-    # End the function here and throw error if all requested data before min date
-    # Otherwise set the one that is before min date to the min date
-    # (i.e. still try to get data from min_date onwards if the provided period straddles it)
-    date_range[date_range < min_date] = min_date
-  }
-  # hourly data only available for the current hour and prior - warn user if date_range in the future
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
-  if(any(date_range > max_date)){
-    # End the function here and throw error if all requested data after max date
-    if(all(date_range > max_date))  stop("At least one date_range value must not be in the future.")
-    warning(paste0(
-      "No hourly data available on BC Gov FTP site beyond the current hour (UTC).\n",
-      "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
-      " (UTC) and earlier to stop this warning."))
-    #
-    date_range[date_range > max_date] = max_date
-  }
-
+  date_range = handle_date_range(date_range, min_date, max_date)
 
   # Get all years in desired date range
   desired_years = seq( date_range[1], date_range[2], by = "1 days") %>%
     # convert to timezone of BCMoE data
     lubridate::with_tz(bcmoe_tzone) %>%
     # extract unique years
-    lubridate::year(.) %>%
+    lubridate::year() %>%
     unique() %>%
     sort()
 
@@ -246,33 +221,22 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # drop NA from case when no non qa/qced years provided
   years_to_get = years_to_get[!is.na(years_to_get)]
 
-  # Warn if any stations unknown
-  unknown_stations = years_to_get %>%
-    lapply(\(year) get_bc_stations(lubridate::ym(paste0(year, "06")))) %>%
-    dplyr::bind_rows() %>%
-    dplyr::pull(.data$site_id) %>%
-    {stations[! stations %in% .]}
-  if(length(unknown_stations) == length(stations)){
-    stop(paste("All station IDs provided not found on the BC FTP site for provided date_range:",
-               paste0(unknown_stations, collapse = ", ")))
-  }else if(length(unknown_stations) > 0){
-    warning(paste("Some station IDs provided not found on the BC FTP site for provided date_range:",
-                  paste0(unknown_stations, collapse = ", ")))
-  }
+  # Handle if any/all don't exist in meta data
+  check_stations_exist(
+    stations, lubridate::ym(paste0(years_to_get, "06")),
+    "the BC FTP site", get_bc_stations)
 
-  # Get data for each year for each station
+  # Get data for each year for all desired stations
   stations_data = years_to_get %>%
-    # Loop through years and get data for stations
     lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
-    # Combine annual datasets
     dplyr::bind_rows()
 
+  # Error if no data retrieved
   if(nrow(stations_data) == 0){
-    warning("No data available for provided stations and date_range")
-    return(NULL)
+    stop("No data available for provided stations and date_range")
   }
 
-  # Filter to desired date range
+  # Filter data to desired date range
   stations_data = dplyr::filter(stations_data,
       .data$date_utc %>% dplyr::between(date_range[1], date_range[2])) %>%
     # Drop duplicated dates for a particular station
@@ -280,10 +244,9 @@ get_bc_data = function(stations, date_range, raw = FALSE){
     # Replace blank values with NA
     dplyr::mutate_at(-(1:2), \(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
-    standardize_colnames(bcmoe_col_names, raw = raw) %>%
-    tibble::as_tibble()
+    standardize_colnames(bcmoe_col_names, raw = raw)
 
-  return(stations_data)
+  return(tibble::as_tibble(stations_data))
 }
 
 # TODO: clean up and document and test
@@ -556,22 +519,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
     }
   }
 
-  # Warn if any stations unknown
+  # If specific stations desired
   if(! "all" %in% stations){
-    unknown_stations = seq(date_range[1], date_range[2], "25 days")  %>%
-      lapply(get_airnow_stations) %>%
-      dplyr::bind_rows() %>%
-      dplyr::pull(.data$site_id) %>%
-      {stations[! stations %in% .]}
-    if(length(unknown_stations) == length(stations)){
-      stop(paste("All station IDs provided not found on AirNow for provided date_range:",
-                    paste0(unknown_stations, collapse = ", ")))
-    }else if(length(unknown_stations) > 0){
-      warning(paste("Some station IDs provided not found on Airnow for provided date_range:",
-                    paste0(unknown_stations, collapse = ", ")))
-    }
+    # Handle if any/all don't exist in meta data
+    check_stations_exist(
+      stations, seq(date_range[1], date_range[2], "25 days"),
+      "AirNow", get_airnow_stations)
   }
-
 
   ## Main ---
   # Make hourly file paths
