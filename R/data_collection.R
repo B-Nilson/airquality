@@ -251,7 +251,7 @@ get_bc_data = function(stations, date_range, raw = FALSE){
 
 # TODO: clean up and document and test
 # stations = get_bc_stations(years = 1998:2024)
-get_bc_stations = function(dates = Sys.time()){
+get_bc_stations = function(dates = Sys.time(), use_sf = FALSE){
   years = unique(lubridate::year(dates))
 
   # Define metadata file locations
@@ -284,8 +284,8 @@ get_bc_stations = function(dates = Sys.time()){
     # Combine meta files for each desired year
     dplyr::bind_rows()
 
-  # Clean up and export
-  stations %>%
+  # Clean up
+  stations = stations %>%
     # Choose and rename columns
     dplyr::select(
       site_id = "EMS_ID", site_name = "STATION_NAME",
@@ -303,6 +303,11 @@ get_bc_stations = function(dates = Sys.time()){
     unique() %>%
     # Drop missing lat/lng rows
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng))
+
+  # Convert to spatial if desired
+  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+
+  return(stations)
 }
 
 ## BC MoE Helpers ---------------------------------------------------------
@@ -600,13 +605,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 }
 
 # TODO: document
-get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours")){
+get_airnow_stations = function(dates = Sys.time(), use_sf = FALSE){
   # Make path to each supplied hours meta file
   dates = sort(dates, decreasing = TRUE) # Newest first
   airnow_paths = make_airnow_metapaths(dates)
 
-  # For each path
-  airnow_meta = lapply(
+  # For each date
+  stations = lapply(
       names(airnow_paths), \(d){
         p = airnow_paths[names(airnow_paths) == as.character(d)]
         # Download meta file, returning NULL if failed
@@ -634,7 +639,11 @@ get_airnow_stations = function(dates = lubridate::floor_date(Sys.time(), "hours"
       dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) %>%
     # Drop duplicated entries
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE)
-  return(airnow_meta)
+
+  # Convert to spatial if desired
+  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+
+  return(stations)
 }
 
 ## AirNow Helpers ----------------------------------------------------------
