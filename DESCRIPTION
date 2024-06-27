@@ -21,6 +21,7 @@ Imports:
     rlang,
     sf,
     stringr,
+    tibble,
     tidyr,
     zoo
 RoxygenNote: 7.3.1
