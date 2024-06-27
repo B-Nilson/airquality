@@ -83,7 +83,7 @@ standardize_colnames = function(df, all_col_names, raw = FALSE){
 }
 
 
-handle_date_range = function(date_range, min_date_allowed, max_date_allowed){
+handle_date_range = function(date_range, min_date_allowed = NA, max_date_allowed = NA){
   # If only a single value provided, repeat it
   if(length(date_range) == 1){
     date_range = c(date_range, date_range)
@@ -99,32 +99,37 @@ handle_date_range = function(date_range, min_date_allowed, max_date_allowed){
       stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
   }
 
-  # If any dates less than the min allowed date
-  if(any(date_range < min_date_allowed)){
-    # End the function here and throw error if all requested data before min_date_allowed
-    if(all(date_range < min_date_allowed))
-      stop(paste("At least one date_range value must be on or after",
-                 format(min_date_allowed, "%F"),"(PST)."))
-    # Otherwise, warn the user
-    warning(paste0(
-      "No data available for this source prior to",
-      format(min_date_allowed, "%F %H:%M %Z"),".\n",
-      "Set the `date_range` to a period from this date onwards to stop this warning."))
-    # And set the date that is before min date to the min date
-    # (i.e. still try to get data from min_date_allowed onwards if the provided period straddles it)
-    date_range[date_range < min_date_allowed] = min_date_allowed
+  if(!is.na(min_date_allowed)){
+    # If any dates less than the min allowed date
+    if(any(date_range < min_date_allowed)){
+      # End the function here and throw error if all requested data before min_date_allowed
+      if(all(date_range < min_date_allowed))
+        stop(paste("At least one date_range value must be on or after",
+                   format(min_date_allowed, "%F"),"(PST)."))
+      # Otherwise, warn the user
+      warning(paste0(
+        "No data available for this source prior to",
+        format(min_date_allowed, "%F %H:%M %Z"),".\n",
+        "Set the `date_range` to a period from this date onwards to stop this warning."))
+      # And set the date that is before min date to the min date
+      # (i.e. still try to get data from min_date_allowed onwards if the provided period straddles it)
+      date_range[date_range < min_date_allowed] = min_date_allowed
+    }
   }
-  # hourly data only available for the current hour and prior - warn user if date_range in the future
-  if(any(date_range > max_date_allowed)){
-    # End the function here and throw error if all requested data after max date
-    if(all(date_range > max_date_allowed)) stop("At least one date_range value must not be in the future.")
-    warning(paste0(
-      "No hourly data available from this source beyond the current hour (UTC).\n",
-      "Set the `date_range` to a period from ", format(max_date_allowed, "%F %H:%M %Z"),
-      " and earlier to stop this warning."))
-    # And set the date that is after max_date_allowed to the max_date_allowed
-    # (i.e. still try to get data from min_date_allowed onwards if the provided period straddles it)
-    date_range[date_range > max_date_allowed] = max_date_allowed
+
+  if(!is.na(max_date_allowed)){
+    # hourly data only available for the current hour and prior - warn user if date_range in the future
+    if(any(date_range > max_date_allowed)){
+      # End the function here and throw error if all requested data after max date
+      if(all(date_range > max_date_allowed)) stop("At least one date_range value must not be in the future.")
+      warning(paste0(
+        "No hourly data available from this source beyond the current hour (UTC).\n",
+        "Set the `date_range` to a period from ", format(max_date_allowed, "%F %H:%M %Z"),
+        " and earlier to stop this warning."))
+      # And set the date that is after max_date_allowed to the max_date_allowed
+      # (i.e. still try to get data from min_date_allowed onwards if the provided period straddles it)
+      date_range[date_range > max_date_allowed] = max_date_allowed
+    }
   }
   return(date_range)
 }
