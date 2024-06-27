@@ -56,7 +56,7 @@ AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
 AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
 }
 \references{
-\link{https://doi.org/10.3155/1047-3289.58.3.435}
+\url{https://doi.org/10.3155/1047-3289.58.3.435}
 }
 \seealso{
 Other Canadian Air Quality: 

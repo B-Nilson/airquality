@@ -25,7 +25,7 @@
 #' and has been adopted by all Canadian provinces/territories
 #' (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 #'
-#' @references \link{https://doi.org/10.3155/1047-3289.58.3.435}
+#' @references \url{https://doi.org/10.3155/1047-3289.58.3.435}
 #'
 #' @family Canadian Air Quality
 #' @family Air Quality Standards
@@ -119,7 +119,7 @@ AQHI = function(datetimes, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, qui
 #' and has been adopted by all Canadian provinces/territories as of 2024
 #' (except Quebec where they use the AQI instead of the AQHI and AQHI+).
 #'
-#' @references \link{https://doi.org/10.17269/s41997-019-00237-w}
+#' @references \url{https://doi.org/10.17269/s41997-019-00237-w}
 #'
 #' @family Canadian Air Quality
 #' @family Air Quality Standards
@@ -275,7 +275,7 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #' Management levels (Green -> Yellow -> Orange -> Red) are defined for each pollutant standard.
 #' A "Red" level indicates exceedance of the CAAQS and management plans are typically developed for regions at "Orange" or worse levels.
 #'
-#' @references \link{https://ccme.ca/en/air-quality-report}
+#' @references \url{https://ccme.ca/en/air-quality-report}
 #' @family Canadian Air Quality
 #' @family Air Quality Standards
 #'

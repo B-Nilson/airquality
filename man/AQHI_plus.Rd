@@ -50,7 +50,7 @@ obs = data.frame(
 AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 }
 \references{
-\link{https://doi.org/10.17269/s41997-019-00237-w}
+\url{https://doi.org/10.17269/s41997-019-00237-w}
 }
 \seealso{
 Other Canadian Air Quality: 

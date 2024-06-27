@@ -47,7 +47,7 @@ CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
 }
 \references{
-\link{https://ccme.ca/en/air-quality-report}
+\url{https://ccme.ca/en/air-quality-report}
 }
 \seealso{
 Other Canadian Air Quality: 
