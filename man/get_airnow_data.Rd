@@ -13,30 +13,43 @@ but only data for desired stations is returned. Default is "all".}
 
 \item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
-whereas two values will return data between (and including) those times
-Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
+whereas two values will return data between (and including) those times.
+Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
 
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if
-raw data files desired (i.e. without standardized column names). Default is FALSE.}
+raw data files desired (i.e. without a standardized format). Default is FALSE.}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
-Columns available will vary depending on available data from station(s).
+Columns returned will vary depending on available data from station(s).
+
+Dates are UTC time and "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 }
 \description{
-A short description...
+AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
+observation data from stations in the US and many other countries globally.
+
+The AirNow API provides access to hourly raw observation files which are updated
+as data are received from the various monitoring agencies. Due to the real-time,
+non-validated nature of these data great care must be taken if using these
+data to support regulation, trends, guidance, or any other government or public decision making.
+It is highly recommended to seek out quality assured data where possible.
+
+[get_airnow_data()] provides an easy way to retrieve these observations using
+AirNow's station IDs (see [get_airnow_stations()]) and a specified date or date range.
+
+Due to the API's file structure, data retrieval time is proportional to the
+number of hours of data desired, regardless of the number of stations.
 }
 \examples{
-# Get data for all stations for first 3 hours of Jan 2019
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
-get_airnow_data("all", date_range)
+# Get data for all stations for first 3 hours (UTC) of Jan 2019
+get_airnow_data("all", c("2019-01-01 01", "2019-01-01 03"))
 
-# Get data for two specific stations for first 3 hours of Jan 2019
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
-get_airnow_data(c("000010102", "000010401"), date_range)
+# Get data for two specific stations for first 3 hours (UTC) of Jan 2019
+get_airnow_data(c("000010102", "000010401"),  c("2019-01-01 01", "2019-01-01 03"))
 
-# Get non-standardized data for all stations for first 3 hours of Jan 2019
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
+# Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
+date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 get_airnow_data("all", date_range, raw = TRUE)
 }
 \seealso{

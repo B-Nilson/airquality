@@ -7,32 +7,39 @@
 get_bc_data(stations, date_range, raw = FALSE)
 }
 \arguments{
-\item{stations}{A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()}
+\item{stations}{A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bc_stations()]).}
 
 \item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
 whereas two values will return data between (and including) those times.
-Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
+Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
 
-\item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.}
+\item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
+if raw data files desired (i.e. without a standardized format). Default is FALSE.}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
-Columns available will vary depending on available data from station(s).
+Columns returned will vary depending on available data from station(s).
+
+Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 }
 \description{
-Air pollution monitoring is done by individial Provinces/Territories in Canada.
-The Province of British Columbia provides hourly observations (both QA/QC'ed and real-time raw data) through a public FTP site.
+Air pollution monitoring in Canada is done by individual Provinces/Territories,
+primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
+The Province of British Columbia hosts it's hourly air quality observations
+through a public FTP site, providing both historic QA/QC'ed and real-time raw data.
 
-Annual QA/QC'ed files are available for each monitoring station, usually 1-2 years out of date due to the QA/QC process.
-A single file is available for each station for all data following the QA/QC'ed years
-(with potentially 2+ years of data depending on the time since the last QA/QC'ed dataset was created).
+Annual QA/QC'ed files are available on the BC FTP site for each monitoring station,
+however these are usually 1-2 years out of date due to the QA/QC process.
+A single file is available for each station for all non-QA/QC'ed years, which has
+potentially 0-2+ years of data depending on the time since the last QA/QC'ed dataset was created).
 
-`get_bc_data()` provides an easy way to retrieve data for stations managed by the BC Government (using BC's "EMS IDs" - see `get_bc_stations()`) and a specified date or date range.
+[get_bc_data()] provides an easy way to retrieve these observations using
+BC's station "EMS IDs"  (see [get_bc_stations()]) and a specified date or date range.
 
 Due to the FTP site's file structure, data retrieval time is proportional to the number of stations requested
-as well as the number of years (PST timezone) desired, with potentially longer retrieval times
-for non-QA/QC'ed years depending on the number of years of data in the stations raw data file.
+as well as the number of years of data (PST timezone) desired. There can be potentially longer retrieval times
+for non-QA/QC'ed years depending on the current time since the last QA/QC'ed year due to larger file sizes.
 }
 \examples{
 # For a single station

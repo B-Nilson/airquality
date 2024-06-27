@@ -41,12 +41,12 @@ Gather air quality observations from multiple data sources
 get_station_data("Fort St. John, BC, Canada", "2019-01-01 00")
 
 # Get data for all stations within 25 km of Kentucky, USA or Edmonton, AB, Canada
-#  for first 1 hour of Jan 2019
+#  for first hour of Jan 2019
 get_station_data(c("Kentucky, USA", "Edmonton, AB, Canada"),
                    "2019-01-01 00", buffer_dist = 25)
 
-# Get data for all FEM stations in Kamloops, BC, Canada from the BC Gov't only
-#  for first 1 hour of Jan 2019
+# Get data for all FEM stations within Kamloops, BC, Canada from the BC Gov't only
+#  for first hour of Jan 2019
 get_station_data(c("Kamloops, BC, Canada"), "2019-01-01 00", buffer_dist = 0,
                  networks = "FEM", sources = "BC")
 }

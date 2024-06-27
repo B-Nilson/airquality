@@ -30,12 +30,12 @@
 #' get_station_data("Fort St. John, BC, Canada", "2019-01-01 00")
 #'
 #' # Get data for all stations within 25 km of Kentucky, USA or Edmonton, AB, Canada
-#' #  for first 1 hour of Jan 2019
+#' #  for first hour of Jan 2019
 #' get_station_data(c("Kentucky, USA", "Edmonton, AB, Canada"),
 #'                    "2019-01-01 00", buffer_dist = 25)
 #'
-#' # Get data for all FEM stations in Kamloops, BC, Canada from the BC Gov't only
-#' #  for first 1 hour of Jan 2019
+#' # Get data for all FEM stations within Kamloops, BC, Canada from the BC Gov't only
+#' #  for first hour of Jan 2019
 #' get_station_data(c("Kamloops, BC, Canada"), "2019-01-01 00", buffer_dist = 0,
 #'                  networks = "FEM", sources = "BC")
 get_station_data = function(locations, date_range, buffer_dist = 10,
@@ -145,31 +145,38 @@ data_collection_funs = function(networks, sources){
 
 #' Download air quality station observations from the British Columbia (Canada) Government
 #'
-#' @param stations A character vector of one or more station IDs (BC EMS IDs) identifying stations data desired for. See also: get_bc_stations()
+#' @param stations A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bc_stations()]).
 #' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times.
-#' Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
-#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if raw data files desired (i.e. without standardized column names). Default is FALSE.
+#' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
+#' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #'
 #' @description
-#' Air pollution monitoring is done by individial Provinces/Territories in Canada.
-#' The Province of British Columbia provides hourly observations (both QA/QC'ed and real-time raw data) through a public FTP site.
-#' Annual QA/QC'ed files are available for each monitoring station, usually 1-2 years out of date due to the QA/QC process.
-#' A single file is available for each station for all data following the QA/QC'ed years
-#' (with potentially 2+ years of data depending on the time since the last QA/QC'ed dataset was created).
+#' Air pollution monitoring in Canada is done by individual Provinces/Territories,
+#' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
+#' The Province of British Columbia hosts it's hourly air quality observations
+#' through a public FTP site, providing both historic QA/QC'ed and real-time raw data.
 #'
-#' `get_bc_data()` provides an easy way to retrieve data for stations managed by the BC Government (using BC's "EMS IDs" - see `get_bc_stations()`) and a specified date or date range.
+#' Annual QA/QC'ed files are available on the BC FTP site for each monitoring station,
+#' however these are usually 1-2 years out of date due to the QA/QC process.
+#' A single file is available for each station for all non-QA/QC'ed years, which has
+#' potentially 0-2+ years of data depending on the time since the last QA/QC'ed dataset was created).
+#'
+#' [get_bc_data()] provides an easy way to retrieve these observations using
+#' BC's station "EMS IDs"  (see [get_bc_stations()]) and a specified date or date range.
 #'
 #' Due to the FTP site's file structure, data retrieval time is proportional to the number of stations requested
-#' as well as the number of years (PST timezone) desired, with potentially longer retrieval times
-#' for non-QA/QC'ed years depending on the number of years of data in the stations raw data file.
+#' as well as the number of years of data (PST timezone) desired. There can be potentially longer retrieval times
+#' for non-QA/QC'ed years depending on the current time since the last QA/QC'ed year due to larger file sizes.
 #'
 #' @seealso [get_bc_stations()]
 #' @return
 #' A tibble of hourly observation data for desired station(s) and date range where available.
-#' Columns available will vary depending on available data from station(s).
+#' Columns returned will vary depending on available data from station(s).
 #'
+#' Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @family Data Collection
 #' @family Canadian Air Quality
 #'
@@ -187,7 +194,6 @@ data_collection_funs = function(networks, sources){
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bc_data(stations, date_range)
 get_bc_data = function(stations, date_range, raw = FALSE){
-  # TODO: add description
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
 
@@ -487,63 +493,53 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
 #' but only data for desired stations is returned. Default is "all".
 #' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
-#' whereas two values will return data between (and including) those times
-#' Interpreted as "backward-looking", so a date of "2019-01-01 01" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' whereas two values will return data between (and including) those times.
+#' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
-#' raw data files desired (i.e. without standardized column names). Default is FALSE.
+#' raw data files desired (i.e. without a standardized format). Default is FALSE.
 #'
 #' @description
-#' A short description...
+#' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
+#' observation data from stations in the US and many other countries globally.
+#'
+#' The AirNow API provides access to hourly raw observation files which are updated
+#' as data are received from the various monitoring agencies. Due to the real-time,
+#' non-validated nature of these data great care must be taken if using these
+#' data to support regulation, trends, guidance, or any other government or public decision making.
+#' It is highly recommended to seek out quality assured data where possible.
+#'
+#' [get_airnow_data()] provides an easy way to retrieve these observations using
+#' AirNow's station IDs (see [get_airnow_stations()]) and a specified date or date range.
+#'
+#' Due to the API's file structure, data retrieval time is proportional to the
+#' number of hours of data desired, regardless of the number of stations.
 #'
 #' @return
 #' A tibble of hourly observation data for desired station(s) and date range where available.
-#' Columns available will vary depending on available data from station(s).
+#' Columns returned will vary depending on available data from station(s).
+#'
+#' Dates are UTC time and "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @export
 #'
 #' @family Data Collection
 #' @family USA Air Quality
 #'
 #' @examples
-#' # Get data for all stations for first 3 hours of Jan 2019
-#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
-#' get_airnow_data("all", date_range)
+#' # Get data for all stations for first 3 hours (UTC) of Jan 2019
+#' get_airnow_data("all", c("2019-01-01 01", "2019-01-01 03"))
 #'
-#' # Get data for two specific stations for first 3 hours of Jan 2019
-#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
-#' get_airnow_data(c("000010102", "000010401"), date_range)
+#' # Get data for two specific stations for first 3 hours (UTC) of Jan 2019
+#' get_airnow_data(c("000010102", "000010401"),  c("2019-01-01 01", "2019-01-01 03"))
 #'
-#' # Get non-standardized data for all stations for first 3 hours of Jan 2019
-#' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-01 02"), tz = "Etc/GMT+8")
+#' # Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
+#' date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
-  # TODO: add description
-  . = NULL # so build check doesn't yell at me
-  ## Handle date_range inputs ---
-  date_range = handle_date_range(date_range)
-  # AirNow hourly data only available for 2014 onwards - warn user if date_range before
+  # TODO: add warning that all data on AirNow is not QA/QC'ed
+  ## Handle date_range inputs
   min_date = lubridate::ymd_h("2014-01-01 01", tz = "UTC")
-  if(any(date_range < min_date)){
-    # End the function here and throw error if all requested data before min date
-    if(all(date_range < min_date)) stop("At least one date_range value must be on or after 2014-01-01 01:00 (UTC).")
-    warning(paste0(
-      "No hourly data available on AirNow prior to 2014.\n",
-      "Set the `date_range` to a period from 2014-01-01 01:00 (UTC) onwards to stop this warning."))
-    # Otherwise set the one that is before min date to the min date
-    # (i.e. still try to get data from min_date onwards if the provided period straddles it)
-    date_range[date_range < min_date] = min_date
-  }
-  # AirNow hourly data only available for the current hour and prior - warn user if date_range in the future
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
-  if(any(date_range > max_date)){
-    # End the function here and throw error if all requested data after max date
-    if(all(date_range > max_date)) stop("At least one date_range value must not be in the future.")
-    warning(paste0(
-      "No hourly data available on AirNow beyond the current hour (UTC).\n",
-      "Set the `date_range` to a period from ", format(max_date, "%F %H:00"),
-      " (UTC) and earlier to stop this warning."))
-    #
-    date_range[date_range > max_date] = max_date
-  }
+  date_range = handle_date_range(date_range, min_date, max_date)
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if(max(date_range) - max_date > lubridate::hours(-48)){ # if date_range in past 48 hours
