@@ -1,3 +1,8 @@
+test_that("an error/warning is not thrown in normal usaage", {
+  date_range = "2019-02-01 00"
+  obs = expect_no_warning(expect_no_error(
+    get_bc_data("0450307", date_range)))
+})
 
 # Input: stations ---------------------------------------------------------
 
