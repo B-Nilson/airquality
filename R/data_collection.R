@@ -39,11 +39,11 @@
 #' # Get data for all FEM stations within Kamloops, BC, Canada from the BC Gov't only
 #' #  for first hour of Jan 2019
 #' get_station_data(c("Kamloops, BC, Canada"), "2019-01-01 00", buffer_dist = 0,
-#'                  networks = "FEM", sources = "BC")
+#'                  networks = "FEM", sources = "BCgov")
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = "all", sources = "all"){
   if(any(networks == "all")) networks = c("FEM")
-  if(any(sources == "all")) sources = c("BC", "AirNow")
+  if(any(sources == "all")) sources = c("BCgov", "AirNow")
 
   . = NULL # so build check doesn't yell at me
 
@@ -132,7 +132,7 @@ data_collection_funs = function(networks, sources){
     # Federal Equivalent Method monitors
     FEM = list(
       # Canada Province of BC
-      BC = list(data = get_bc_data, meta = get_bc_stations),
+      BCgov = list(data = get_bc_data, meta = get_bc_stations),
       # USA (and elsewhere...) AirNow
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
     )
