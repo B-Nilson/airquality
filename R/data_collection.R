@@ -20,26 +20,41 @@
 #' @param networks (Optional) A character vector indicating which monitoring networks to get data for. Default is "all".
 #' @param sources (Optional) A character vector indicating which data sources to get data from. Default is "all".
 #'
+#' @description
+#' This is the general use function for gathering air quality observation data in a
+#' standardized format for all desired monitoring networks and data sources available in this package.
+#'
+#' It either uses OpenStreetMap to look up a polygon for (a) specified location(s) or user-provided polygons to
+#' searche for monitoring stations within a buffer distance of the polygon(s) from
+#' the specified networks/sources. The data from those stations for the desired period
+#' are then downloaded, standardized and combined.
+#'
+#' Currently the following monitoring networks and data sources are available:
+#'
+#' FEM (Regulatory-grade "Federal Equivalent Method") monitors:
+#' \enumerate{
+#'  \item AirNow (US/Global, non-validated, real-time)
+#'  \item BCgov (B.C. (Canada), validated and non-validated, real-time)
+#' }
+#'
 #' @return
-#' A tibble of hourly observation data for the specified date range and for
-#' stations within a specified location + buffer from specified monitoring networks
-#' and data sources where available.
-#' Columns available will vary depending on available data from station(s) and data sources.
+#' A tibble of hourly observation data over the date range for all
+#' stations from the specified monitoring networks and data sources
+#' within a specified location + buffer.
+#'
+#' Columns returned will vary depending on available data from station(s) and data sources.
 #' @export
 #'
 #' @examples
-#' # Get data for all stations within 10 km of Fort St. John, BC for first 1 hour of Jan 2019
-#' get_station_data("Fort St. John, BC, Canada", "2019-01-01 00")
+#' # Get data for all stations within 10 km of Fort St. John, BC
+#' #  for the first hour of Feb 2019
+#' get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 #'
-#' # Get data for all stations within 25 km of Kentucky, USA or Edmonton, AB, Canada
-#' #  for first hour of Jan 2019
-#' get_station_data(c("Kentucky, USA", "Edmonton, AB, Canada"),
-#'                    "2019-01-01 00", buffer_dist = 25)
-#'
-#' # Get data for all FEM stations within Kamloops, BC, Canada from the BC Gov't only
-#' #  for first hour of Jan 2019
-#' get_station_data(c("Kamloops, BC, Canada"), "2019-01-01 00", buffer_dist = 0,
-#'                  networks = "FEM", sources = "BCgov")
+#' # Get data for all FEM stations within 25 km of 2 BC cities from the BC Gov't only
+#' #  for the first hour of Feb 2019
+#' get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
+#'                    "2019-02-01 01", buffer_dist = 25,
+#'                    networks = "FEM", sources = "BCgov")
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = "all", sources = "all"){
   if(any(networks == "all")) networks = c("FEM")

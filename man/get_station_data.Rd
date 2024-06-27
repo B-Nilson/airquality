@@ -56,13 +56,9 @@ FEM (Regulatory-grade "Federal Equivalent Method") monitors:
 #  for the first hour of Feb 2019
 get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 
-# Get data for all stations within 25 km of Kentucky, USA or Edmonton, AB, Canada
+# Get data for all FEM stations within 25 km of 2 BC cities from the BC Gov't only
 #  for the first hour of Feb 2019
-get_station_data(c("Kentucky, USA", "Edmonton, AB, Canada"),
-                   "2019-02-01 01", buffer_dist = 25)
-
-# Get data for all FEM stations within Kamloops, BC, Canada from the BC Gov't only
-#  for the first hour of Feb 2019
-get_station_data(c("Kamloops, BC, Canada"), "2019-02-01 00", buffer_dist = 0,
-                 networks = "FEM", sources = "BCgov")
+get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
+                   "2019-02-01 01", buffer_dist = 25,
+                   networks = "FEM", sources = "BCgov")
 }
