@@ -152,7 +152,7 @@ data_collection_funs = function(networks, sources){
     # Federal Equivalent Method monitors
     FEM = list(
       # Canada Province of BC
-      BCgov = list(data = get_bc_data, meta = get_bc_stations),
+      BCgov = list(data = get_bcgov_data, meta = get_bcgov_stations),
       # USA (and elsewhere...) AirNow
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
     )
@@ -167,7 +167,7 @@ data_collection_funs = function(networks, sources){
 
 #' Download air quality station observations from the British Columbia (Canada) Government
 #'
-#' @param stations A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bc_stations()]).
+#' @param stations A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).
 #' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times.
@@ -186,14 +186,14 @@ data_collection_funs = function(networks, sources){
 #' A single file is available for each station for all non-QA/QC'ed years, which has
 #' potentially 0-2+ years of data depending on the time since the last QA/QC'ed dataset was created).
 #'
-#' [get_bc_data()] provides an easy way to retrieve these observations using
-#' BC's station "EMS IDs"  (see [get_bc_stations()]) and a specified date or date range.
+#' [get_bcgov_data()] provides an easy way to retrieve these observations using
+#' BC's station "EMS IDs"  (see [get_bcgov_stations()]) and a specified date or date range.
 #'
 #' Due to the FTP site's file structure, data retrieval time is proportional to the number of stations requested
 #' as well as the number of years of data (PST timezone) desired. There can be potentially longer retrieval times
 #' for non-QA/QC'ed years depending on the current time since the last QA/QC'ed year due to larger file sizes.
 #'
-#' @seealso [get_bc_stations()]
+#' @seealso [get_bcgov_stations()]
 #' @return
 #' A tibble of hourly observation data for desired station(s) and date range where available.
 #' Columns returned will vary depending on available data from station(s).
@@ -205,23 +205,23 @@ data_collection_funs = function(networks, sources){
 #' @export
 #' @examples
 #' # For a single station
-#' station = "0450307" # EMS IDs - see get_bc_stations()
+#' station = "0450307" # EMS IDs - see get_bcgov_stations()
 #' # For the years 2019 and 2020
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
-#' get_bc_data(station, date_range)
+#' get_bcgov_data(station, date_range)
 #'
 #' # For multiple stations
-#' stations = c("0450307", "E206898") # EMS IDs - see get_bc_stations()
+#' stations = c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 #' # For first week of January 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
-#' get_bc_data(stations, date_range)
-get_bc_data = function(stations, date_range, raw = FALSE){
+#' get_bcgov_data(stations, date_range)
+get_bcgov_data = function(stations, date_range, raw = FALSE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
   # TODO: warn if returning non qa/qced data and add a test to check for that
 
   # Get list of years currently QA/QC'ed
-  qaqc_years = get_bc_qaqc_years()
+  qaqc_years = get_bcgov_qaqc_years()
 
   # Handle date_range inputs
   min_date = lubridate::ym(paste(min(qaqc_years),"01"), tz = bcmoe_tzone)
@@ -247,11 +247,11 @@ get_bc_data = function(stations, date_range, raw = FALSE){
   # Handle if any/all don't exist in meta data
   check_stations_exist(
     stations, lubridate::ym(paste0(years_to_get, "06")),
-    "the BC FTP site", get_bc_stations)
+    "the BC FTP site", get_bcgov_stations)
 
   # Get data for each year for all desired stations
   stations_data = years_to_get %>%
-    lapply(\(year) get_annual_bc_data(stations, year, qaqc_years)) %>%
+    lapply(\(year) get_annual_bcgov_data(stations, year, qaqc_years)) %>%
     dplyr::bind_rows()
 
   # Error if no data retrieved
@@ -273,8 +273,8 @@ get_bc_data = function(stations, date_range, raw = FALSE){
 }
 
 # TODO: clean up and document and test
-# stations = get_bc_stations(years = 1998:2024)
-get_bc_stations = function(dates = Sys.time(), use_sf = FALSE){
+# stations = get_bcgov_stations(years = 1998:2024)
+get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
   years = unique(lubridate::year(dates))
 
   # Define metadata file locations
@@ -283,7 +283,7 @@ get_bc_stations = function(dates = Sys.time(), use_sf = FALSE){
   ftp_site_raw  = paste0(bc_ftp_site, "Hourly_Raw_Air_Data/Year_to_Date/")
 
   # Get list of years currently QA/QC'ed
-  qaqc_years = get_bc_qaqc_years()
+  qaqc_years = get_bcgov_qaqc_years()
 
   # Drop all years not in qaqc_years except the first
   years = sort(years) # ensure years are in order
@@ -341,11 +341,11 @@ bcmoe_tzone = "Etc/GMT+8"
 
 bcmoe_col_names = c(
   # Meta
-  date_utc = "date_utc", # Added by get_annual_bc_data()
+  date_utc = "date_utc", # Added by get_annual_bcgov_data()
   date_local = "DATE_PST",
   site_id = "EMS_ID",
   site_name = "STATION_NAME",
-  quality_assured = "quality_assured", # Added by get_annual_bc_data()
+  quality_assured = "quality_assured", # Added by get_annual_bcgov_data()
   # Particulate Matter
   pm25_1hr_ugm3 = "PM25",
   pm25_1hr_ugm3_instrument = "PM25_INSTRUMENT",
@@ -392,7 +392,7 @@ bcmoe_col_names = c(
 
 # Checks the years in the QA/QC'ed data archive for BC MoE data
 # (usually 1-2 years out of date)
-get_bc_qaqc_years = function(){
+get_bcgov_qaqc_years = function(){
   . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
 
@@ -414,7 +414,7 @@ get_bc_qaqc_years = function(){
   return(years)
 }
 
-get_annual_bc_data = function(stations, year, qaqc_years = NULL){
+get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
   . = NULL # so build check doesn't yell at me
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
@@ -432,7 +432,7 @@ get_annual_bc_data = function(stations, year, qaqc_years = NULL){
     STATION_NAME = "character")
 
   # Get list of years that have been qaqc'ed if needed
-  if (is.null(qaqc_years)) qaqc_years = get_bc_qaqc_years()
+  if (is.null(qaqc_years)) qaqc_years = get_bcgov_qaqc_years()
 
   # If year has qaqc'ed data
   if (year %in% qaqc_years) {

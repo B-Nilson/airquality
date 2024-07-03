@@ -53,7 +53,7 @@ CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
 Other Canadian Air Quality: 
 \code{\link{AQHI}()},
 \code{\link{AQHI_plus}()},
-\code{\link{get_bc_data}()}
+\code{\link{get_bcgov_data}()}
 
 Other Air Quality Standards: 
 \code{\link{AQHI}()},
