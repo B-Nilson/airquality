@@ -4,16 +4,10 @@
 \alias{AQHI}
 \title{Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations}
 \usage{
-AQHI(
-  datetimes,
-  pm25_1hr_ugm3,
-  no2_1hr_ppb = NA,
-  o3_1hr_ppb = NA,
-  quiet = FALSE
-)
+AQHI(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE)
 }
 \arguments{
-\item{datetimes}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
+\item{dates}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
 
 \item{pm25_1hr_ugm3}{Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
@@ -27,7 +21,7 @@ AQHI(
 A tibble (data.frame) with columns (*if all 3 pollutants provided):
 date, pm25, o3*, no2*, pm25_rolling_3hr*, o3_rolling_3hr*, o3_rolling_3hr*,
  AQHI, AQHI_plus, risk, high_risk_pop_message, general_pop_message, AQHI_plus_exceeds_AQHI*
- and potentially more rows than `length(datetimes)` (due to any missing hours being filled with NA values).
+ and potentially more rows than `length(dates)` (due to any missing hours being filled with NA values).
 }
 \description{
 The Canadian Air Quality Health Index (AQHI) combines the health risk of
@@ -50,10 +44,10 @@ obs = data.frame(
   date = seq(lubridate::ymd_h("2024-01-01 00"),
              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 
-AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
+AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
 }
 \references{
 \url{https://doi.org/10.3155/1047-3289.58.3.435}

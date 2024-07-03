@@ -5,7 +5,7 @@
 \title{Calculate the US AQI from pollutant observations}
 \usage{
 AQI(
-  datetimes = Sys.time(),
+  dates = Sys.time(),
   o3_8hr_ppm = NA,
   o3_1hr_ppm = NA,
   pm25_24hr_ugm3 = NA,
@@ -19,7 +19,7 @@ AQI(
 )
 }
 \arguments{
-\item{datetimes}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
+\item{dates}{Vector of hourly dates corresponding to observations. Date gaps will be filled automatically.}
 
 \item{o3_8hr_ppm}{(Optional) Numeric vector of hourly 8-hour mean ozone (O3) concentrations (ppm).
 Will be calculated from o3_1hr_ppm if provided and o3_8hr_ppm not provided.}
@@ -49,7 +49,7 @@ Will be calculated from co_1hr_ppm if provided and co_8hr_ppm not provided.}
 \value{
 A tibble (data.frame) with columns:
 date, AQI, risk_category, principal_pol
-and 1 row for each day between the min and max values of the provided datetimes
+and 1 row for each day between the min and max values of the provided dates
 }
 \description{
 The Air Quality Index (AQI) is used for reporting on air quality in the United States,

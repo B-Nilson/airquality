@@ -5,7 +5,7 @@
 \title{Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)}
 \usage{
 CAAQS(
-  datetimes,
+  dates,
   pm25_1hr_ugm3 = NULL,
   o3_1hr_ppb = NULL,
   no2_1hr_ppb = NULL,
@@ -14,7 +14,7 @@ CAAQS(
 )
 }
 \arguments{
-\item{datetimes}{Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.}
+\item{dates}{Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.}
 
 \item{pm25_1hr_ugm3}{(Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).}
 
@@ -43,7 +43,7 @@ obs = data.frame(
   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
 )
-CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+CAAQS(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
 }
 \references{
