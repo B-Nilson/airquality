@@ -588,17 +588,16 @@ AQI = function(dates = Sys.time(),
                pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
                co_8hr_ppm = NA, co_1hr_ppm = NA,
                so2_1hr_ppb = NA, no2_1hr_ppb = NA){
-  # TODO: Review https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
-  . = NULL # so build check doesn't yell at me
-  # Determine which non-na pollutants provided
-  pols = c("o3_8hr_ppm", "o3_1hr_ppm",
+  # TODO: Reference https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
+
+  # Determine which pollutants provided as input
+  AQI_pols = c("o3_8hr_ppm", "o3_1hr_ppm",
            "pm25_24hr_ugm3", "pm25_1hr_ugm3",
            "pm10_24hr_ugm3", "pm10_1hr_ugm3",
-           "co_8hr_ppm", "co_1hr_ppm",
-           "so2_1hr_ppb", "no2_1hr_ppb")
-  all_missing = lapply(stats::setNames(pols, pols), \(pol){
-    all(is.na(get(pol)))
-  })
+           "co_8hr_ppm"    , "co_1hr_ppm",
+           "so2_1hr_ppb"   , "no2_1hr_ppb")
+  all_missing = lapply(AQI_pols, \(pol) all(is.na(get(pol)))) %>%
+    stats::setNames(AQI_pols)
 
   # Ensure at least one pollutants data is provided
   if(all(unlist(all_missing))){
@@ -613,8 +612,10 @@ AQI = function(dates = Sys.time(),
                    pm10_24hr_ugm3, pm10_1hr_ugm3,
                    co_8hr_ppm, co_1hr_ppm,
                    so2_1hr_ppb, no2_1hr_ppb) %>%
-    tidyr::complete(date = seq(min(.data$date), max(.data$date), "1 hours"))
+    # Fill hourly date gaps with NA obs
+    tidyr::complete(date = seq(min(dates), max(dates), "1 hours"))
 
+  ## Make additional running averages if needed
   # If no non-NA o3_8hr_ppm values provided, but 1hr ozone is provided
   if(all_missing$o3_8hr_ppm & !all_missing$o3_1hr_ppm){
     # Calculate o3_8hr_ppm from o3_1hr_ppm
@@ -635,7 +636,6 @@ AQI = function(dates = Sys.time(),
     # Calculate co_8hr_ppm from co_1hr_ppm
     dat$co_8hr_ppm = roll_mean_8hr_min_5(dat$co_1hr_ppm)
   }
-
   # If non-NA so2_1hr_ppb values provided
   if(!all_missing$so2_1hr_ppb){
     # Calculate so2_24hr_ppb from so2_1hr_ppb
@@ -647,39 +647,37 @@ AQI = function(dates = Sys.time(),
     all_missing$so2_24hr_ppb = TRUE
   }
 
-  # Get Daily summaries
+  # Get Daily mean values for all pollutants/averaging times
   dat = dplyr::group_by(dat, date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(dplyr::across(dplyr::everything(), mean_no_na))
+    dplyr::summarise(dplyr::across(dplyr::everything(), mean_no_na)) %>%
+    dplyr::arrange(.data$date) # Sort by date
 
-  # Reformat: Sort by date
-  dat = dplyr::arrange(dat, .data$date) %>%
-    # Truncate to specified decimal places
-    dplyr::mutate(
-      o3_8hr_ppm     = trunc_n(.data$o3_8hr_ppm    , 3),
-      o3_1hr_ppm     = trunc_n(.data$o3_1hr_ppm    , 3),
-      pm25_24hr_ugm3 = trunc_n(.data$pm25_24hr_ugm3, 1),
-      pm10_24hr_ugm3 = trunc_n(.data$pm10_24hr_ugm3, 0),
-      co_8hr_ppm     = trunc_n(.data$co_8hr_ppm    , 1),
-      so2_1hr_ppb    = trunc_n(.data$so2_1hr_ppb   , 0),
-      so2_24hr_ppb   = trunc_n(.data$so2_24hr_ppb  , 0),
-      no2_1hr_ppb    = trunc_n(.data$no2_1hr_ppb   , 0)
-    )
+  # Truncate daily means
+  dat = dat %>%
+    # Truncate ozone to 3 decimals
+    dplyr::mutate(dplyr::across(dplyr::starts_with("o3"),
+                                \(x) trunc_n(x, 3))) %>%
+    # Truncate PM2.5 and CO to 1 decimal
+    dplyr::mutate(dplyr::across(dplyr::starts_with("pm25|co"),
+                                \(x) trunc_n(x, 1))) %>%
+    # Truncate PM10, SO2, and NO2 to no decimals
+    dplyr::mutate(dplyr::across(dplyr::starts_with("so2|no2|pm10"),
+                                \(x) trunc_n(x, 0)))
 
   # Calculate AQI for each pollutant provided
-  pols = names(dat)[-1]
-  aqi_cols = stats::setNames(as.list(paste0("AQI_", pols)), pols)
-  for(pol in pols){
+  provided_pols = names(dat)[-1] # get pols that are provided
+  for (pol in provided_pols) {
     # If provided
-    if(!all_missing[[pol]]){
-      # Calc AQI
+    if (!all_missing[[pol]]) {
+      # Calculate AQI from pollutant concentrations
       dat = AQI_from_con(dat, pol)
     # Otherwise use NA
     }else dat[[paste0("AQI_", pol)]] = NA
   }
+  AQI_cols = paste0("AQI_", provided_pols)
+  names(AQI_cols) = stringr::str_split(AQI_cols, "_", simplify = T)[,2]
 
   # Set hourly AQI to the highest of the calculated values
-  AQI_cols = paste0("AQI_", pols) %>%
-    stats::setNames(., stringr::str_split(., "_", simplify = T)[,2])
   dat = dplyr::rowwise(dat) %>% # for each hour
     dplyr::mutate(
       # Take the max non-NA value as the AQI
@@ -703,8 +701,7 @@ aqi_levels = list(
   "Unhealthy for Sensitive Groups" = 101:150,
   "Unhealthy" = 151:200,
   "Very Unhealthy" = 201:300,
-  "Hazardous" = 301:400,
-  "Hazardous2" = 401:500, # Still called "Hazardous" but has different breakpoints
+  "Hazardous" = 301:500,
   "Beyond the AQI" = 500:5000
 )
 
@@ -740,36 +737,36 @@ AQI_breakpoints = list(
   ## 1 Hour Mean Ozone
   # 1-hour O3 values do not define Good-Moderate AQI values (< 101).
   o3_1hr_ppm = data.frame(
-    risk_category = names(aqi_levels)[3:8],
-    bp_low   = c(0.125, 0.165, 0.205, 0.405, 0.505, 0.605),
-    bp_high  = c(0.164, 0.204, 0.404, 0.504, 0.604, Inf  ),
-    aqi_low  = c(101  , 151  , 201  , 301  , 401  , 401  ),
-    aqi_high = c(150  , 200  , 300  , 400  , 500  , 500  )
+    risk_category = names(aqi_levels)[3:7],
+    bp_low   = c(0.125, 0.165, 0.205, 0.405, 0.605),
+    bp_high  = c(0.164, 0.204, 0.404, 0.504, Inf  ),
+    aqi_low  = c(101  , 151  , 201  , 301  , 301  ),
+    aqi_high = c(150  , 200  , 300  , 500  , 500  )
   ),
   ## 24 Hour Mean Fine Particulate Matter
   # If a different SHL for PM2.5 is promulgated, Unhealthy and above will change accordingly.
   pm25_24hr_ugm3 = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0   , 12.1, 35.5, 55.5 , 150.5, 250.5, 350.5, 500.5),
-    bp_high  = c(12  , 35.4, 55.4, 150.4, 250.4, 350.4, 500.4, Inf  ),
-    aqi_low  = c(0   , 51  , 101 , 151  , 201  , 301  , 401  , 401  ),
-    aqi_high = c(50  , 100 , 150 , 200  , 300  , 400  , 500  , 500  )
+    risk_category = names(aqi_levels)[1:7],
+    bp_low   = c(0 , 9.1 , 35.5, 55.5 , 125.5, 225.5, 325.5),
+    bp_high  = c(9 , 35.4, 55.4, 125.4, 225.4, 325.4, Inf  ),
+    aqi_low  = c(0 , 51  , 101 , 151  , 201  , 301  , 301  ),
+    aqi_high = c(50, 100 , 150 , 200  , 300  , 500  , 500  )
   ),
   ## 24 Hour Mean Fine-Coarse Particulate Matter
   pm10_24hr_ugm3 = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 55 , 155, 255, 355, 425, 505, 605),
-    bp_high  = c(54, 154, 254, 354, 424, 504, 604, Inf),
-    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
-    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
+    risk_category = names(aqi_levels)[1:7],
+    bp_low   = c(0 , 55 , 155, 255, 355, 425, 605),
+    bp_high  = c(54, 154, 254, 354, 424, 604, Inf),
+    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 301),
+    aqi_high = c(50, 100, 150, 200, 300, 500, 500)
   ),
   ## 8 Hour Mean Carbon Monoxide
   co_8hr_ppm = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 4.5 , 9.5, 12.5, 15.5, 30.5, 40.5, 50.5),
-    bp_high  = c(4.4, 9.4, 12.4, 15.4, 30.4, 40.4, 50.4, Inf),
-    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 401, 401),
-    aqi_high = c(50, 100, 150, 200, 300, 400, 500, 500)
+    risk_category = names(aqi_levels)[1:7],
+    bp_low   = c(0 , 4.5 , 9.5, 12.5, 15.5, 30.5, 50.5),
+    bp_high  = c(4.4, 9.4, 12.4, 15.4, 30.4, 50.4, Inf),
+    aqi_low  = c(0 , 51 , 101, 151, 201, 301, 301),
+    aqi_high = c(50, 100, 150, 200, 300, 500, 500)
   ),
   ## 1 Hour Mean Sulfur Dioxide
   # 1-hour SO2 values do not define higher AQI values (≥ 200).
@@ -783,19 +780,19 @@ AQI_breakpoints = list(
   ## 24 Hour Mean Sulfur Dioxide
   # AQI values of 200 or greater are calculated with 24-hour SO2 concentrations.
   so2_24hr_ppb = data.frame(
-    risk_category = names(aqi_levels)[5:8],
-    bp_low   = c(305, 605, 805 , 1005),
-    bp_high  = c(604, 804, 1004, Inf ),
-    aqi_low  = c(201, 301, 401 , 401),
-    aqi_high = c(300, 400, 500 , 500)
+    risk_category = names(aqi_levels)[5:7],
+    bp_low   = c(305, 605, 1005),
+    bp_high  = c(604, 1004, Inf ),
+    aqi_low  = c(201, 301, 301),
+    aqi_high = c(300, 500, 500)
   ),
   ## 1 Hour Mean Nitrogen Dioxide
   no2_1hr_ppb = data.frame(
-    risk_category = names(aqi_levels)[1:8],
-    bp_low   = c(0 , 55 , 101, 361, 650 , 1250, 1650, 2050),
-    bp_high  = c(54, 100, 360, 649, 1249, 1649, 2049, Inf ),
-    aqi_low  = c(0 , 51 , 101, 151, 201 , 301 , 401 , 401 ),
-    aqi_high = c(50, 100, 150, 200, 300 , 400 , 500 , 500 )
+    risk_category = names(aqi_levels)[1:7],
+    bp_low   = c(0 , 54 , 101, 361, 650 , 1250, 2050),
+    bp_high  = c(53, 100, 360, 649, 1249, 2049, Inf ),
+    aqi_low  = c(0 , 51 , 101, 151, 201 , 301 , 301 ),
+    aqi_high = c(50, 100, 150, 200, 300 , 500 , 500 )
   )
 )
 
