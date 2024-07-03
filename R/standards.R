@@ -3,7 +3,7 @@
 
 #' Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations
 #'
-#' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
+#' @param dates Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
 #' @param pm25_1hr_ugm3 Numeric vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
 #' @param no2_1hr_ppb (Optional). Numeric vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
 #' @param o3_1hr_ppb (Optional). Numeric vector of hourly mean ozone (O3) concentrations (ppb). If not provided AQHI+ will be calculated from PM2.5 only.
@@ -33,7 +33,7 @@
 #' @return A tibble (data.frame) with columns (*if all 3 pollutants provided):
 #' date, pm25, o3*, no2*, pm25_rolling_3hr*, o3_rolling_3hr*, o3_rolling_3hr*,
 #'  AQHI, AQHI_plus, risk, high_risk_pop_message, general_pop_message, AQHI_plus_exceeds_AQHI*
-#'  and potentially more rows than `length(datetimes)` (due to any missing hours being filled with NA values).
+#'  and potentially more rows than `length(dates)` (due to any missing hours being filled with NA values).
 #' @export
 #'
 #' @examples
@@ -41,11 +41,11 @@
 #'   date = seq(lubridate::ymd_h("2024-01-01 00"),
 #'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
 #'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-#' AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+#' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
 #'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 #'
-#' AQHI(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
-AQHI = function(datetimes, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE){
+#' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
+AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE){
   # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
   . = NULL # so build check doesn't yell at me
   aqhi_breakpoints = stats::setNames(
@@ -54,7 +54,7 @@ AQHI = function(datetimes, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, qui
   )
   # Join inputs
   obs = dplyr::bind_cols(
-    date = datetimes, pm25 = pm25_1hr_ugm3,
+    date = dates, pm25 = pm25_1hr_ugm3,
     o3 = o3_1hr_ppb, no2 = no2_1hr_ppb
   ) %>%
     # Fill in missing hours with NAs
@@ -261,7 +261,7 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 
 #' Assess the attainment of the Canadian Ambient Air Quality Standards (CAAQS)
 #'
-#' @param datetimes Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
+#' @param dates Vector of hourly datetime values corresponding to observations. Date gaps will be filled automatically.
 #' @param pm25_1hr_ugm3 (Optional). Vector of hourly mean fine particulate matter (PM2.5) concentrations (ug/m^3).
 #' @param o3_1hr_ppb (Optional). Vector of hourly mean ozone (O3) concentrations (ppb).
 #' @param no2_1hr_ppb (Optional). Vector of hourly mean nitrogen dioxide (NO2) concentrations (ppb).
@@ -289,23 +289,23 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
 #'   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
 #'   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
 #' )
-#' CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+#' CAAQS(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
 #'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
-CAAQS = function(datetimes, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
+CAAQS = function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
                  no2_1hr_ppb = NULL, so2_1hr_ppb = NULL,
                  min_completeness = 0.5){
   # Define thresholds for each pollutant / avg / year
   thresholds = CAAQS_thesholds()
 
   # Get full record of dates for years provided
-  complete_datetimes = seq(
-    lubridate::floor_date(min(datetimes), "years"),
-    lubridate::ceiling_date(max(datetimes), "years") - lubridate::hours(1),
+  complete_dates = seq(
+    lubridate::floor_date(min(dates), "years"),
+    lubridate::ceiling_date(max(dates), "years") - lubridate::hours(1),
     "1 hours")
 
   # Join inputs
   obs = dplyr::bind_cols(
-    date = datetimes, pm25 = pm25_1hr_ugm3,
+    date = dates, pm25 = pm25_1hr_ugm3,
     o3 = o3_1hr_ppb, no2 = no2_1hr_ppb,
     so2 = so2_1hr_ppb)
 
@@ -336,7 +336,7 @@ CAAQS = function(datetimes, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
 
   # Fill in missing hours with NAs
   obs = obs %>%
-    tidyr::complete(date = complete_datetimes) %>%
+    tidyr::complete(date = complete_dates) %>%
     dplyr::arrange(.data$date)
 
   # Calculate CAAQS attainment where data provided
@@ -538,7 +538,7 @@ CAAQS_objectives = function(mgmt_levels){
 
 #' Calculate the US AQI from pollutant observations
 #'
-#' @param datetimes Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.
+#' @param dates Vector of hourly dates corresponding to observations. Date gaps will be filled automatically.
 #' @param o3_8hr_ppm (Optional) Numeric vector of hourly 8-hour mean ozone (O3) concentrations (ppm).
 #' Will be calculated from o3_1hr_ppm if provided and o3_8hr_ppm not provided.
 #' @param o3_1hr_ppm (Optional) Numeric vector of hourly 1-hour mean ozone (O3) concentrations (ppm).
@@ -573,7 +573,7 @@ CAAQS_objectives = function(mgmt_levels){
 #'
 #' @return A tibble (data.frame) with columns:
 #' date, AQI, risk_category, principal_pol
-#' and 1 row for each day between the min and max values of the provided datetimes
+#' and 1 row for each day between the min and max values of the provided dates
 #' @export
 #'
 #' @family Air Quality Standards
@@ -582,7 +582,7 @@ CAAQS_objectives = function(mgmt_levels){
 #' @examples
 #' AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #' AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
-AQI = function(datetimes = Sys.time(),
+AQI = function(dates = Sys.time(),
                o3_8hr_ppm = NA, o3_1hr_ppm = NA,
                pm25_24hr_ugm3 = NA, pm25_1hr_ugm3 = NA,
                pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
@@ -606,8 +606,8 @@ AQI = function(datetimes = Sys.time(),
                 "be provided and have at least 1 non-NA value."))
   }
 
-  # Combine inputs and fill date gaps
-  dat = data.frame(date = datetimes,
+  # Combine inputs
+  dat = data.frame(date = dates,
                    o3_8hr_ppm, o3_1hr_ppm,
                    pm25_24hr_ugm3, pm25_1hr_ugm3,
                    pm10_24hr_ugm3, pm10_1hr_ugm3,

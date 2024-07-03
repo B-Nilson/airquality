@@ -6,7 +6,7 @@ obs = data.frame(
 )
 
 test_that("Returns a list of proper size", {
-  output = CAAQS(datetimes = obs$date, pm25_1hr_ugm3 = obs$pm25,
+  output = CAAQS(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
                 o3_1hr_ppb = obs$o3, so2_1hr_ppb = obs$so2)
   expect_type(output, "list")
   expect_length(output, 4)
