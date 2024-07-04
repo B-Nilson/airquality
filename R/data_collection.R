@@ -473,6 +473,50 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
 
 }
 
+# AB MoE Data -------------------------------------------------------------
+
+# TODO: clean up and document and test
+get_abgov_stations = function(use_sf = FALSE){
+  # Define endpoint
+  api_endpoint = "Stations?"
+
+  # Make request
+  api_request = paste0(ab_api_site, api_endpoint) %>%
+    xml2::read_xml() %>% xml2::as_list()
+
+  # Parse request data
+  stations = api_request$feed[-(1:4)] %>%
+    lapply(\(entry){
+      data.frame(entry$content$properties) %>%
+        stats::setNames(names(entry$content$properties))
+    }) %>%
+    dplyr::bind_rows()
+
+  # Standardize column names
+  stations = dplyr::select(stations,
+    site_id = "Abbreviation",
+    site_name = "Name",
+    type = "Type",
+    description = "Description",
+    address = "Address",
+    airshed = "AirshedName",
+    lat = "Latitude",
+    lng = "Longitude",
+    elev = "Elevation")
+
+  # Fix data types
+  stations = stations %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(col)
+      ifelse(col %in% c("Not Available", "Unknown"), NA, col))) %>%
+    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric))
+
+  # Convert to spatial if desired
+  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+
+  return(stations)
+}
+
+ab_api_site = "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
 
 # AirNow Data -------------------------------------------------------------
 
