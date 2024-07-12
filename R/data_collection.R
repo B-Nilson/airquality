@@ -475,22 +475,26 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
 
 # AB MoE Data -------------------------------------------------------------
 
+parse_abgov_api_request = function(api_request){
+  api_request = api_request %>%
+    xml2::read_xml() %>%
+    xml2::as_list()
+  api_request$feed[-(1:4)] %>%
+    lapply(\(entry){
+      e = unlist(entry$content$properties)
+      data.frame(t(e))
+    }) %>%
+    dplyr::bind_rows()
+}
+
 # TODO: clean up and document and test
 get_abgov_stations = function(use_sf = FALSE){
   # Define endpoint
   api_endpoint = "Stations?"
 
   # Make request
-  api_request = paste0(ab_api_site, api_endpoint) %>%
-    xml2::read_xml() %>% xml2::as_list()
-
-  # Parse request data
-  stations = api_request$feed[-(1:4)] %>%
-    lapply(\(entry){
-      data.frame(entry$content$properties) %>%
-        stats::setNames(names(entry$content$properties))
-    }) %>%
-    dplyr::bind_rows()
+  stations = paste0(ab_api_site, api_endpoint) %>%
+    parse_abgov_api_request()
 
   # Standardize column names
   stations = dplyr::select(stations,
@@ -516,7 +520,122 @@ get_abgov_stations = function(use_sf = FALSE){
   return(stations)
 }
 
+get_abgov_data = function(stations, date_range, raw = FALSE){
+  date_range = lubridate::with_tz(date_range, "UTC") # Correct? Or is it AB time? DST?
+
+  # Define endpoint
+  api_endpoint = "StationMeasurements?"
+
+  # Columns to retrieve
+  data_cols = c("Value", "StationName",
+                "ParameterName", "ReadingDate")
+
+  # Build station filter
+  station_filter = paste0(
+    "(indexof('", stations %>%
+      paste0(collapse = "', StationName) ge 0 or indexof('"),
+    "', StationName) ge 0)"
+  )
+
+  # Build date filter
+  date_filter = paste0(
+    "(ReadingDate ge datetime'", format(date_range[1], "%FT%T"),
+    "' and ReadingDate le datetime'", format(date_range[2], "%FT%T"),
+    "')"
+  )
+
+  # Combine arguments
+  args = c(
+    paste0("select=", paste0(data_cols, collapse = ",")),
+    paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) %>%
+      paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
+  ) %>%
+    paste0(collapse = "&") %>%
+    URLencode()
+
+  # Make request
+  stations_data = paste0(ab_api_site, api_endpoint, args) %>%
+    parse_abgov_api_request()
+
+  # Error if no data retrieved
+  if(nrow(stations_data) == 0){
+    stop("No data available for provided stations and date_range")
+  }
+
+  stations_data = stations_data %>%
+    # Convert dates, add quality assured column (unknown at the moment)
+    # TODO: determine if/what QA/QC'ed
+    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone),
+                  quality_assured = NA) %>%
+    # Drop erroneous columns
+    dplyr::select(-"DeterminantParameterName", -"ReadingDate", -"Id") %>%
+    # Filter data to desired date range
+    dplyr::filter(.data$date_utc %>% dplyr::between(date_range[1], date_range[2])) %>%
+    # Drop duplicated dates for a particular station
+    dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") %>%
+    # Long to wide, sort
+    tidyr::pivot_wider(names_from = "ParameterName", values_from = "Value") %>%
+    dplyr::arrange("StationName", "date_utc") %>%
+    # Convert to numeric
+    dplyr::mutate_at(-(1:3), as.numeric) %>%
+    # Rename and select desired columns
+    standardize_colnames(abgov_col_names, raw = raw)
+
+  # Fix data types
+  stations = stations %>%
+    dplyr::mutate(dplyr::across(dplyr::everything(), \(col)
+                                ifelse(col %in% c("Not Available", "Unknown"), NA, col))) %>%
+    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric))
+
+  # Convert to spatial if desired
+  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+}
+
+## AB MoE Helpers ---------------------------------------------------------
+
 ab_api_site = "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
+
+## Endpoints we care about
+# Data: StationMeasurements?
+# Stations: Stations?
+
+abgov_tzone = "Etc/GMT+7"
+
+abgov_col_names = c(
+  # Meta
+  date_utc = "date_utc", # Added by get_abgov_data()
+  # date_local = "DATE_PST",
+  site_id = "EMS_ID",
+  site_name = "StationName",
+  quality_assured = "quality_assured", # Added by get_abgov_data()
+  # Particulate Matter
+  pm25_1hr_ugm3 = "Fine Particulate Matter",
+  # pm10_1hr_ugm3 = "PM10",
+  # # Ozone
+  # o3_1hr_ppb = "O3",
+  # # Nitrogen Pollutants
+  # no_1hr_ppb = "NO",
+  # no2_1hr_ppb = "NO2",
+  # nox_1hr_ppb = "NOx",
+  nh3_1hr_ppb = "Ammonia",
+  # # Sulfur Pollutants
+  # so2_1hr_ppb = "SO2",
+  trs_1hr_ppb = "Total Reduced Sulphur",
+  # h2s_1hr_ppb = "H2S",
+  # # Carbon Monoxide
+  # co_1hr_ppb = "CO",
+  # # Met data
+  # rh_1hr_percent = "HUMIDITY",
+  # t_1hr_celcius = "TEMP_MEAN",
+  # wd_1hr_degrees = "WDIR_VECT",
+  # ws_1hr_ms = "WSPD_SCLR",
+  # precip_1hr_mm = "PRECIP",
+  # snowDepth_1hr_cm = "SNOW",
+  # pressure_1hr_kpa = "PRESSURE", # TODO: Ensure pressure proper units ....
+  # vapourPressure_1hr_kpa = "VAPOUR",
+  solar_1hr_wm2 = "Solar Radiation"
+)
+
 
 # AirNow Data -------------------------------------------------------------
 
