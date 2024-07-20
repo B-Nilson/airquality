@@ -538,7 +538,9 @@ get_abgov_stations = function(use_sf = FALSE){
   stations = stations %>%
     dplyr::mutate(dplyr::across(dplyr::everything(), \(col)
       ifelse(col %in% c("Not Available", "Unknown"), NA, col))) %>%
-    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric))
+    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) %>%
+    # Lookup local timezones
+    dplyr::mutate(tz_local = get_station_timezone(lng, lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
@@ -547,7 +549,18 @@ get_abgov_stations = function(use_sf = FALSE){
 }
 
 get_abgov_data = function(stations, date_range, raw = FALSE){
-  date_range = lubridate::with_tz(date_range, "Etc/GMT+7") # Correct? Or is it UTC time? DST?
+  date_range = lubridate::with_tz(date_range, abgov_tzone) # Correct? Or is it UTC time? DST?
+
+  # Handle date_range inputs
+  min_date = lubridate::ymd_h("1970-01-01 00", tz = abgov_tzone) # TODO: determine actual min date
+  max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
+  date_range = handle_date_range(date_range, min_date, max_date)
+
+  # Get all stations during period
+  known_stations = get_abgov_stations()
+
+  # Handle if any/all don't exist in meta data
+  check_stations_exist(stations, known_stations$site_name, source = "the AB Gov. site")
 
   # Define endpoint
   api_endpoint = "StationMeasurements?"
@@ -566,18 +579,25 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
   })
 
   # Build date filter
-  date_filter = paste0(
-    "(ReadingDate ge datetime'", format(date_range[1], "%FT%T"),
-    "' and ReadingDate le datetime'", format(date_range[2], "%FT%T"),
+  starts = seq(date_range[1] -lubridate::hours(1), date_range[2], "3 days")
+  ends = starts + lubridate::days(3)
+  ends[ends > date_range[2]] = date_range[2]
+  date_filters = sapply(1:length(starts), \(i) paste0(
+    "(ReadingDate ge datetime'", format(starts[i], "%FT%T"),
+    "' and ReadingDate le datetime'", format(ends[i], "%FT%T"),
     "')"
-  )
+  ))
 
   # Combine arguments
-  args = sapply(station_filters, \(station_filter) c(
-    paste0("select=", paste0(data_cols, collapse = ",")),
-    paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) %>%
-      paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-  ) %>% paste0(collapse = "&") %>% URLencode()) %>% unname()
+  args = sapply(station_filters, \(station_filter) {
+    sapply(date_filters, \(date_filter) {
+      c(
+        paste0("select=", paste0(data_cols, collapse = ",")),
+        paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) %>%
+          paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
+      ) %>% paste0(collapse = "&") %>% URLencode()
+    })
+  }) %>% as.character() %>% unname()
 
   # Make request
   stations_data = paste0(ab_api_site, api_endpoint, args) %>%
@@ -591,21 +611,31 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
   stations_data = stations_data %>%
     # Convert dates, add quality assured column (unknown at the moment)
     # TODO: determine if/what QA/QC'ed
-    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone),
+    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone) %>%
+                    lubridate::with_tz("UTC"),
                   quality_assured = NA) %>%
     # Drop erroneous columns
     dplyr::select(-"DeterminantParameterName", -"ReadingDate", -"Id") %>%
     # Filter data to desired date range
     dplyr::filter(.data$date_utc %>% dplyr::between(date_range[1], date_range[2])) %>%
-    # Drop duplicated dates for a particular station
-    dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") %>%
     # Long to wide, sort
     tidyr::pivot_wider(names_from = "ParameterName", values_from = "Value") %>%
     dplyr::arrange("StationName", "date_utc") %>%
+    # Drop duplicated dates for a particular station
+    dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") %>%
     # Convert to numeric
     dplyr::mutate_at(-(1:3), as.numeric) %>%
     # Rename and select desired columns
-    standardize_colnames(abgov_col_names, raw = raw)
+    standardize_colnames(abgov_col_names, raw = raw) %>%
+    # Convert date_local to local time
+    dplyr::left_join(known_stations %>% dplyr::select("site_name", "tz_local"),
+                     by = "site_name") %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(date_local = lubridate::with_tz(date_utc, tz_local) %>%
+                    format("%F %H:%M %z")) %>%
+    dplyr::relocate("date_local", .after = "date_utc") %>%
+    dplyr::select(-"tz_local") %>%
+    tibble::as_tibble()
 
   return(stations_data)
 }
@@ -618,7 +648,7 @@ ab_api_site = "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.sv
 # Data: StationMeasurements?
 # Stations: Stations?
 
-abgov_tzone = "Etc/GMT+7"
+abgov_tzone = "America/Edmonton"
 
 abgov_col_names = c(
   # Meta
@@ -734,12 +764,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
     }
   }
 
+  # Get all stations during period
+  known_stations =  seq(date_range[1], date_range[2], "25 days") %>%
+    get_airnow_stations()
   # If specific stations desired
   if(! "all" %in% stations){
     # Handle if any/all don't exist in meta data
-    check_stations_exist(
-      stations, seq(date_range[1], date_range[2], "25 days"),
-      "AirNow", get_airnow_stations)
+    check_stations_exist(stations, known_stations$site_id, "AirNow")
   }
 
   ## Main ---
@@ -781,6 +812,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
       # (datetimes only support a single timezone in a column)
       date_local = .data$date + lubridate::hours(trunc(.data$tz_offset)) +
         lubridate::minutes((.data$tz_offset - trunc(.data$tz_offset))*60), # For partial hour timezones
+      # TODO: standardize tz offset hours in date_local
       date_local = format(.data$date_local, "%F %H:%M ") %>%
         paste0(ifelse(.data$tz_offset >= 0, "+", "-"), abs(.data$tz_offset))) %>%
     # drop now erroneous time and tz_offset columns
