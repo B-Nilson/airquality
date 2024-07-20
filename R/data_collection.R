@@ -224,7 +224,7 @@ get_bcgov_data = function(stations, date_range, raw = FALSE){
   qaqc_years = get_bcgov_qaqc_years()
 
   # Handle date_range inputs
-  min_date = lubridate::ym(paste(min(qaqc_years),"01"), tz = bcmoe_tzone)
+  min_date = lubridate::ymd_h(paste(min(qaqc_years),"01-01 01"), tz = bcmoe_tzone)
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
   date_range = handle_date_range(date_range, min_date, max_date)
 
@@ -244,10 +244,13 @@ get_bcgov_data = function(stations, date_range, raw = FALSE){
   # drop NA from case when no non qa/qced years provided
   years_to_get = years_to_get[!is.na(years_to_get)]
 
+  # Get all stations during period
+  known_stations = lubridate::ym(paste0(years_to_get, "06")) %>%
+    lapply(get_bcgov_stations) %>%
+    dplyr::bind_rows()
+
   # Handle if any/all don't exist in meta data
-  check_stations_exist(
-    stations, lubridate::ym(paste0(years_to_get, "06")),
-    "the BC FTP site", get_bcgov_stations)
+  check_stations_exist(stations, known_stations$site_id, source = "the BC FTP site")
 
   # Get data for each year for all desired stations
   stations_data = years_to_get %>%
@@ -267,9 +270,24 @@ get_bcgov_data = function(stations, date_range, raw = FALSE){
     # Replace blank values with NA
     dplyr::mutate_at(-(1:2), \(x) ifelse(x == "", NA, x)) %>%
     # Rename and select desired columns
-    standardize_colnames(bcmoe_col_names, raw = raw)
+    standardize_colnames(bcmoe_col_names, raw = raw) %>%
+    # Output as tibble
+    tibble::as_tibble()
 
-  return(tibble::as_tibble(stations_data))
+  if(nrow(stations_data) & !raw){
+    stations_data = stations_data %>%
+      # Convert date_local to local time
+      dplyr::left_join(known_stations %>% dplyr::select("site_id", "tz_local"),
+                       by = "site_id") %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(date_local = lubridate::with_tz(date_utc, tz_local) %>%
+                      format("%F %H:%M %z")) %>%
+      dplyr::select(-"tz_local")
+  }else{
+    if(!raw) stop("No data available for provided stations and date_range")
+  }
+
+  return(stations_data)
 }
 
 # TODO: clean up and document and test
@@ -309,6 +327,12 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
 
   # Clean up
   stations = stations %>%
+    # Fix reversed lat/lng entries
+    dplyr::mutate(
+      lat2 = ifelse(LAT %>% dplyr::between(45,60), LAT, LONG),
+      LONG = ifelse(LAT %>% dplyr::between(45,60), LONG, -LAT),
+      LAT = lat2
+    ) %>%
     # Choose and rename columns
     dplyr::select(
       site_id = "EMS_ID", site_name = "STATION_NAME",
@@ -325,7 +349,9 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
     # Drop duplicated meta entries
     unique() %>%
     # Drop missing lat/lng rows
-    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng))
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) %>%
+    # Lookup local timezones
+    dplyr::mutate(tz_local = get_station_timezone(lng, lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))

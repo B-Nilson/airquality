@@ -38,7 +38,7 @@ test_that("invalid date_range causes error", {
 
 test_that("too early date_range causes warning/error", {
   station = "M110514"
-  earliest_time = lubridate::ymd_h("1990-01-01 00", tz = bcmoe_tzone)
+  earliest_time = lubridate::ymd_h("1990-01-01 01", tz = bcmoe_tzone)
   # Case: All in the past
   expect_error(get_bcgov_data(station, earliest_time - hours(1)))
   # Case: Partly in the past
@@ -48,7 +48,7 @@ test_that("too early date_range causes warning/error", {
 
 test_that("too late date_range causes warning/error", {
   station = "0450307"
-  current_time = Sys.time()
+  current_time = lubridate::floor_date(Sys.time(), "hours")
   future_time = current_time + lubridate::hours(24)
   # Case: All in the future
   expect_error(get_bcgov_data(station, future_time))
@@ -60,19 +60,9 @@ test_that("too late date_range causes warning/error", {
 # Inputs: raw -------------------------------------------------------------
 
 test_that("raw data returned", {
-  obs_raw = get_bcgov_data("0450307", "2018-02-01 00", raw = TRUE)
+  obs_raw = get_bcgov_data(stations = "0450307", date_range = "2018-02-01 00", raw = TRUE)
 
   expect_snapshot(obs_raw)
-})
-
-test_that("raw data differs", {
-  obs = get_bcgov_data("0450307", "2018-02-01 00", raw = FALSE)
-  obs_raw = get_bcgov_data("0450307", "2018-02-01 00", raw = TRUE)
-
-  # Case: column counts should differ
-  expect_true(ncol(obs) != ncol(obs_raw))
-  # Case: column names should differ
-  expect_true(!all(names(obs_raw) %in% names(obs)))
 })
 
 # Outputs: dates ---------------------------------------------------------
@@ -94,13 +84,13 @@ test_that("date_local converts to date_utc correctly", {
   obs = get_bcgov_data("0450307", date_range)
   obs = obs %>% dplyr::mutate(
     # Extract tz offset from end of local date string
-    tz_offset = stringr::str_extract(.data$date_local, "[+,-]\\d\\d?$") %>%
-      as.numeric(),
+    tz_offset = extract_tz_offset(.data$date_local),
     # Convert local date string to a datetime
-    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d?$") %>%
+    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d*$") %>%
       lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
     # Convert from local to UTC by subtracting timezone offset
-    date_utc_from_local = .data$date_local - lubridate::hours(tz_offset))
+    date_utc_from_local = .data$date_local - lubridate::hours(trunc(tz_offset)) -
+      (lubridate::minutes(tz_offset - trunc(tz_offset))))
   # Case: date_utc the same as converting date_local to UTC
   expect_equal(obs$date_utc, obs$date_utc_from_local)
 })

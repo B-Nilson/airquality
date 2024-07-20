@@ -135,13 +135,9 @@ handle_date_range = function(date_range, min_date_allowed = NA, max_date_allowed
 }
 
 # Handle if any/all requested stations for a specific data source don't exist in its meta data
-check_stations_exist = function(stations, dates, source, station_FUN){
-  # Get all stations during period
-  known_stations = dates %>%
-    lapply(station_FUN) %>%
-    dplyr::bind_rows()
+check_stations_exist = function(stations, known_stations, source){
   # Determine if any desired stations not known
-  unknown_stations = stations[! stations %in% known_stations$site_id]
+  unknown_stations = stations[! stations %in% known_stations]
   if(length(unknown_stations) == length(stations)){
     # Error if all stations unknown
     stop(paste("All station IDs provided not found on", source, "for provided date_range:",
@@ -157,4 +153,12 @@ check_stations_exist = function(stations, dates, source, station_FUN){
 # Wrapper for looking up timezone of locations from lat/lng coords
 get_station_timezone = function(lng, lat, method = "accurate"){
   lutz::tz_lookup_coords(lat, lng, method = method)
+}
+
+extract_tz_offset = function(date_str){
+  offset = stringr::str_extract(date_str, "[+,-]\\d\\d*$")
+
+  hours = as.numeric(stringr::str_sub(offset, end = 3))
+  minutes = as.numeric(stringr::str_sub(offset, start = 4))
+  hours + minutes / 60
 }
