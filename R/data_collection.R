@@ -521,7 +521,7 @@ get_abgov_stations = function(use_sf = FALSE){
 }
 
 get_abgov_data = function(stations, date_range, raw = FALSE){
-  date_range = lubridate::with_tz(date_range, "UTC") # Correct? Or is it AB time? DST?
+  date_range = lubridate::with_tz(date_range, "Etc/GMT+7") # Correct? Or is it UTC time? DST?
 
   # Define endpoint
   api_endpoint = "StationMeasurements?"
@@ -530,12 +530,14 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
   data_cols = c("Value", "StationName",
                 "ParameterName", "ReadingDate")
 
-  # Build station filter
-  station_filter = paste0(
-    "(indexof('", stations %>%
+  # Build station filters (max 10 stations at a time)
+  station_filters = sapply(seq(1, length(stations), 10), \(s){
+    end = ifelse(s + 10 > length(stations), length(stations), s + 10)
+    paste0(
+    "(indexof('", stations[s:end] %>%
       paste0(collapse = "', StationName) ge 0 or indexof('"),
-    "', StationName) ge 0)"
-  )
+    "', StationName) ge 0)")
+  })
 
   # Build date filter
   date_filter = paste0(
@@ -545,17 +547,15 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
   )
 
   # Combine arguments
-  args = c(
+  args = sapply(station_filters, \(station_filter) c(
     paste0("select=", paste0(data_cols, collapse = ",")),
     paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) %>%
       paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-  ) %>%
-    paste0(collapse = "&") %>%
-    URLencode()
+  ) %>% paste0(collapse = "&") %>% URLencode()) %>% unname()
 
   # Make request
   stations_data = paste0(ab_api_site, api_endpoint, args) %>%
-    parse_abgov_api_request()
+    lapply(parse_abgov_api_request) %>% dplyr::bind_rows()
 
   # Error if no data retrieved
   if(nrow(stations_data) == 0){
@@ -581,14 +581,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
     # Rename and select desired columns
     standardize_colnames(abgov_col_names, raw = raw)
 
-  # Fix data types
-  stations = stations %>%
-    dplyr::mutate(dplyr::across(dplyr::everything(), \(col)
-                                ifelse(col %in% c("Not Available", "Unknown"), NA, col))) %>%
-    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric))
-
-  # Convert to spatial if desired
-  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+  return(stations_data)
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
@@ -612,23 +605,28 @@ abgov_col_names = c(
   pm25_1hr_ugm3 = "Fine Particulate Matter",
   # pm10_1hr_ugm3 = "PM10",
   # # Ozone
-  # o3_1hr_ppb = "O3",
+  o3_1hr_ppb = "Ozone",
   # # Nitrogen Pollutants
-  # no_1hr_ppb = "NO",
-  # no2_1hr_ppb = "NO2",
-  # nox_1hr_ppb = "NOx",
+  no_1hr_ppb = "Nitric Oxide",
+  no2_1hr_ppb = "Nitrogen Dioxide",
+  nox_1hr_ppb = "Total Oxides of Nitrogen",
   nh3_1hr_ppb = "Ammonia",
   # # Sulfur Pollutants
-  # so2_1hr_ppb = "SO2",
+  so2_1hr_ppb = "Sulphur Dioxide",
   trs_1hr_ppb = "Total Reduced Sulphur",
-  # h2s_1hr_ppb = "H2S",
+  h2s_1hr_ppb = "Hydrogen Sulphide",
   # # Carbon Monoxide
-  # co_1hr_ppb = "CO",
+  co_1hr_ppb = "Carbon Monoxide",
+  # Methane
+  ch4_1hr_ppb = "Methane",
+  # Hydrocarbons
+  hc_1hr_ppb = "Total Hydrocarbons",
+  hcnm_1hr_ppb = "Non-methane Hydrocarbons",
   # # Met data
-  # rh_1hr_percent = "HUMIDITY",
-  # t_1hr_celcius = "TEMP_MEAN",
-  # wd_1hr_degrees = "WDIR_VECT",
-  # ws_1hr_ms = "WSPD_SCLR",
+  rh_1hr_percent = "Relative Humidity",
+  t_1hr_celcius = "Outdoor Temperature",
+  wd_1hr_degrees = "Wind Direction",
+  ws_1hr_ms = "Wind Speed",
   # precip_1hr_mm = "PRECIP",
   # snowDepth_1hr_cm = "SNOW",
   # pressure_1hr_kpa = "PRESSURE", # TODO: Ensure pressure proper units ....
