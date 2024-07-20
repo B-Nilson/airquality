@@ -153,3 +153,8 @@ check_stations_exist = function(stations, dates, source, station_FUN){
   }
   return(invisible(NULL))
 }
+
+# Wrapper for looking up timezone of locations from lat/lng coords
+get_station_timezone = function(lng, lat, method = "accurate"){
+  lutz::tz_lookup_coords(lat, lng, method = method)
+}
