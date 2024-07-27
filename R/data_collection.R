@@ -163,6 +163,26 @@ data_collection_funs = function(networks, sources){
   return(data_funs)
 }
 
+data_citation = function(source){
+  data_sources = list(
+    BCgov = "the British Columbia Ministry of Environment and Climate Change Strategy",
+    ABgov = "the Alberta Ministry of Environment and Protected Areas",
+    AirNow = "the US Environmental Protection Agency"
+  )
+  data_urls = list(
+    BCgov = "https://www2.gov.bc.ca/gov/content/environment/air-land-water/air",
+    ABgov = "https://www.alberta.ca/access-air-data",
+    AirNow = "https://www.airnow.gov"
+  )
+ message(paste0("Data from the '", source,
+        "' repository are collected from ", data_sources[[source]],
+        " and are NOT to be used commercially. ",
+        "Recent observations are not quality assured, ",
+        "and are intended research and/or situational awareness ",
+        "(NOT for regulatory decision making). ",
+        "See `", data_urls[[source]], "` for more information."))
+}
+
 # BC MoE Data ----------------------------------------------------------
 
 #' Download air quality station observations from the British Columbia (Canada) Government
@@ -219,6 +239,8 @@ get_bcgov_data = function(stations, date_range, raw = FALSE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
   # TODO: warn if returning non qa/qced data and add a test to check for that
+  # Output citation message to user
+  data_citation("BCgov")
 
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bcgov_qaqc_years()
@@ -549,6 +571,9 @@ get_abgov_stations = function(use_sf = FALSE){
 }
 
 get_abgov_data = function(stations, date_range, raw = FALSE){
+  # Output citation message to user
+  data_citation("ABgov")
+
   date_range = lubridate::with_tz(date_range, abgov_tzone) # Correct? Or is it UTC time? DST?
 
   # Handle date_range inputs
@@ -744,6 +769,11 @@ abgov_col_names = c(
 #' get_airnow_data("all", date_range, raw = TRUE)
 get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   # TODO: add warning that all data on AirNow is not QA/QC'ed
+
+
+  # Output citation message to user
+  data_citation("AirNow")
+
   ## Handle date_range inputs
   min_date = lubridate::ymd_h("2014-01-01 01", tz = "UTC")
   max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
