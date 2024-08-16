@@ -25,7 +25,7 @@ test_that("all dates non-na and within requested period", {
   location = "Vanderhoof, BC, Canada"
   date_range = lubridate::ymd_h(
     c("2019-01-01 00", "2019-01-01 01"), tz = "America/Toronto")
-  obs = get_station_data(location, date_range)
+  obs = get_station_data(location, date_range)$data
   # Case: All date_utc non-NA
   expect_true(all(!is.na(obs$date_utc)))
   # Case: All date_local non-NA
@@ -37,7 +37,7 @@ test_that("all dates non-na and within requested period", {
 test_that("date_local converts to date_utc correctly", {
   location = "Vanderhoof, BC, Canada"
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"), tz = "America/Vancouver")
-  obs = get_station_data(location, date_range)
+  obs = get_station_data(location, date_range)$data
   obs = obs %>% dplyr::mutate(
     # Extract tz offset from end of local date string
     tz_offset = stringr::str_extract(.data$date_local, "[+,-]\\d\\d?$") %>%
@@ -55,7 +55,7 @@ test_that("date_local converts to date_utc correctly", {
 
 test_that("expected data returned", {
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-  obs = get_station_data("0450307", date_range)
+  obs = get_station_data("Vanderhoof, BC, Canada", date_range)$data
   # Case: tibble is returned
   expect_true("tbl_df" %in% class(obs))
   # Case: data.frame has rows
