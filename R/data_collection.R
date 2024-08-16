@@ -843,8 +843,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
       date_local = .data$date + lubridate::hours(trunc(.data$tz_offset)) +
         lubridate::minutes((.data$tz_offset - trunc(.data$tz_offset))*60), # For partial hour timezones
       # TODO: standardize tz offset hours in date_local
-      date_local = format(.data$date_local, "%F %H:%M ") %>%
-        paste0(ifelse(.data$tz_offset >= 0, "+", "-"), abs(.data$tz_offset))) %>%
+      date_local = format(.data$date_local, "%F %H:%M %z")) %>%
     # drop now erroneous time and tz_offset columns
     dplyr::select(-"time", -"tz_offset")
 
