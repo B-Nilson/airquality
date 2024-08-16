@@ -837,15 +837,8 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
     dplyr::mutate(
       # Join date and time columns, convert to datetime
       date = lubridate::mdy_hm(paste(.data$date, .data$time), tz = "UTC") +
-        lubridate::hours(1), # from forward -> backward looking averages,
-      # Add local time column (STANDARD TIME) - format as character due to timezone variations
-      # (datetimes only support a single timezone in a column)
-      date_local = .data$date + lubridate::hours(trunc(.data$tz_offset)) +
-        lubridate::minutes((.data$tz_offset - trunc(.data$tz_offset))*60), # For partial hour timezones
-      # TODO: standardize tz offset hours in date_local
-      date_local = format(.data$date_local, "%F %H:%M %z")) %>%
-    # drop now erroneous time and tz_offset columns
-    dplyr::select(-"time", -"tz_offset")
+        lubridate::hours(1)
+    ) # from forward -> backward looking averages,
 
   # Filter for desired stations if "all" not supplied
   if(! "all" %in% stations){
@@ -856,8 +849,17 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   if(raw) return(airnow_data)
   ## Otherwise
   # Convert from long format to wide format ("param_unit" column for each param/unit)
-  airnow_data = tidyr::pivot_wider(
-    airnow_data, names_from = c("param", "unit"), values_from = "value")
+  airnow_data = airnow_data %>%
+    # Convert date_local to local time
+    dplyr::left_join(known_stations %>% dplyr::select(siteID = "site_id", "tz_local"), by = "siteID") %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(
+      date_local = lubridate::with_tz(.data$date, as.character(.data$tz_local)) %>%
+                    format("%F %H:%M %z")) %>%
+    # drop now erroneous time and tz_offset columns
+    dplyr::select(-"time", -"tz_offset", -"tz_local") %>%
+    # long to wide
+    tidyr::pivot_wider(names_from = c("param", "unit"), values_from = "value")
 
   # Standardize units if needed
   if("BARPR_MILLIBAR" %in% names(airnow_data))
@@ -909,7 +911,9 @@ get_airnow_stations = function(dates = Sys.time(), use_sf = FALSE){
     dplyr::mutate(dplyr::across(
       dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) %>%
     # Drop duplicated entries
-    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE)
+    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) %>%
+    # Lookup local timezones
+    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
