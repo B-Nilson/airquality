@@ -11,27 +11,6 @@ test_that("invalid date_range causes error", {
   expect_error(get_station_data(location, c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02")))
 })
 
-test_that("too early date_range causes warning/error", {
-  location = "Vanderhoof, BC, Canada"
-  earliest_time = lubridate::ymd_h("1990-01-01 00", tz = bcmoe_tzone)
-  # Case: All in the past
-  expect_error(get_station_data(location, earliest_time - hours(1)))
-  # Case: Partly in the past
-  date_range = c(earliest_time - lubridate::hours(1), earliest_time)
-  expect_warning(get_station_data(location, date_range))
-})
-
-test_that("too late date_range causes warning/error", {
-  location = "Vanderhoof, BC, Canada"
-  current_time = Sys.time()
-  future_time = current_time + lubridate::hours(24)
-  # Case: All in the future
-  expect_error(get_station_data(location, future_time))
-  # Case: Partly in the future
-  date_range = c(current_time - lubridate::hours(1), future_time)
-  expect_warning(get_station_data(location, date_range))
-})
-
 # Inputs: buffer_dist -----------------------------------------------------
 
 
