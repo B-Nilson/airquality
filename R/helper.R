@@ -212,7 +212,7 @@ converter = function(x, y = NULL, conversions, in_unit, out_unit){
     conversion = paste0(in_unit, "_to_", out_unit)
   }else{ # If base unit not involved
     # First convert to the base unit
-    temperature = convert_temperature(x, in_unit, base_unit)
+    x = converter(x, in_unit, base_unit)
     # Then use a conversion from the base unit
     conversion = paste0(base_unit, "_to_", out_unit)
   }
