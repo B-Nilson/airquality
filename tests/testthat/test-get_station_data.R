@@ -40,13 +40,13 @@ test_that("date_local converts to date_utc correctly", {
   obs = get_station_data(location, date_range)$data
   obs = obs %>% dplyr::mutate(
     # Extract tz offset from end of local date string
-    tz_offset = stringr::str_extract(.data$date_local, "[+,-]\\d\\d?$") %>%
-      as.numeric(),
+    tz_offset = as.numeric(stringr::str_extract(.data$date_local, "[+,-]\\d{4}$")) %>%
+      {trunc(. / 100) + (. - trunc(./100)*100)/60},
     # Convert local date string to a datetime
-    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d?$") %>%
+    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d{4}$") %>%
       lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
     # Convert from local to UTC by subtracting timezone offset
-    date_utc_from_local = .data$date_local - lubridate::hours(tz_offset))
+    date_utc_from_local = .data$date_local - lubridate::minutes(tz_offset*60))
   # Case: date_utc the same as converting date_local to UTC
   expect_equal(obs$date_utc, obs$date_utc_from_local)
 })
