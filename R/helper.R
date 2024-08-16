@@ -162,3 +162,83 @@ extract_tz_offset = function(date_str){
   minutes = as.numeric(stringr::str_sub(offset, start = 4))
   hours + minutes / 60
 }
+
+all_conversions = list(
+  concentrations = list(
+    PPM_to_PPB = function(PPM) PPM * 1000,
+    PPB_to_PPM = function(PPB) PPB / 1000,
+    PPM_to_UGM3 = function(PPM) PPM,
+    UGM3_to_PPM = function(UGM3) UGM3
+  ),
+  temperature = list(
+    C_to_F = function(C) (C * 9 / 5) + 32,
+    C_to_K = function(C) C + 273.15,
+    F_to_C = function(F) (F - 32) * 5 / 9,
+    K_to_C = function(K) K - 273.15
+  ),
+  humidity = list(
+    RH_to_DEWPOINT = function(RH, T){
+      b = ifelse(T >= 0, 17.368, 17.966) # Over water, or over ice
+      c = ifelse(T >= 0, 238.88, 247.15) # Over water, or over ice
+      return(c * log(RH/100 * saturation_vapour_pressure(T) / 6.1121) /
+              (b - log(RH/100 * saturation_vapour_pressure(T) / 6.1121)))
+    },
+    DEWPOINT_to_RH = function(Td, T)
+      saturation_vapour_pressure(Td) / saturation_vapour_pressure(T) * 100
+  )
+
+)
+
+saturation_vapour_pressure = function(temperature_c){
+  if(!dplyr::between(temperature_c, -80, 50))
+    warning("Saturation vapour pressure estimation method only optimized within [-80, 50] celcius")
+  # Using the Arden Buck equation (Buck, 1996)
+  e = ifelse(temperature_c > 0,
+             6.1121 * exp( # over water
+               (18.678 - temperature_c/234.5) *
+               (temperature_c/(257.14 + temperature_c))),
+             6.1115 * exp( # over ice
+               (23.036 - temperature_c/333.7) *
+               (temperature_c/(279.82 + temperature_c))))
+  return(e) # units hPa (millibars)
+}
+
+converter = function(x, y = NULL, conversions, in_unit, out_unit){
+  # Get the common unit used in all conversions (the first one)
+  base_unit = stringr::str_split(names(conversions)[1], "_to_")[[1]][1]
+  # If converting to/from the base unit
+  if (in_unit == base_unit | out_unit == base_unit) {
+    # Use a conversion
+    conversion = paste0(in_unit, "_to_", out_unit)
+  }else{ # If base unit not involved
+    # First convert to the base unit
+    temperature = convert_temperature(x, in_unit, base_unit)
+    # Then use a conversion from the base unit
+    conversion = paste0(base_unit, "_to_", out_unit)
+  }
+  # Convert values and return
+  if(is.null(y)){
+    x = conversions[[conversion]](x)
+  }else{
+    x = conversions[[conversion]](x, y)
+  }
+  return(x)
+}
+
+convert_units = function(x, in_unit, out_unit){
+  # Force inputs to uppercase
+  in_unit = toupper(in_unit)
+  out_unit = toupper(out_unit)
+  # Handle matching in/out units
+  if (in_unit == out_unit) return(x)
+
+  # Handle temperature conversions
+  temperature_units = c("K", "F", "C")
+  if (in_unit %in% temperature_units) {
+    if (!out_unit %in% temperature_units) {
+      stop(paste("Cannot convert unit", in_unit, "to unit", out_unit))
+    }else convert_temperature(x, in_unit, out_unit)
+  }
+}
+
+
