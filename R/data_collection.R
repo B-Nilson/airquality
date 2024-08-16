@@ -302,7 +302,7 @@ get_bcgov_data = function(stations, date_range, raw = FALSE){
       dplyr::left_join(known_stations %>% dplyr::select("site_id", "tz_local"),
                        by = "site_id") %>%
       dplyr::rowwise() %>%
-      dplyr::mutate(date_local = lubridate::with_tz(date_utc, tz_local) %>%
+      dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) %>%
                       format("%F %H:%M %z")) %>%
       dplyr::select(-"tz_local")
   }else{
@@ -351,9 +351,9 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
   stations = stations %>%
     # Fix reversed lat/lng entries
     dplyr::mutate(
-      lat2 = ifelse(LAT %>% dplyr::between(45,60), LAT, LONG),
-      LONG = ifelse(LAT %>% dplyr::between(45,60), LONG, -LAT),
-      LAT = lat2
+      lat2 = ifelse(.data$LAT %>% dplyr::between(45,60), .data$LAT, .data$LONG),
+      LONG = ifelse(.data$LAT %>% dplyr::between(45,60), .data$LONG, -.data$LAT),
+      LAT = .data$lat2
     ) %>%
     # Choose and rename columns
     dplyr::select(
@@ -373,7 +373,7 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
     # Drop missing lat/lng rows
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) %>%
     # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(lng, lat))
+    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
@@ -562,7 +562,7 @@ get_abgov_stations = function(use_sf = FALSE){
       ifelse(col %in% c("Not Available", "Unknown"), NA, col))) %>%
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) %>%
     # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(lng, lat))
+    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
@@ -620,7 +620,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
         paste0("select=", paste0(data_cols, collapse = ",")),
         paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) %>%
           paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-      ) %>% paste0(collapse = "&") %>% URLencode()
+      ) %>% paste0(collapse = "&") %>% utils::URLencode()
     })
   }) %>% as.character() %>% unname()
 
@@ -656,7 +656,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE){
     dplyr::left_join(known_stations %>% dplyr::select("site_name", "tz_local"),
                      by = "site_name") %>%
     dplyr::rowwise() %>%
-    dplyr::mutate(date_local = lubridate::with_tz(date_utc, tz_local) %>%
+    dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) %>%
                     format("%F %H:%M %z")) %>%
     dplyr::relocate("date_local", .after = "date_utc") %>%
     dplyr::select(-"tz_local") %>%
