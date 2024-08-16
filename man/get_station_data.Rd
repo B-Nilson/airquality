@@ -14,7 +14,7 @@ get_station_data(
 }
 \arguments{
 \item{locations}{A character vector with at least one value that indicates a
-location on Open Street Map that data is desired for (ie. "Prince George, BC, Canada"),
+location on Open Street Map that data is desired for (ie. "Prince George, BC, Canada", or "Canada"),
 OR an sf object with polygon(s) indicating area of interest.}
 
 \item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
