@@ -55,11 +55,11 @@
 #' #  for the first hour of Feb 2019
 #' get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 #'
-#' # Get data for all FEM stations within 25 km of 2 BC cities from the BC Gov't only
+#' # Get data for all FEM stations within 25 km of 2 BC cities from AirNow only
 #' #  for the first hour of Feb 2019
 #' get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
 #'                    "2019-02-01 01", buffer_dist = 25,
-#'                    networks = "FEM", sources = "BCgov")
+#'                    networks = "FEM", sources = "AirNow")
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = "all", sources = "all"){
   if(any(networks == "all")) networks = c("FEM")
@@ -194,7 +194,9 @@ data_citation = function(source){
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
-#'
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
+#' 
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
@@ -235,12 +237,12 @@ data_citation = function(source){
 #' # For first week of January 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bcgov_data(stations, date_range)
-get_bcgov_data = function(stations, date_range, raw = FALSE){
+get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
   # TODO: warn if returning non qa/qced data and add a test to check for that
   # Output citation message to user
-  data_citation("BCgov")
+  if(verbose) data_citation("BCgov")
 
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bcgov_qaqc_years()
@@ -570,9 +572,9 @@ get_abgov_stations = function(use_sf = FALSE){
   return(stations)
 }
 
-get_abgov_data = function(stations, date_range, raw = FALSE){
+get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
-  data_citation("ABgov")
+  if(verbose) data_citation("ABgov")
 
   date_range = lubridate::with_tz(date_range, abgov_tzone) # Correct? Or is it UTC time? DST?
 
@@ -730,6 +732,8 @@ abgov_col_names = c(
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
 #' raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
 #'
 #' @description
 #' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
@@ -767,12 +771,9 @@ abgov_col_names = c(
 #' # Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
-get_airnow_data = function(stations = "all", date_range, raw = FALSE){
-  # TODO: add warning that all data on AirNow is not QA/QC'ed
-
-
+get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
-  data_citation("AirNow")
+  if(verbose) data_citation("AirNow")
 
   ## Handle date_range inputs
   min_date = lubridate::ymd_h("2014-01-01 01", tz = "UTC")
@@ -782,13 +783,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if(max(date_range) - max_date > lubridate::hours(-48)){ # if date_range in past 48 hours
     if(max(date_range) - max_date > lubridate::minutes(-55)){ # if date_range in past 55 minutes
-      warning(paste("The current hour AirNow files is updated twice per hour",
+      if(verbose) warning(paste("The current hour AirNow files is updated twice per hour",
                     "(at 25 and 55 minutes past the hour) or more frequently if possible.",
                     "All hourly files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
                     "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }else{ # if date_range in past 48 hours but not past 55 minutes
-      warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
+      if(verbose) warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
                     "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }
@@ -822,11 +823,10 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
 
   # If no data (should not happen unless AirNow is offline and requesting current data)
   if(nrow(airnow_data) == 0){
-    # Warn user and end the function here, returning NULL
-    warning(paste("No data available for provided date range.",
+    # Error and quit here
+    stop(paste("No data available for provided date range.",
             "Ensure `date_range` is valid and AirNow is not offline",
             "(see: https://www.airnowtech.org/ for AirNow status)."))
-    return(NULL)
   }
 
   # Basic formatting
