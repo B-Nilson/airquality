@@ -196,7 +196,7 @@ data_citation = function(source){
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed
-#'
+#' 
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
@@ -823,11 +823,10 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
 
   # If no data (should not happen unless AirNow is offline and requesting current data)
   if(nrow(airnow_data) == 0){
-    # Warn user and end the function here, returning NULL
-    warning(paste("No data available for provided date range.",
+    # Error and quit here
+    stop(paste("No data available for provided date range.",
             "Ensure `date_range` is valid and AirNow is not offline",
             "(see: https://www.airnowtech.org/ for AirNow status)."))
-    return(NULL)
   }
 
   # Basic formatting
