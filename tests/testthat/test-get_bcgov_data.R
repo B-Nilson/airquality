@@ -1,7 +1,7 @@
 test_that("an error/warning is not thrown in normal usaage", {
   date_range = "2019-02-01 00"
   obs = expect_no_warning(expect_no_error(
-    get_bcgov_data("0450307", date_range)))
+    get_bcgov_data("0450307", date_range, verbose = FALSE)))
 })
 
 # Input: stations ---------------------------------------------------------
@@ -10,7 +10,7 @@ test_that("returns requested stations only", {
   stations = c("0450307", "E206898")
   date_range = "2019-02-01 00"
   # Case: a single station
-  obs = get_bcgov_data(stations[1], date_range)
+  obs = get_bcgov_data(stations[1], date_range, verbose = FALSE)
   expect_true(all(unique(obs$site_id) %in% stations[1]))
   # Case: 2+ stations
   obs = get_bcgov_data(stations, date_range)
@@ -21,9 +21,9 @@ test_that("unknown stations cause warning", {
   stations = c("bananas", "0450307")
   date_range = "2019-02-02 00"
   # Case: All stations invalid
-  expect_error(get_bcgov_data(stations[1], date_range))
+  expect_error(get_bcgov_data(stations[1], date_range, verbose = FALSE))
   # Case: Some stations invalid
-  expect_warning(get_bcgov_data(stations, date_range))
+  expect_warning(get_bcgov_data(stations, date_range, verbose = FALSE))
 })
 
 # Inputs: date_range ------------------------------------------------------
@@ -31,16 +31,16 @@ test_that("unknown stations cause warning", {
 test_that("invalid date_range causes error", {
   station = "0450307"
   # Case: invalid input value
-  expect_error(get_bcgov_data(station, "bananas"))
+  expect_error(get_bcgov_data(station, "bananas", verbose = FALSE))
   # Case: too many dates
-  expect_error(get_bcgov_data(station, c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02")))
+  expect_error(get_bcgov_data(station, c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"), verbose = FALSE))
 })
 
 test_that("too early date_range causes warning/error", {
   station = "M110514"
   earliest_time = lubridate::ymd_h("1990-01-01 01", tz = bcmoe_tzone)
   # Case: All in the past
-  expect_error(get_bcgov_data(station, earliest_time - hours(1)))
+  expect_error(get_bcgov_data(station, earliest_time - hours(1), verbose = FALSE))
   # Case: Partly in the past
   date_range = c(earliest_time - lubridate::hours(1), earliest_time)
   expect_warning(get_bcgov_data(station, date_range))
@@ -51,16 +51,16 @@ test_that("too late date_range causes warning/error", {
   current_time = lubridate::floor_date(Sys.time(), "hours")
   future_time = current_time + lubridate::hours(24)
   # Case: All in the future
-  expect_error(get_bcgov_data(station, future_time))
+  expect_error(get_bcgov_data(station, future_time, verbose = FALSE))
   # Case: Partly in the future
   date_range = c(current_time - lubridate::hours(1), future_time)
-  expect_warning(get_bcgov_data(station, date_range))
+  expect_warning(get_bcgov_data(station, date_range, verbose = FALSE))
 })
 
 # Inputs: raw -------------------------------------------------------------
 
 test_that("raw data returned", {
-  obs_raw = get_bcgov_data(stations = "0450307", date_range = "2018-02-01 00", raw = TRUE)
+  obs_raw = get_bcgov_data(stations = "0450307", date_range = "2018-02-01 00", raw = TRUE, verbose = FALSE)
 
   expect_snapshot(obs_raw)
 })
@@ -70,7 +70,7 @@ test_that("raw data returned", {
 test_that("all dates non-na and within requested period", {
   date_range = lubridate::ymd_h(
     c("2019-01-01 00", "2019-01-01 01"), tz = "America/Toronto")
-  obs = get_bcgov_data("0450307", date_range)
+  obs = get_bcgov_data("0450307", date_range, verbose = FALSE)
   # Case: All date_utc non-NA
   expect_true(all(!is.na(obs$date_utc)))
   # Case: All date_local non-NA
@@ -81,7 +81,7 @@ test_that("all dates non-na and within requested period", {
 
 test_that("date_local converts to date_utc correctly", {
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"), tz = "America/Vancouver")
-  obs = get_bcgov_data("0450307", date_range)
+  obs = get_bcgov_data("0450307", date_range, verbose = FALSE)
   obs = obs %>% dplyr::mutate(
     # Extract tz offset from end of local date string
     tz_offset = extract_tz_offset(.data$date_local),
@@ -99,7 +99,7 @@ test_that("date_local converts to date_utc correctly", {
 
 test_that("expected data returned", {
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-  obs = get_bcgov_data("0450307", date_range)
+  obs = get_bcgov_data("0450307", date_range, verbose = FALSE)
   # Case: tibble is returned
   expect_true("tbl_df" %in% class(obs))
   # Case: data.frame has rows

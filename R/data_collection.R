@@ -194,6 +194,8 @@ data_citation = function(source){
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -235,12 +237,12 @@ data_citation = function(source){
 #' # For first week of January 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bcgov_data(stations, date_range)
-get_bcgov_data = function(stations, date_range, raw = FALSE){
+get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant
   # TODO: warn if returning non qa/qced data and add a test to check for that
   # Output citation message to user
-  data_citation("BCgov")
+  if(verbose) data_citation("BCgov")
 
   # Get list of years currently QA/QC'ed
   qaqc_years = get_bcgov_qaqc_years()
