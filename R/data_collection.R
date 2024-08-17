@@ -732,6 +732,8 @@ abgov_col_names = c(
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
 #' raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
 #'
 #' @description
 #' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
@@ -769,12 +771,9 @@ abgov_col_names = c(
 #' # Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
-get_airnow_data = function(stations = "all", date_range, raw = FALSE){
-  # TODO: add warning that all data on AirNow is not QA/QC'ed
-
-
+get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
-  data_citation("AirNow")
+  if(verbose) data_citation("AirNow")
 
   ## Handle date_range inputs
   min_date = lubridate::ymd_h("2014-01-01 01", tz = "UTC")
@@ -784,13 +783,13 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE){
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if(max(date_range) - max_date > lubridate::hours(-48)){ # if date_range in past 48 hours
     if(max(date_range) - max_date > lubridate::minutes(-55)){ # if date_range in past 55 minutes
-      warning(paste("The current hour AirNow files is updated twice per hour",
+      if(verbose) warning(paste("The current hour AirNow files is updated twice per hour",
                     "(at 25 and 55 minutes past the hour) or more frequently if possible.",
                     "All hourly files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
                     "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }else{ # if date_range in past 48 hours but not past 55 minutes
-      warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
+      if(verbose) warning(paste("All hourly AirNow files for the preceding 48 hours will be updated every hour",
                     "to ensure data completeness and quality.",
                     "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."))
     }
