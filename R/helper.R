@@ -1,7 +1,10 @@
 
 # Specify return value if code fails
-on_error = function(..., return = NULL){
-  tryCatch(..., error = \(...) return(return))
+on_error = function(..., return = NULL, msg = FALSE){
+  tryCatch(..., error = \(e, ...){
+    if(msg) message(e)
+    return(return)
+  })
 }
 
 # General function for loading in data quickly and quietly
