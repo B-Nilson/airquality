@@ -24,6 +24,7 @@ Imports:
     stringr,
     tibble,
     tidyr,
+    xml2,
     zoo
 RoxygenNote: 7.3.1
 URL: https://github.com/B-Nilson/airquality
