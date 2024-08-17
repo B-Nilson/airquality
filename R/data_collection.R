@@ -572,9 +572,9 @@ get_abgov_stations = function(use_sf = FALSE){
   return(stations)
 }
 
-get_abgov_data = function(stations, date_range, raw = FALSE){
+get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
-  data_citation("ABgov")
+  if(verbose) data_citation("ABgov")
 
   date_range = lubridate::with_tz(date_range, abgov_tzone) # Correct? Or is it UTC time? DST?
 
