@@ -61,7 +61,7 @@ FEM (Regulatory-grade "Federal Equivalent Method") monitors:
 #  for the first hour of Feb 2019
 get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 
-# Get data for all FEM stations within 25 km of 2 BC cities from the BC Gov't only
+# Get data for all FEM stations within 25 km of 2 BC cities from AirNow only
 #  for the first hour of Feb 2019
 get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
                    "2019-02-01 01", buffer_dist = 25,
