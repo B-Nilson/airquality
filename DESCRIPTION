@@ -26,3 +26,5 @@ Imports:
     tidyr,
     zoo
 RoxygenNote: 7.3.1
+URL: https://github.com/B-Nilson/airquality
+BugReports: https://github.com/B-Nilson/airquality/issues
