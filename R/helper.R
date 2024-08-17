@@ -203,7 +203,7 @@ saturation_vapour_pressure = function(temperature_c){
   return(e) # units hPa (millibars)
 }
 
-converter = function(x, y = NULL, conversions, in_unit, out_unit){
+converter = function(x, conversions, in_unit, out_unit, y = NULL){
   # Get the common unit used in all conversions (the first one)
   base_unit = stringr::str_split(names(conversions)[1], "_to_")[[1]][1]
   # If converting to/from the base unit
@@ -225,20 +225,15 @@ converter = function(x, y = NULL, conversions, in_unit, out_unit){
   return(x)
 }
 
-convert_units = function(x, in_unit, out_unit){
+convert_units = function(x, in_unit, out_unit, y = NULL){
   # Force inputs to uppercase
   in_unit = toupper(in_unit)
   out_unit = toupper(out_unit)
   # Handle matching in/out units
   if (in_unit == out_unit) return(x)
 
-  # Handle temperature conversions
-  temperature_units = c("K", "F", "C")
-  if (in_unit %in% temperature_units) {
-    if (!out_unit %in% temperature_units) {
-      stop(paste("Cannot convert unit", in_unit, "to unit", out_unit))
-    }else convert_temperature(x, in_unit, out_unit)
-  }
+  # Handle conversion
+  converter(x, all_conversions, in_unit, out_unit, y)
 }
 
 
