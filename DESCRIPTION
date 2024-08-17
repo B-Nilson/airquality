@@ -1,11 +1,11 @@
 Package: airquality
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Gather, Standardize, and Analyze Air Quality Data
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Brayden Nilson
+Maintainer: Brayden Nilson <nilson.brayden@gmail.com>
+Description: The goal of airquality is to reduce the burden of gathering, standardizing, and analyzing air quality data. 
+    This package is very much a work in progress, significant changes will occur and there is no gaurentee things will work as expected. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
