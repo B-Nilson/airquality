@@ -331,6 +331,19 @@
       ],
       "Hash": "680ad542fbcf801442c83a6ac5a2126c"
     },
+    "lutz": {
+      "Package": "lutz",
+      "Version": "0.3.2",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "lubridate",
+        "stats"
+      ],
+      "Hash": "b2a1e127d24872c54d2038bd06d72d48"
+    },
     "magrittr": {
       "Package": "magrittr",
       "Version": "2.0.3",
