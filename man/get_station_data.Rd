@@ -65,5 +65,5 @@ get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 #  for the first hour of Feb 2019
 get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
                    "2019-02-01 01", buffer_dist = 25,
-                   networks = "FEM", sources = "BCgov")
+                   networks = "FEM", sources = "AirNow")
 }
