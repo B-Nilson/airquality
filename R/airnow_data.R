@@ -141,6 +141,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
     dplyr::mutate(
       date_local = lubridate::with_tz(.data$date, as.character(.data$tz_local)) %>%
                     format("%F %H:%M %z")) %>%
+    dplyr::ungroup() %>%
     # drop now erroneous time and tz_offset columns
     dplyr::select(-"time", -"tz_offset", -"tz_local") %>%
     # long to wide

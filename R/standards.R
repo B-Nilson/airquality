@@ -687,7 +687,8 @@ AQI = function(dates = Sys.time(),
       # Determine the principal pollutant for the AQI
       principal_pol = names(AQI_cols)[which.max( # get pol where max
         dplyr::across(dplyr::all_of(AQI_cols)))] %>% # across AQI columns
-        factor(unique(names(AQI_cols)))) # make it a factor
+        factor(unique(names(AQI_cols)))) %>% # make it a factor
+    dplyr::ungroup()
 
   # Return a tibble with datetimes and corresponding AQI
   return(dplyr::select(dat, "date", "AQI",

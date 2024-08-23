@@ -121,6 +121,7 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
       dplyr::rowwise() %>%
       dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) %>%
                       format("%F %H:%M %z")) %>%
+      dplyr::ungroup() %>%
       dplyr::select(-"tz_local")
   }else{
     if(!raw) stop("No data available for provided stations and date_range")
