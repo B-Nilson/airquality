@@ -107,7 +107,7 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") %>%
     # Replace blank values with NA
-    dplyr::mutate_at(-(1:2), \(x) ifelse(x == "", NA, x)) %>%
+    dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) %>%
     # Rename and select desired columns
     standardize_colnames(bcmoe_col_names, raw = raw) %>%
     # Output as tibble
@@ -182,8 +182,8 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
     # Replace blank values with NA
     dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
     # Convert date_created and date_removed to date objects
-    dplyr::mutate_at(c('date_created', 'date_removed'),
-      \(x) lubridate::ymd(stringr::str_sub(x, end = 10))) %>%
+    dplyr::mutate(dplyr::across(c('date_created', 'date_removed'),
+      \(x) lubridate::ymd(stringr::str_sub(x, end = 10)))) %>%
     # Sort alphabetically
     dplyr::arrange(.data$site_name) %>%
     # Drop duplicated meta entries

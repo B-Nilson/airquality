@@ -126,7 +126,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") %>%
     # Convert to numeric
-    dplyr::mutate_at(-(1:3), as.numeric) %>%
+    dplyr::mutate(dplyr::across(-(1:3), as.numeric)) %>%
     # Rename and select desired columns
     standardize_colnames(abgov_col_names, raw = raw) %>%
     # Convert date_local to local time
