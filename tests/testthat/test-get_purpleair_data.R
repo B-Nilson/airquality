@@ -1,3 +1,6 @@
+skip_on_cran() # cran won't have keys defined
+if(Sys.getenv("purpleair_api_read") == "" |  # tests won't work without keys available
+  Sys.getenv("purpleair_api_write") == "") skip("PurpleAir API keys not defined in .Renviron")
 
 test_that("Keys/Org. API calls work as expected", {
   # Written to .Renviron - make your own here: https://develop.purpleair.com/
