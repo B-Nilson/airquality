@@ -824,21 +824,22 @@ AQI_from_con = function(dat, pol){
   . = NULL # so build check doesn't yell at me
   dat[paste0("cat_",pol)] = NA
   dat[paste0("AQI_",pol)] = NA
-  dat %>%
+  dat = dat %>%
     # Determine the risk category based on the concentrations and break points
-    dplyr::mutate_at(., paste0("cat_",pol),
-                     \(x) AQI_bp_cat(.[[pol]], AQI_breakpoints[[pol]])) %>%
+    dplyr::mutate(dplyr::across(paste0("cat_",pol),
+                     \(x) AQI_bp_cat(dat[[pol]], AQI_breakpoints[[pol]]))) %>%
     # Append the corresponding break points and AQI breaks for each hour
     dplyr::left_join(AQI_breakpoints[[pol]] %>%
                        dplyr::rename_with(.cols = 2:5, \(x)paste0(x,"_", pol)),
-                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) %>%
+                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) 
+  dat %>%
     # Calculate AQI for each hour based on those
-    dplyr::mutate_at(., paste0("AQI_",pol),
+    dplyr::mutate(across(paste0("AQI_",pol),
                      \(x) AQI_formulation(
-                       .[[pol]],
-                       .[[paste0("bp_low_", pol)]],
-                       .[[paste0("bp_high_", pol)]],
-                       .[[paste0("aqi_low_", pol)]],
-                       .[[paste0("aqi_high_", pol)]]))
+                       dat[[pol]],
+                       dat[[paste0("bp_low_", pol)]],
+                       dat[[paste0("bp_high_", pol)]],
+                       dat[[paste0("aqi_low_", pol)]],
+                       dat[[paste0("aqi_high_", pol)]])))
 }
 

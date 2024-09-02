@@ -80,8 +80,9 @@ standardize_colnames = function(df, all_col_names, raw = FALSE){
   }else{
     col_names = all_col_names[all_col_names %in% names(df)]
     df %>%
-      dplyr::rename_at(col_names, \(x) names(col_names)[col_names == x]) %>%
-      dplyr::select_at(names(col_names))
+      dplyr::rename_with(.cols = col_names, 
+        \(x) names(col_names)[col_names == x]) %>%
+      dplyr::select(dplyr::any_of(names(col_names)))
   }
 }
 

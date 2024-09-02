@@ -40,7 +40,7 @@ test_that("too early date_range causes warning/error", {
   station = "000010102"
   earliest_time = lubridate::ymd_h("2014-01-01 01") # 01 because AirNow is forward looking
   # Case: All in the past
-  expect_error(get_airnow_data(station, earliest_time - hours(1)))
+  expect_error(get_airnow_data(station, earliest_time - hours(1), verbose = FALSE))
   # Case: Partly in the past
   date_range = c(earliest_time - lubridate::hours(1), earliest_time)
   expect_warning(expect_warning(get_airnow_data(station, date_range, verbose = FALSE)))
