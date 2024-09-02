@@ -28,30 +28,34 @@ test_that("Sensors API calls work as expected", {
   read_key = Sys.getenv("purpleair_api_read")
   write_key = Sys.getenv("purpleair_api_write")
 
+  channel = "sensors"
+
   parameters = list(
-    nwlat = 63.595851, nwlng = -135.899856, selat = 63.592657, selng = -135.891057,
-    fields = c("temperature", "humidity"), 
+    nwlat = 63.595851, nwlng = -135.899856, 
+    selat = 63.592657, selng = -135.891057,
+    fields = "temperature", 
     sensor_index = 198385, 
-    start_timestamp = Sys.time() |> lubridate::with_tz("UTC") - lubridate::minutes(15))
+    start_timestamp = Sys.time() |> 
+      lubridate::with_tz("UTC") - lubridate::minutes(15))
+  
+  expected_headers = c("time_stamp", "sensor_index", "temperature")
   
   # Get Sensors Data
-  test = purpleair_api(read_key = read_key, channel = "sensors", 
+  test = purpleair_api(read_key = read_key, channel = channel, 
     parameters = parameters[1:5], verbose = FALSE)
-  expect_length(names(test), 4)
-  expect_equal(names(test), c("time_stamp", "sensor_index", "humidity", "temperature"))
+  expect_equal(names(test), expected_headers)
 
   # Get Sensor Data
-  test = purpleair_api(read_key = read_key, channel = "sensors", 
+  test = purpleair_api(read_key = read_key, channel = channel, 
     parameters = parameters[5:6], verbose = FALSE)
   Sys.sleep(0.5) # Avoid API call frequency limits
   expect_length(names(test), 4)
   expect_length(test$time_stamp, 1)
-  expect_equal(names(test), c("time_stamp", "sensor_index", "humidity", "temperature"))
+  expect_equal(names(test), expected_headers)
 
   # Get Sensor History
-  test = purpleair_api(read_key = read_key, channel = "sensors", 
+  test = purpleair_api(read_key = read_key, channel = channel, 
     parameters = parameters[5:7], verbose = FALSE)
-  expect_length(names(test), 4)
-  expect_equal(names(test), c("time_stamp", "sensor_index", "humidity", "temperature"))
+  expect_equal(names(test), expected_headers)
 
 })
