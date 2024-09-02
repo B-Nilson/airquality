@@ -243,7 +243,7 @@ purpleair_points_estimator = function(call, parameters, verbose = FALSE){
     n_rows =length(seq(s, Sys.time(), paste(parameters$average, "mins")))
   }else if("end_timestamp" %in% names(parameters)){
     n_rows = max_rows
-  }
+  }else n_rows = 1
 
   if(n_rows > max_rows) n_rows = max_rows
   total_cost = call_costs[1] + row_costs * n_rows
