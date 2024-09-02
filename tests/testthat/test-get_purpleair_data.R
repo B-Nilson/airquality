@@ -1,5 +1,5 @@
 
-test_that("API calls work as expected", {
+test_that("Keys/Org. API calls work as expected", {
   # Written to .Renviron - make your own here: https://develop.purpleair.com/
   # and run usethis::edit_r_environ("project") to open the environ file for editting
   # Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
@@ -16,7 +16,15 @@ test_that("API calls work as expected", {
   test = purpleair_api(read_key = read_key, channel = "organization", verbose = FALSE)
   expect_type(test$remaining_points, "integer")
 
-  ## Sensors channel
+})
+
+test_that("Sensors API calls work as expected", {
+  # Written to .Renviron - make your own here: https://develop.purpleair.com/
+  # and run usethis::edit_r_environ("project") to open the environ file for editting
+  # Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
+  read_key = Sys.getenv("purpleair_api_read")
+  write_key = Sys.getenv("purpleair_api_write")
+
   parameters = list(
     nwlat = 63.595851, nwlng = -135.899856, selat = 63.592657, selng = -135.891057,
     fields = c("temperature", "humidity"), 
