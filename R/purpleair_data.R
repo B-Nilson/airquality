@@ -66,6 +66,16 @@ get_purpleair_api_call = function(channel, parameters){
   }
 }
 
+purpleair_call_msg = function(channel, call){
+  url = paste0(
+    "https://api.purpleair.com/#api-", channel, "-", 
+    stringr::str_to_lower(call) |> 
+      stringr::str_replace_all(" ", "-") |> 
+      paste(collapse = "-"))
+  paste0(
+    "Calling `", call, "`", "(See: ", url, ")")
+}  
+
 purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters = NULL, verbose = TRUE){
   # Handle inputs
   if(is.null(read_key) & is.null(write_key))
@@ -90,19 +100,9 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
       as.numeric()
   }
   
-  call_msg = function(channel, call){
-    url = paste0(
-      "https://api.purpleair.com/#api-", channel, "-", 
-      stringr::str_to_lower(call) |> 
-        stringr::str_replace_all(" ", "-") |> 
-        paste(collapse = "-"))
-    paste0(
-      "Calling `", call, "`", "(See: ", url, ")")
-  }  
-
   call = get_purpleair_api_call(channel, parameters)
 
-  if(verbose) message(call_msg(channel, call))
+  if(verbose) message(purpleair_call_msg(channel, call))
 
   channel_suffix = purpleair_api_calls[[channel]][[call]]
   if(stringr::str_detect(channel_suffix, ":sensor_index")){
@@ -117,6 +117,13 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
     channel_suffix = channel_suffix |>
       stringr::str_replace(":member_id", parameters$member_id)
   }
+
+  expected_cost = purpleair_points_estimator(call, parameters, verbose)
+  if(verbose){
+    keep_going = readline("Would you like to continue? (y/n): ") |>
+      stringr::str_to_lower() %in% c("y", "yes", "ye", "yeah", "yup", "sure")
+    if(!keep_going) stop("User requested to exit.")
+  }
   
   results = httr::GET(
     paste0(purpleair_api_site, channel_suffix), 
@@ -125,6 +132,10 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
     httr::content()
 
   if("data" %in% names(results)){
+    if(length(results$data) == 0){
+      warning("No data available for the desired sensors/period")
+      return(NULL)
+    }
     results$data = results$data |>
       lapply(\(d) as.data.frame(t(unlist(setNames(d, results$fields))))) |>
       dplyr::bind_rows()  
@@ -146,4 +157,95 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
   }
 
   return(results)
+}
+
+purpleair_points_costs = list(
+  # If row cost is NA, cost is sum of requested field costs
+  endpoints = list(
+    get_organization_data = c(request = 0, row = 0),
+    check_api_key = c(request = 0, row = 0),
+    get_sensor_data = c(request = 1, row = NA),
+    get_sensors_data	= c(request = 5, row = NA),
+    get_sensor_history = c(request = 2, row = NA),	
+    create_member	= c(request = 1, row = 1),	
+    delete_member	= c(request = 1, row = 0),
+    get_member_data = c(request = 1, row = NA),
+    get_member_history = c(request = 2, row = NA),
+    get_members_data = c(request = 3, row = NA),
+    create_group = c(request = 1, row = 0),
+    delete_group = c(request = 1, row = 0),
+    get_group_detail = c(request = 1, row = 3),
+    get_groups_list = c(request = 4, row = 3)
+  ),
+  #(any other fields cost 1 point)
+  fields = list(
+    sensor_index = 0,
+    humidity = 2, temperature = 2, pressure = 2, voc = 2, 
+    scattering_coefficient = 2, deciviews = 2, visual_range = 2,
+    '0.3_um_count' = 2, '0.5_um_count' = 2, '1.0_um_count' = 2,
+    '2.5_um_count' = 2, '5.0_um_count' = 2, '10.0_um_count' = 2,
+    pm1.0 = 2, pm1.0_cf_1 = 2, pm1.0_atm = 2,
+    pm2.5_10minute = 2, pm2.5_30minute = 2, pm2.5_60minute = 2,
+    pm2.5_6hour = 2, pm2.5_24hour = 2,pm2.5_1week = 2,
+    pm2.5 = 2, pm2.5_atm = 2, pm2.5_cf_1 = 2, pm2.5_alt = 2,
+    pm10.0 = 2, pm10.0_atm = 2, pm10.0_cf_1 = 2
+  )
+)
+
+# See https://community.purpleair.com/t/loop-api-calls-for-historical-data/4623
+purpleair_request_limits = list(
+  avg_0 = 30 * 24 * 30,
+  avg_10 = 6 * 24 * 60, 
+  avg_30 = 2 * 24 * 90,
+  avg_60 = 1 * 24 * 180,
+  avg_360 = 1/6 * 24 * 365,
+  avg_1440 = 1/24 * 24 * 730,
+  avg_10080 = 1/24/7 * 24 * 1825,
+  avg_43200 = 1/24/30 * 24 * 7300,
+  avg_525600 = 1/24/365 * 24 * 36500
+)
+
+purpleair_points_estimator = function(call, parameters, verbose = FALSE){
+  call_costs = purpleair_points_costs$endpoints[[
+    stringr::str_to_lower(call) |> stringr::str_replace_all(" ", "_")]]
+  
+  if(!is.na(call_costs[2])){
+    row_costs = call_costs[2]
+  }else{
+    if(!"fields" %in% names(parameters)) stop("Parameter `fields` must be provided.")
+    fields = stringr::str_split(parameters$fields, ",")[[1]]
+    row_costs = sum(unlist(ifelse(
+      fields %in% names(purpleair_points_costs$fields), 
+      purpleair_points_costs$fields[fields], 1)))
+  }
+  
+  if(call %in% c("Get Sensors Data", "Get Members Data")){
+    if(verbose) message(paste0("It is difficult to estimate the points cost of `", call, "` as it depends on the number of sensors in the request. ",
+      "Points used will be equal to ", call_costs[1], " + ", row_costs, " * n_sensors"))
+    return(NA)
+  }
+
+  if(!"average" %in% names(parameters)) parameters$average = 10
+  if(!paste0("avg_", parameters$average) %in% names(purpleair_request_limits)){
+    stop(paste("average must be one of", paste(names(purpleair_request_limits)|>stringr::str_remove("avg_"), collapse = ", ")))
+  }
+  max_rows = purpleair_request_limits[[paste0("avg_", parameters$average)]]
+
+  if(call %in% c("Get Sensor Data", "Get Member Data")){
+    n_rows = 1
+  }else if(all(c("start_timestamp", "end_timestamp") %in% names(parameters))){
+    s = lubridate::as_datetime(parameters$start_timestamp)
+    e = lubridate::as_datetime(parameters$end_timestamp)
+    n_rows = length(seq(s, e, paste(parameters$average, "mins")))
+  }else if("start_timestamp" %in% names(parameters)){
+    s = lubridate::as_datetime(parameters$start_timestamp)
+    n_rows =length(seq(s, Sys.time(), paste(parameters$average, "mins")))
+  }else if("end_timestamp" %in% names(parameters)){
+    n_rows = max_rows
+  }
+
+  if(n_rows > max_rows) n_rows = max_rows
+  total_cost = call_costs[1] + row_costs * n_rows
+  if(verbose) message(paste("This is estimated to cost up to", total_cost, "points."))
+  return(total_cost)
 }
