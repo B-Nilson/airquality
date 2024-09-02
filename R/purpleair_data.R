@@ -84,7 +84,7 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
     stop("Either read_key or write_key must be provided, not both.")
   if(!channel %in% purpleair_api_channels) 
     stop(paste("channel must be one of:", paste(purpleair_api_channels, collapse = ", ")))
-  if(channel %in% c("organization", "sensors", "keys"))
+  if(channel %in% c("organization", "sensors"))
     if(is.null(read_key)) 
       stop(paste(channel, "channel is read only"))
   
