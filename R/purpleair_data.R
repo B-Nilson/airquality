@@ -126,9 +126,13 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
     if(!keep_going) stop("User requested to exit.")
   }
   
+  
+  # Get the api key provided
+  api_key = ifelse(is.null(read_key), write_key, read_key)
+  # Make the request
   results = httr::GET(
     paste0(purpleair_api_site, channel_suffix), 
-    httr::add_headers("X-API-Key" = read_key), query = parameters
+    httr::add_headers("X-API-Key" = api_key), query = parameters
   ) |>
     httr::content()
 
