@@ -119,7 +119,8 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
   }
 
   expected_cost = purpleair_points_estimator(call, parameters, verbose)
-  if(verbose){
+  
+  if(!is.na(expected_cost)) if(expected_cost > 0 & verbose){
     keep_going = readline("Would you like to continue? (y/n): ") |>
       stringr::str_to_lower() %in% c("y", "yes", "ye", "yeah", "yup", "sure")
     if(!keep_going) stop("User requested to exit.")
@@ -246,6 +247,6 @@ purpleair_points_estimator = function(call, parameters, verbose = FALSE){
 
   if(n_rows > max_rows) n_rows = max_rows
   total_cost = call_costs[1] + row_costs * n_rows
-  if(verbose) message(paste("This is estimated to cost up to", total_cost, "points."))
+  if(verbose & total_cost > 0) message(paste("This is estimated to cost up to", total_cost, "points."))
   return(total_cost)
 }
