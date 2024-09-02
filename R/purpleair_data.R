@@ -1,4 +1,9 @@
 
+get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbose = TRUE){
+  # Use httr::GET(...,
+    # query = list(lat = 40.7, lon = -74))
+}
+
 purpleair_api_site = "https://api.purpleair.com/v1/"
 purpleair_api_channels = c("sensors", "groups", "organization", "keys")
 
@@ -227,6 +232,10 @@ purpleair_points_estimator = function(call, parameters, verbose = FALSE){
   if(call %in% c("Get Sensors Data", "Get Members Data")){
     if(verbose) message(paste0("It is difficult to estimate the points cost of `", call, "` as it depends on the number of sensors in the request. ",
       "Points used will be equal to ", call_costs[1], " + ", row_costs, " * n_sensors"))
+    if(call == "Get Sensors Data" & !"nwlat" %in% names(parameters) & verbose){
+      message("This request may cost a significant amount of points (100k+) given that a bounding box is not supplied")
+      return(100000)
+    }
     return(NA)
   }
 
@@ -243,8 +252,9 @@ purpleair_points_estimator = function(call, parameters, verbose = FALSE){
     e = lubridate::as_datetime(parameters$end_timestamp)
     n_rows = length(seq(s, e, paste(parameters$average, "mins")))
   }else if("start_timestamp" %in% names(parameters)){
-    s = lubridate::as_datetime(parameters$start_timestamp)
-    n_rows =length(seq(s, Sys.time(), paste(parameters$average, "mins")))
+    s = lubridate::as_datetime(parameters$start_timestamp) |>
+      lubridate::with_tz("UTC")
+    n_rows =length(seq(s, lubridate::with_tz(Sys.time(), "UTC"), paste(parameters$average, "mins")))
   }else if("end_timestamp" %in% names(parameters)){
     n_rows = max_rows
   }else n_rows = 1
