@@ -423,7 +423,7 @@ CAAQS_no2 = function(obs, thresholds){
                     .data$annual_mean_of_hourly) %>%
     dplyr::summarise(
       perc_98_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%\
+        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
     dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
