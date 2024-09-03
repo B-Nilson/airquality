@@ -13,7 +13,7 @@ test_that("returns requested stations only", {
   obs = get_bcgov_data(stations[1], date_range, verbose = FALSE)
   expect_true(all(unique(obs$site_id) %in% stations[1]))
   # Case: 2+ stations
-  obs = get_bcgov_data(stations, date_range)
+  obs = get_bcgov_data(stations, date_range, verbose = FALSE)
   expect_true(all(unique(obs$site_id) %in% stations))
 })
 
@@ -43,7 +43,7 @@ test_that("too early date_range causes warning/error", {
   expect_error(get_bcgov_data(station, earliest_time - hours(1), verbose = FALSE))
   # Case: Partly in the past
   date_range = c(earliest_time - lubridate::hours(1), earliest_time)
-  expect_warning(get_bcgov_data(station, date_range))
+  expect_warning(get_bcgov_data(station, date_range, verbose = FALSE))
 })
 
 test_that("too late date_range causes warning/error", {

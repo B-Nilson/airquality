@@ -49,7 +49,6 @@ test_that("Sensors API calls work as expected", {
   test = purpleair_api(read_key = read_key, channel = channel, 
     parameters = parameters[5:6], verbose = FALSE)
   Sys.sleep(0.5) # Avoid API call frequency limits
-  expect_length(names(test), 4)
   expect_length(test$time_stamp, 1)
   expect_equal(names(test), expected_headers)
 
