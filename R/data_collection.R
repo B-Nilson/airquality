@@ -138,8 +138,9 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
       # Update user on state of data grab
       message(paste(net, "-", src, ":", length(site_ids), "station(s) to check for data"))
       # Get data for these stations and desired date range
-      on_error(source_funs$data(stations = site_ids, date_range), return = NULL, msg = TRUE) %>%
-      dplyr::mutate(source = src, network = net) # flag as from this source & network
+      d = on_error(source_funs$data(stations = site_ids, date_range), return = NULL, msg = TRUE) 
+      if(!is.null(d)) d = dplyr::mutate(d, source = src, network = net) # flag as from this source & network
+      return(d)
     }) %>% dplyr::bind_rows() # Combine data from all sources for this network
   }) %>% dplyr::bind_rows() # Combine data from all networks
 
