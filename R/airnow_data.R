@@ -128,7 +128,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
   # If raw data desired, end function and return data
   if(raw) return(airnow_data)
   
-  if(nrow(airnow_data == 0)) {
+  if(nrow(airnow_data) == 0) {
     # Error and quit here
     stop(paste("No data available for desired stations during speciifed date range."))
   }
@@ -167,6 +167,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
 get_airnow_stations = function(dates = Sys.time(), use_sf = FALSE){
   # Make path to each supplied hours meta file
   dates = sort(dates, decreasing = TRUE) # Newest first
+  dates = dates - lubridate::days(1) # in case current days file not made yet
   airnow_paths = make_airnow_metapaths(dates)
 
   # For each date
