@@ -839,12 +839,12 @@ AQI_from_con = function(dat, pol){
                      by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) 
   dat %>%
     # Calculate AQI for each hour based on those
-    dplyr::mutate(across(paste0("AQI_",pol),
-                     \(x) AQI_formulation(
-                       dat[[pol]],
-                       dat[[paste0("bp_low_", pol)]],
-                       dat[[paste0("bp_high_", pol)]],
-                       dat[[paste0("aqi_low_", pol)]],
-                       dat[[paste0("aqi_high_", pol)]])))
+    dplyr::mutate(dplyr::across(paste0("AQI_",pol),
+      \(x) AQI_formulation(
+        dat[[pol]],
+        dat[[paste0("bp_low_", pol)]],
+        dat[[paste0("bp_high_", pol)]],
+        dat[[paste0("aqi_low_", pol)]],
+        dat[[paste0("aqi_high_", pol)]])))
 }
 

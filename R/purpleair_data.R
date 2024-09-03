@@ -32,7 +32,7 @@ purpleair_api_calls = list(
   )
 )
 
-get_purpleair_api_call = function(channel, parameters){
+get_purpleair_api_call = function(write_key, channel, parameters){
   p_names = names(parameters)
   if(channel %in% c("keys", "organization")){
     call = names(purpleair_api_calls[[channel]])[1]
@@ -105,7 +105,7 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
       as.numeric()
   }
   
-  call = get_purpleair_api_call(channel, parameters)
+  call = get_purpleair_api_call(write_key, channel, parameters)
 
   if(verbose) message(purpleair_call_msg(channel, call))
 
@@ -147,7 +147,7 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
       return(NULL)
     }
     results$data = results$data |>
-      lapply(\(d) as.data.frame(t(unlist(setNames(d, results$fields))))) |>
+      lapply(\(d) as.data.frame(t(unlist(stats::setNames(d, results$fields))))) |>
       dplyr::bind_rows()  
     results$data = results$data[, 1:length(results$fields)] 
     
