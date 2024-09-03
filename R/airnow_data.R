@@ -130,7 +130,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
   
   if(nrow(airnow_data) == 0) {
     # Error and quit here
-    stop(paste("No data available for desired stations during speciifed date range."))
+    stop("No data available for desired stations during speciifed date range.")
   }
   ## Otherwise
   # Convert from long format to wide format ("param_unit" column for each param/unit)
