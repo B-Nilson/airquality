@@ -1,8 +1,8 @@
 
 # Specify return value if code fails
 on_error = function(..., return = NULL, msg = FALSE){
-  tryCatch(..., error = \(e, ...){
-    if(msg) message(e)
+  tryCatch(..., error = \(e){
+    if(msg) message(as.character(e))
     return(return)
   })
 }
