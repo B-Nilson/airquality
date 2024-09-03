@@ -57,7 +57,8 @@ get_airnow_data("all", date_range, raw = TRUE)
 }
 \seealso{
 Other Data Collection: 
-\code{\link{get_bcgov_data}()}
+\code{\link{get_bcgov_data}()},
+\code{\link{purpleair_api}()}
 
 Other USA Air Quality: 
 \code{\link{AQI}()}

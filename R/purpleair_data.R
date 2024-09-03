@@ -4,83 +4,55 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
     # query = list(lat = 40.7, lon = -74))
 }
 
-purpleair_api_site = "https://api.purpleair.com/v1/"
-purpleair_api_channels = c("sensors", "groups", "organization", "keys")
-
-purpleair_api_calls = list(
-  keys = list(
-    "Check API Key" = "keys"
-  ),
-  organization = list(
-    "Get Organization Data" = "organization"
-  ),
-  sensors = list(
-    "Get Sensor Data" = "sensors/:sensor_index",
-    "Get Sensor History" = "sensors/:sensor_index/history",
-    "Get Sensors Data" = "sensors"
-  ),
-  groups = list(
-    "Create Group" = "groups",
-    "Create Member" = "groups/:group_id/members",
-    "Delete Group" = "groups/:group_id",
-    "Delete Member" = "groups/:group_id/members/:member_id",
-    "Get Group Detail" = "groups/:group_id",
-    "Get Groups List" = "groups",
-    "Get Member Data" = "groups/:group_id/members/:member_id", 
-    "Get Member History" = "groups/:group_id/members/:member_id/history/csv",
-    "Get Members Data" = "groups/:group_id/members"
-  )
-)
-
-get_purpleair_api_call = function(write_key, channel, parameters){
-  p_names = names(parameters)
-  if(channel %in% c("keys", "organization")){
-    call = names(purpleair_api_calls[[channel]])[1]
-  }else if(channel == "sensors"){
-    call = dplyr::case_when(
-      # sensor_index not provided
-      !"sensor_index" %in% p_names ~ "Get Sensors Data",
-      # sensor_index and a start/end date provided
-      "start_timestamp" %in% p_names | 
-           "end_timestamp" %in% p_names ~ "Get Sensor History",
-      # sensor_index provided but not dates
-      "sensor_index" %in% p_names ~ "Get Sensor Data")
-  }else if(channel == "groups"){
-    if(!is.null(write_key)){ # If write key provided
-      call = dplyr::case_when(
-        # group_id not provided
-        !"group_id" %in% p_names ~ "Create Group",
-        # group id provided but not other ids
-        !any(c("sensor_index", "sensor_id", "member_id") %in% p_names) ~ "Delete Group",
-        # group_id and member_id provided
-        "member_id" %in% p_names ~ "Delete Member",
-        c("sensor_index", "sensor_id") %in% p_names ~ "Create Member")
-    }else{ # If read key provided
-      call = dplyr::case_when(
-        # group_id not provided
-        !"group_id" %in% p_names ~ "Get Groups List",
-        # group_id and fields provided 
-        "fields" %in% p_names ~ "Get Members Data",
-        # group_id provided but not fields nor member_id
-        !"member_id" %in% p_names ~ "Get Group Detail",
-        # group_id, member_id, and start/end date provided
-        any(c("start_timestamp", "end_timestamp") %in% p_names) ~ "Get Member History",
-        # group_id and member_id provided but no dates
-        "member_id" %in% p_names ~ "Get Member Data")
-    }
-  }
-}
-
-purpleair_call_msg = function(channel, call){
-  url = paste0(
-    "https://api.purpleair.com/#api-", channel, "-", 
-    stringr::str_to_lower(call) |> 
-      stringr::str_replace_all(" ", "-") |> 
-      paste(collapse = "-"))
-  paste0(
-    "Calling `", call, "`", "(See: ", url, ")")
-}  
-
+#' Interface with the PurpleAir API
+#'
+#' @param read_key (Optional) A single character value of your PurpleAir API read key (see develop.purpleair.com). If NULL, write_key must be provided.
+#' @param write_key (Optional) A single character value of your PurpleAir API write key (see develop.purpleair.com). If NULL, read_key must be provided.
+#' @param channel A single character value indicating what API channel to use (Currently supported: keys, organization, sensors, groups)
+#' @param parameters (Optional) A named list containing paramaters to be supplied to the API request (see api.purpleair.com).
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed.
+#' 
+#' @description
+#' Your Description Here
+#'
+#' @return
+#' If channel either "keys" or "organization", or invalid/missing parameters, then a list with the call results
+#' If sensors or groups channel, then a tibble with the data returned from the request
+#' 
+#' @family Data Collection
+#' @family Canadian Air Quality
+#' @family USA Air Quality
+#'#'
+#'@export
+#'@examples
+#'# Written to .Renviron - make your own here: https://develop.purpleair.com/
+#'# and run usethis::edit_r_environ("project") to open the environ file for editting
+#'# Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
+#'read_key = Sys.getenv("purpleair_api_read")
+#'write_key = Sys.getenv("purpleair_api_write")
+#'
+#'parameters = list( # see api.purpleair.com for more
+#'   nwlat = 63.595851, nwlng = -135.899856, 
+#'   selat = 63.592657, selng = -135.891057,
+#'   fields = "temperature", 
+#'   sensor_index = 198385, 
+#'   start_timestamp = Sys.time() |> 
+#'     lubridate::with_tz("UTC") - lubridate::minutes(15))
+#' 
+#' 
+#'# Get Sensors Data
+#'test = purpleair_api(read_key = read_key, channel = "sensors", 
+#'   parameters = parameters[1:5])
+#'
+#'# Get Sensor Data
+#'test = purpleair_api(read_key = read_key, channel = "sensors", 
+#'   parameters = parameters[5:6])
+#'
+#'# Get Sensor History
+#'test = purpleair_api(read_key = read_key, channel = "sensors", 
+#'  parameters = parameters[5:7])
+#'
 purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters = NULL, verbose = TRUE){
   # Handle inputs
   if(is.null(read_key) & is.null(write_key))
@@ -168,6 +140,83 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
 
   return(results)
 }
+
+purpleair_api_site = "https://api.purpleair.com/v1/"
+purpleair_api_channels = c("sensors", "groups", "organization", "keys")
+
+purpleair_api_calls = list(
+  keys = list(
+    "Check API Key" = "keys"
+  ),
+  organization = list(
+    "Get Organization Data" = "organization"
+  ),
+  sensors = list(
+    "Get Sensor Data" = "sensors/:sensor_index",
+    "Get Sensor History" = "sensors/:sensor_index/history",
+    "Get Sensors Data" = "sensors"
+  ),
+  groups = list(
+    "Create Group" = "groups",
+    "Create Member" = "groups/:group_id/members",
+    "Delete Group" = "groups/:group_id",
+    "Delete Member" = "groups/:group_id/members/:member_id",
+    "Get Group Detail" = "groups/:group_id",
+    "Get Groups List" = "groups",
+    "Get Member Data" = "groups/:group_id/members/:member_id", 
+    "Get Member History" = "groups/:group_id/members/:member_id/history/csv",
+    "Get Members Data" = "groups/:group_id/members"
+  )
+)
+
+get_purpleair_api_call = function(write_key, channel, parameters){
+  p_names = names(parameters)
+  if(channel %in% c("keys", "organization")){
+    call = names(purpleair_api_calls[[channel]])[1]
+  }else if(channel == "sensors"){
+    call = dplyr::case_when(
+      # sensor_index not provided
+      !"sensor_index" %in% p_names ~ "Get Sensors Data",
+      # sensor_index and a start/end date provided
+      "start_timestamp" %in% p_names | 
+           "end_timestamp" %in% p_names ~ "Get Sensor History",
+      # sensor_index provided but not dates
+      "sensor_index" %in% p_names ~ "Get Sensor Data")
+  }else if(channel == "groups"){
+    if(!is.null(write_key)){ # If write key provided
+      call = dplyr::case_when(
+        # group_id not provided
+        !"group_id" %in% p_names ~ "Create Group",
+        # group id provided but not other ids
+        !any(c("sensor_index", "sensor_id", "member_id") %in% p_names) ~ "Delete Group",
+        # group_id and member_id provided
+        "member_id" %in% p_names ~ "Delete Member",
+        c("sensor_index", "sensor_id") %in% p_names ~ "Create Member")
+    }else{ # If read key provided
+      call = dplyr::case_when(
+        # group_id not provided
+        !"group_id" %in% p_names ~ "Get Groups List",
+        # group_id and fields provided 
+        "fields" %in% p_names ~ "Get Members Data",
+        # group_id provided but not fields nor member_id
+        !"member_id" %in% p_names ~ "Get Group Detail",
+        # group_id, member_id, and start/end date provided
+        any(c("start_timestamp", "end_timestamp") %in% p_names) ~ "Get Member History",
+        # group_id and member_id provided but no dates
+        "member_id" %in% p_names ~ "Get Member Data")
+    }
+  }
+}
+
+purpleair_call_msg = function(channel, call){
+  url = paste0(
+    "https://api.purpleair.com/#api-", channel, "-", 
+    stringr::str_to_lower(call) |> 
+      stringr::str_replace_all(" ", "-") |> 
+      paste(collapse = "-"))
+  paste0(
+    "Calling `", call, "`", "(See: ", url, ")")
+}  
 
 purpleair_points_costs = list(
   # If row cost is NA, cost is sum of requested field costs
