@@ -359,6 +359,7 @@ CAAQS_pm25 = function(obs, thresholds){
     dplyr::group_by(year = lubridate::year(.data$date)) %>%
     dplyr::summarise(perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
                      mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
+    dplyr::ungroup() |>
     # +3 year averages, +whether standard is met
     dplyr::mutate(
       # +3 year averages,
@@ -394,6 +395,7 @@ CAAQS_o3 = function(obs, thresholds){
     dplyr::group_by(year = lubridate::year(.data$date)) %>%
     dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
     dplyr::summarise(fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
+    dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
       # +3 year averages
@@ -421,7 +423,8 @@ CAAQS_no2 = function(obs, thresholds){
                     .data$annual_mean_of_hourly) %>%
     dplyr::summarise(
       perc_98_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
+        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%\
+    dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
       # +3 year averages
@@ -455,6 +458,7 @@ CAAQS_so2 = function(obs, thresholds){
     dplyr::summarise(
       perc_99_of_daily_maxima = unname(stats::quantile(
         .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
+    dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
       # +3 year averages
@@ -650,6 +654,7 @@ AQI = function(dates = Sys.time(),
   # Get Daily mean values for all pollutants/averaging times
   dat = dplyr::group_by(dat, date = lubridate::floor_date(.data$date, "days")) %>%
     dplyr::summarise(dplyr::across(dplyr::everything(), mean_no_na)) %>%
+    dplyr::ungroup() |>
     dplyr::arrange(.data$date) # Sort by date
 
   # Truncate daily means
