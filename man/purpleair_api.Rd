@@ -35,6 +35,7 @@ Your Description Here
 # Written to .Renviron - make your own here: https://develop.purpleair.com/
 # and run usethis::edit_r_environ("project") to open the environ file for editting
 # Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
+\donttest{
 read_key = Sys.getenv("purpleair_api_read")
 write_key = Sys.getenv("purpleair_api_write")
 
@@ -58,7 +59,7 @@ test = purpleair_api(read_key = read_key, channel = "sensors",
 # Get Sensor History
 test = purpleair_api(read_key = read_key, channel = "sensors", 
  parameters = parameters[5:7])
-
+}
 }
 \seealso{
 Other Data Collection: 

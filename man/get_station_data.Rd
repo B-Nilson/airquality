@@ -57,6 +57,7 @@ FEM (Regulatory-grade "Federal Equivalent Method") monitors:
 }
 }
 \examples{
+\donttest{
 # Get data for all stations within 10 km of Fort St. John, BC
 #  for the first hour of Feb 2019
 get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
@@ -66,4 +67,5 @@ get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
 get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
                    "2019-02-01 01", buffer_dist = 25,
                    networks = "FEM", sources = "AirNow")
+}
 }

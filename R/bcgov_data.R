@@ -41,6 +41,7 @@
 #'
 #' @export
 #' @examples
+#' \donttest{
 #' # For a single station
 #' station = "0450307" # EMS IDs - see get_bcgov_stations()
 #' # For the years 2019 and 2020
@@ -52,6 +53,7 @@
 #' # For first week of January 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bcgov_data(stations, date_range)
+#' }
 get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # TODO: ensure date times match what BC webmap displays (check for DST and backward/forward averages)
   # TODO: handle multiple instruments for same pollutant

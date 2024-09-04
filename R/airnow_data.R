@@ -42,6 +42,7 @@
 #' @family USA Air Quality
 #'
 #' @examples
+#' \donttest{
 #' # Get data for all stations for first 3 hours (UTC) of Jan 2019
 #' get_airnow_data("all", c("2019-01-01 01", "2019-01-01 03"))
 #'
@@ -51,6 +52,7 @@
 #' # Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
 #' date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
+#' }
 get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
   if(verbose) data_citation("AirNow")

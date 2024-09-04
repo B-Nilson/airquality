@@ -45,6 +45,7 @@ as well as the number of years of data (PST timezone) desired. There can be pote
 for non-QA/QC'ed years depending on the current time since the last QA/QC'ed year due to larger file sizes.
 }
 \examples{
+\donttest{
 # For a single station
 station = "0450307" # EMS IDs - see get_bcgov_stations()
 # For the years 2019 and 2020
@@ -56,6 +57,7 @@ stations = c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 # For first week of January 2019
 date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bcgov_data(stations, date_range)
+}
 }
 \seealso{
 [get_bcgov_stations()]

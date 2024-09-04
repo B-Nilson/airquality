@@ -29,6 +29,7 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
 #'# Written to .Renviron - make your own here: https://develop.purpleair.com/
 #'# and run usethis::edit_r_environ("project") to open the environ file for editting
 #'# Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
+#' \donttest{
 #'read_key = Sys.getenv("purpleair_api_read")
 #'write_key = Sys.getenv("purpleair_api_write")
 #'
@@ -52,7 +53,7 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
 #'# Get Sensor History
 #'test = purpleair_api(read_key = read_key, channel = "sensors", 
 #'  parameters = parameters[5:7])
-#'
+#'}
 purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters = NULL, verbose = TRUE){
   # Handle inputs
   if(is.null(read_key) & is.null(write_key))
