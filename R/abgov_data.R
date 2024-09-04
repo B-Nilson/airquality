@@ -1,17 +1,3 @@
-# AB MoE Data -------------------------------------------------------------
-
-parse_abgov_api_request = function(api_request){
-  api_request = api_request %>%
-    xml2::read_xml() %>%
-    xml2::as_list()
-  api_request$feed[-(1:4)] %>%
-    lapply(\(entry){
-      e = unlist(entry$content$properties)
-      data.frame(t(e))
-    }) %>%
-    dplyr::bind_rows()
-}
-
 # TODO: clean up and document and test
 get_abgov_stations = function(use_sf = FALSE){
   # Define endpoint
@@ -141,6 +127,18 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
     tibble::as_tibble()
 
   return(stations_data)
+}
+
+parse_abgov_api_request = function(api_request){
+  api_request = api_request %>%
+    xml2::read_xml() %>%
+    xml2::as_list()
+  api_request$feed[-(1:4)] %>%
+    lapply(\(entry){
+      e = unlist(entry$content$properties)
+      data.frame(t(e))
+    }) %>%
+    dplyr::bind_rows()
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
