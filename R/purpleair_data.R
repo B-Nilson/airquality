@@ -13,9 +13,30 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed.
 #' 
+#' @md
 #' @description
-#' Your Description Here
-#'
+#' PurpleAir provides access to the observations from their network of low-cost PM2.5 monitors through a points-based API system. 
+#' New accounts start with 1M points, and each call has a cost from 1-5 points plus the number of rows times the total column cost 
+#' (which depends on the column, typically 1-2 points per column).
+#'  Point can be purchased on develop.purpleair.com and cost less if buying in bulk.
+#' 
+#' For more information, see: api.purpleair.com
+#' 
+#' In order to retrieve these data you must:
+#' * make an account on develop.purpleair.com (a google account is required, which can be made using any email)
+#' * create a new project, click on it after it is created
+#' * add two API keys, 1 for reading (getting data), 1 for writing (making groups of sensors)
+#' * (Optional) open your .Renviron for editing (you can use `usethis::edit_r_environ("project")` after installing the usethis package)
+#' * (Optional) add your keys on 2 seperate lines in this format: `purpleair_api_read = "YOUR-API-KEY-HERE"`
+#' * (Optional) refer to keys using `read_key = Sys.getenv("purpleair_api_read")` to keep your API key secure
+#' 
+#' `purpleair_api()` requires either a read or write key (depending on what you are trying to do), a channel name to make a request to, 
+#' and (depending on the request type you want to make) a named list of parameters. 
+#' See api.purpleair.com for which parameters are avalailable for each request type.
+#' Based on the provided channel/parameters, the request and estimated points cost will be displayed,
+#' and the request will be made if desired. Set `verbose` to `FALSE` to silence this and always run the request
+#' (caution, some calls may cost a lot of points)
+#' 
 #' @return
 #' If channel either "keys" or "organization", or invalid/missing parameters, then a list with the call results
 #' If sensors or groups channel, then a tibble with the data returned from the request
@@ -26,9 +47,6 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
 #'#'
 #'@export
 #'@examples
-#'# Written to .Renviron - make your own here: https://develop.purpleair.com/
-#'# and run usethis::edit_r_environ("project") to open the environ file for editting
-#'# Entries should look like `purpleair_api_read = "YOUR-API-KEY-HERE"`
 #' \donttest{
 #'read_key = Sys.getenv("purpleair_api_read")
 #'write_key = Sys.getenv("purpleair_api_write")
