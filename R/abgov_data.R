@@ -1,4 +1,3 @@
-# TODO: clean up and document and test
 get_abgov_stations = function(use_sf = FALSE){
   # Define endpoint
   api_endpoint = "Stations?"
@@ -33,6 +32,41 @@ get_abgov_stations = function(use_sf = FALSE){
   return(stations)
 }
 
+#' Download air quality station observations from the Alberta (Canada) Government
+#'
+#' @param stations A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
+#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+#' Providing a single value will return data for that hour only,
+#' whereas two values will return data between (and including) those times.
+#' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
+#' if raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
+#' 
+#' @description
+#' Air pollution monitoring in Canada is done by individual Provinces/Territories,
+#' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
+#' The Province of Alberta hosts it's hourly air quality observations
+#' through a public API, providing both historic and real-time raw data.
+#'
+#' [get_abgov_data()] provides an easy way to retrieve these observations using
+#' station name(s) (see [get_abgov_stations()]) and a specified date or date range.
+#'
+#' @seealso [get_abgov_stations()]
+#' @return
+#' A tibble of hourly observation data for desired station(s) and date range where available.
+#' Columns returned will vary depending on available data from station(s).
+#'
+#' Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @family Data Collection
+#' @family Canadian Air Quality
+#'
+#' @export
+#' @examples
+#' \donttest{
+#' get_abgov_data("Calgary Southeast", c("2024-01-05 00", "2024-01-05 23"))
+#' }
 get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # Output citation message to user
   if(verbose) data_citation("ABgov")
@@ -136,6 +170,7 @@ parse_abgov_api_request = function(api_request){
   api_request$feed[-(1:4)] %>%
     lapply(\(entry){
       e = unlist(entry$content$properties)
+      # TODO: handle no data causing error here `get_abgov_data("Calgary Southeast", c("2021-01-05 00", "2021-01-05 23"))`
       data.frame(t(e))
     }) %>%
     dplyr::bind_rows()

@@ -82,6 +82,7 @@ test = purpleair_api(read_key = read_key, channel = "sensors",
 }
 \seealso{
 Other Data Collection: 
+\code{\link{get_abgov_data}()},
 \code{\link{get_airnow_data}()},
 \code{\link{get_bcgov_data}()}
 
@@ -89,6 +90,7 @@ Other Canadian Air Quality:
 \code{\link{AQHI}()},
 \code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
+\code{\link{get_abgov_data}()},
 \code{\link{get_bcgov_data}()}
 }
 \concept{Canadian Air Quality}
