@@ -15,12 +15,48 @@ You can install the development version of airquality from [GitHub](https://gith
 devtools::install_github("B-Nilson/airquality")
 ```
 
-## Example
+## Data Collection
 
-This is a basic example which shows you how to solve a common problem:
+### Federal Equivalent Method (FEM) Data
+Here's how you can get regulatory FEM airquality data. This data is considered the "gold standard" for realtime observations. Due to upfront and maintenance costs these stations tend to be prioritized for areas with more people.
 
 ``` r
 library(airquality)
-## basic example code
+
+# All FEM networks for (a) location(s)
+get_station_data("Prince George, BC, Canada", date_range = c("2023-01-01 00", "2023-01-03 23"), networks = "FEM")
+
+# AirNow (US + Partner Agencies) 
+stations = get_airnow_stations()
+get_airnow_data(stations$site_id[1], date_range = c("2023-01-01 00", "2023-01-03 23"))
+
+# BC Gov. (Canada)
+stations = get_bcgov_stations()
+get_bcgov_data(stations$site_id[1], date_range = c("2023-01-01 00", "2023-01-03 23"))
+
+# AB Gov. (Canada)
+stations = get_abgov_stations()
+get_abgov_data(stations$site_id[1], date_range = c("2023-01-01 00", "2023-01-03 23"))
+
+```
+
+### Low-cost Monitor (LCM) Data
+Here's how you can get LCM airquality data. These monitors are not as accurate as their FEM counterparts, but due to their significantly lower cost they can be installed in more locations. Caution is recommended to ensure unrealistic observations are properly flagged and removed before analysis.
+
+``` r
+library(airquality)
+
+# All LCM networks for (a) location(s)
+get_station_data("Prince George, BC, Canada", date_range = c("2023-01-01 00", "2023-01-03 23"), networks = "LCM")
+
+# PurpleAir (Global) [under development]
+read_key = "YOUR-API-KEY" # see develop.purpleair.com
+stations = get_purpleair_stations("Prince George, BC, Canada", api_key = read_key)
+get_purpleair_data(stations$site_id[1], date_range = c("2023-01-01 00", "2023-01-03 23"), api_key = read_key)
+
+# AQEgg (Global?) [to come]
+
+# Clarity (Global?) [to come]
+
 ```
 
