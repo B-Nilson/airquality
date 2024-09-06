@@ -1,4 +1,4 @@
-l
+
 # airquality
 
 <!-- badges: start -->
@@ -82,4 +82,25 @@ get_purpleair_data(stations$site_id[1], date_range = c("2023-01-01 00", "2023-01
 # Clarity (Global?) [to come]
 
 ```
+
+## Air Quality Standards [under development]
+
+Air quality managers and organizations set standards that are used to assess air quality impacts in their region. Here are ways you can calculate these standards with observation data:
+
+```r
+library(airquality)
+
+# Canadian AQHI
+AQHI(pm25 = 25, o3 = 70, no2 = 20)
+AQHI_plus(pm25 = 25)
+
+# Canadian Ambient Air Quality Standards 
+CAAQS(...)
+
+# United States AQI
+AQI(pm25 = 20, o3 = 70, no2 = 20)
+AQI(pm25 = 25)
+
+```
+
 
