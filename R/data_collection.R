@@ -1,10 +1,6 @@
-# TODO: Add data citation message to each main function call
 # TODO: Add optional dependence on future.apply - if installed, allow for parallel data collection (responsibly)
 # TODO: Add station localization (country - prov/terr/state - county? region? - nearest community?)
 # TODO: update get_station_data() as additional functions added
-# TODO: add warning to get_airnow_data() for long time ranges (need to download each hour)
-# TODO: add an argument `quietly = FALSE` to silence warnings
-# TODO: add option to include meta data with observations
 
 # General -----------------------------------------------------------------
 
