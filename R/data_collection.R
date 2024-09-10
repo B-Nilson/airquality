@@ -75,11 +75,11 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
     }
     # Get polygons from OSM for desired locations
     search_area = on_error(return = NULL,
-      locations %>%
-        lapply(\(location) osmdata::getbb(location, format_out = "sf_polygon") %>%
-                 .[!sapply(., is.null)] %>%
-                 dplyr::bind_rows() %>%
-                 sf::st_cast("POLYGON")) %>%
+      locations |>
+        lapply(\(location) osmdata::getbb(location, format_out = "sf_polygon") |>
+                 .[!sapply(., is.null)] |>
+                 dplyr::bind_rows() |>
+                 sf::st_cast("POLYGON")) |>
         dplyr::bind_rows())
     # Error if that fails
     if(is.null(search_area))
@@ -106,16 +106,16 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
     lapply(names(network_funs), \(src){ # For each data source in this network
       source_funs = network_funs[[src]] # Get this sources functions
       # Get stations for desired date range
-      source_funs$meta(dates) %>%
+      source_funs$meta(dates) |>
         dplyr::mutate(source = src, network = net) # flag as from this source & network
-    }) %>% dplyr::bind_rows() # Combine data from all sources for this network
-  }) %>% dplyr::bind_rows() # Combine data from all networks
+    }) |> dplyr::bind_rows() # Combine data from all sources for this network
+  }) |> dplyr::bind_rows() # Combine data from all networks
 
   # Filter to stations in our search area
   stations = sf::st_as_sf(stations, coords = c("lng", "lat"), crs = "WGS84")
   sf::st_agr(stations) = "constant" # Avoid warning about assuming attributes are spatially constant
-  stations = stations %>%
-    sf::st_intersection(search_area) %>%
+  stations = stations |>
+    sf::st_intersection(search_area) |>
     dplyr::select('site_id', 'site_name', 'network', 'source', 'geometry')
 
   # If no stations, warn and end the function here, returning NULL
@@ -139,8 +139,8 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
       d = on_error(source_funs$data(stations = site_ids, date_range), return = NULL, msg = TRUE) 
       if(!is.null(d)) d = dplyr::mutate(d, source = src, network = net) # flag as from this source & network
       return(d)
-    }) %>% dplyr::bind_rows() # Combine data from all sources for this network
-  }) %>% dplyr::bind_rows() # Combine data from all networks
+    }) |> dplyr::bind_rows() # Combine data from all sources for this network
+  }) |> dplyr::bind_rows() # Combine data from all networks
 
   # Return a list with metadata and observations
   return(list(stations = stations, data = data))
@@ -163,7 +163,7 @@ data_collection_funs = function(networks, sources){
       PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
     )
   )
-  data_funs = data_funs[networks] %>%
+  data_funs = data_funs[networks] |>
     lapply(\(srcs) srcs[names(srcs) %in% sources])
 
   return(data_funs)
