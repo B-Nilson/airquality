@@ -74,45 +74,43 @@ get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbos
 #'}
 purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters = NULL, verbose = TRUE){
   # Handle inputs
-  if(is.null(read_key) & is.null(write_key))
+  if (is.null(read_key) & is.null(write_key))
     stop("Either read_key or write_key must be provided.")
-  if(!is.null(read_key) & !is.null(write_key))
+  if (!is.null(read_key) & !is.null(write_key))
     stop("Either read_key or write_key must be provided, not both.")
-  if(!channel %in% purpleair_api_channels) 
+  if (!channel %in% purpleair_api_channels) 
     stop(paste("channel must be one of:", paste(purpleair_api_channels, collapse = ", ")))
-  if(channel %in% c("organization", "sensors"))
-    if(is.null(read_key)) 
+  if (channel %in% c("organization", "sensors"))
+    if (is.null(read_key)) 
       stop(paste(channel, "channel is read only"))
   
-  if("fields" %in% names(parameters)){
+  if ("fields" %in% names(parameters))
     parameters$fields = paste0(parameters$fields, collapse = ",")
-  }
-  if("start_timestamp" %in% names(parameters)){
+  if ("start_timestamp" %in% names(parameters))
     parameters$start_timestamp = lubridate::as_datetime(parameters$start_timestamp) |>
       as.numeric()
-  }
-  if("end_timestamp" %in% names(parameters)){
+  if ("end_timestamp" %in% names(parameters))
     parameters$end_timestamp = lubridate::as_datetime(parameters$end_timestamp) |>
       as.numeric()
-  }
   
   call = get_purpleair_api_call(write_key, channel, parameters)
-
-  if(verbose) message(purpleair_call_msg(channel, call))
-
+  if (verbose) message(purpleair_call_msg(channel, call))
   channel_suffix = purpleair_api_calls[[channel]][[call]]
-  if(stringr::str_detect(channel_suffix, ":sensor_index")){
+
+  has_index = stringr::str_detect(channel_suffix, ":sensor_index")
+  if (has_index)
     channel_suffix = channel_suffix |>
       stringr::str_replace(":sensor_index", as.character(parameters$sensor_index[1]))
-  }
-  if(stringr::str_detect(channel_suffix, ":group_id")){
+  has_group = stringr::str_detect(channel_suffix, ":group_id")
+
+  if (has_group) 
     channel_suffix = channel_suffix |>
       stringr::str_replace(":group_id", parameters$group_id)
-  }
-  if(stringr::str_detect(channel_suffix, ":member_id")){
+  has_member = stringr::str_detect(channel_suffix, ":member_id")
+
+  if (has_member)
     channel_suffix = channel_suffix |>
       stringr::str_replace(":member_id", parameters$member_id)
-  }
 
   expected_cost = purpleair_points_estimator(call, parameters, verbose)
   
@@ -122,23 +120,26 @@ purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters 
     if(!keep_going) stop("User requested to exit.")
   }
   
-  
   # Get the api key provided
   api_key = ifelse(is.null(read_key), write_key, read_key)
   # Make the request
   results = httr::GET(
     paste0(purpleair_api_site, channel_suffix), 
-    httr::add_headers("X-API-Key" = api_key), query = parameters
+    httr::add_headers("X-API-Key" = api_key), 
+                      query = parameters
   ) |>
     httr::content()
 
   if("data" %in% names(results)){
     if(length(results$data) == 0){
-      warning("No data available for the desired sensors/period")
-      return(NULL)
+      stop("No data available for the desired sensors/period")
     }
     results$data = results$data |>
-      lapply(\(d) as.data.frame(t(unlist(stats::setNames(d, results$fields))))) |>
+      lapply(\(d) d |>
+        stats::setNames(results$fields) |>
+        unlist() |>
+        t() |>
+        as.data.frame()) |>
       dplyr::bind_rows()  
     results$data = results$data[, 1:length(results$fields)] 
     
