@@ -26,7 +26,7 @@ roll_mean = function(x, width, direction = "backward", fill = NA, min_n = 0){
                  ifelse(direction == "forward", "left", "center"))
   zoo::rollapply(
     x, width = width, align = align, fill = fill,
-    FUN = mean_if_enough, min_n = min_n) %>%
+    FUN = mean_if_enough, min_n = min_n) |>
     round(1)
 }
 
@@ -80,7 +80,7 @@ standardize_colnames = function(df, all_col_names, raw = FALSE){
   }else{
     col_names = all_col_names[all_col_names %in% names(df)]
     dplyr::rename_with(df, .cols = unname(col_names), 
-        \(x) names(col_names)[col_names == x]) %>%
+        \(x) names(col_names)[col_names == x]) |>
       dplyr::select(dplyr::any_of(names(col_names)))
   }
 }
