@@ -64,8 +64,8 @@
 #' }
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = "all", sources = "all"){
-  if(any(networks == "all")) networks = c("FEM")
-  if(any(sources == "all")) sources = c("BCgov", "AirNow")
+  if(any(networks == "all")) networks = c("FEM", "LCM")
+  if(any(sources == "all")) sources = c("BCgov", "ABgov", "AirNow", "PurpleAir")
 
   . = NULL # so build check doesn't yell at me
 
@@ -156,8 +156,15 @@ data_collection_funs = function(networks, sources){
     FEM = list(
       # Canada Province of BC
       BCgov = list(data = get_bcgov_data, meta = get_bcgov_stations),
+      # Canada Province of BC
+      ABgov = list(data = get_abgov_data, meta = get_abgov_stations),
       # USA (and elsewhere...) AirNow
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
+    ),
+    # Low-Cost Monitors
+    LCM = list(
+      # PurpleAir PM monitors
+      PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
     )
   )
   data_funs = data_funs[networks] %>%
@@ -171,11 +178,13 @@ data_citation = function(source){
     BCgov = "the British Columbia Ministry of Environment and Climate Change Strategy",
     ABgov = "the Alberta Ministry of Environment and Protected Areas",
     AirNow = "the US Environmental Protection Agency"
+    PurpleAir = "PurpleAir"
   )
   data_urls = list(
     BCgov = "https://www2.gov.bc.ca/gov/content/environment/air-land-water/air",
     ABgov = "https://www.alberta.ca/access-air-data",
-    AirNow = "https://www.airnow.gov"
+    AirNow = "https://www.airnow.gov",
+    PurpleAir = "www.purpleair.com"
   )
  message(paste0("Data from the '", source,
         "' repository are collected from ", data_sources[[source]],
