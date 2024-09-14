@@ -174,7 +174,7 @@ data_citation = function(source){
   data_sources = list(
     BCgov = "the British Columbia Ministry of Environment and Climate Change Strategy",
     ABgov = "the Alberta Ministry of Environment and Protected Areas",
-    AirNow = "the US Environmental Protection Agency"
+    AirNow = "the US Environmental Protection Agency",
     PurpleAir = "PurpleAir"
   )
   data_urls = list(
