@@ -275,60 +275,39 @@ get_bcgov_qaqc_years = function(){
 }
 
 get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
-  . = NULL # so build check doesn't yell at me
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  # Where to get the QA/QC'ed obs - usually a few years out of date
-  loc_qaqc = ftp_site |> # "Archieved" lol
+  qaqc_url = ftp_site |> # "Archieved" lol
     paste0("Archieved/STATION_DATA_{year}/{station}.csv")
-  # Where to get the raw obs
-  loc_raw = ftp_site |> # actually since qa/qc to date, not just this year
+  raw_url = ftp_site |> # actually since qa/qc to date, not just this year
     paste0("Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/{station}.csv")
 
-  # Classes of specific columns found in all files
-  colClasses = c(
-    DATE_PST = "character", # will be converted to date
-    EMS_ID = "character",
-    STATION_NAME = "character")
-
-  # Get list of years that have been qaqc'ed if needed
+  # Determine file to get for this year
   if (is.null(qaqc_years)) qaqc_years = get_bcgov_qaqc_years()
-
-  # If year has qaqc'ed data
   if (year %in% qaqc_years) {
-    # Use qaqc location
-    loc = loc_qaqc |>
+    data_url = qaqc_url |>
       stringr::str_replace("\\{year\\}", as.character(year))
-    # Otherwise, use raw location
-  }else loc = loc_raw
+  }else data_url = raw_url
 
   # Get each stations data for this year
-  stations_data = stations |>
-    # Insert station ids into file location
-    stringr::str_replace(loc, "\\{station\\}", .) |>
-    # Load each stations data if it exists and combine
-    lapply(\(p) on_error(return =  NULL, read_data(file = p, colClasses = colClasses))) |>
-    # Combine rowise into a single dataframe
+  stations_data = data_url |>
+    stringr::str_replace("\\{station\\}", stations) |>
+    lapply(\(p) on_error(return =  NULL, 
+      read_data(p, colClasses = c(DATE_PST = "character",
+        EMS_ID = "character", STATION_NAME = "character")))) |>
     dplyr::bind_rows()
 
   if(nrow(stations_data) == 0){
-    warning(paste("No data available for provided stations for", year))
-    return(NULL)
-  }else {
-    stations_data = stations_data  |>
-      # Format date time properly and add a flag for if data are qa/qc'ed
+    stop(paste("No data available for provided stations for", year))
+  }else # Fix date formating and add QA column
+    stations_data  |>
       dplyr::mutate(
         DATE_PST = tryCatch(
           lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
           warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
         date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
         DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
-        quality_assured = loc != loc_raw
-      ) |>
+        quality_assured = loc != loc_raw) |>
       dplyr::relocate("date_utc", .before = "DATE_PST") %>%
-      # Drop DATE and TIME columns (erroneous)
       dplyr::select(-'DATE', -'TIME')
-    return(stations_data)
-  }
-
 }
