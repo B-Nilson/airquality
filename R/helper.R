@@ -239,4 +239,6 @@ convert_units = function(x, in_unit, out_unit, y = NULL){
   converter(x, all_conversions, in_unit, out_unit, y)
 }
 
-
+lapply_and_bind = function(...){
+  lapply(...) |> dplyr::bind_rows()
+}

@@ -15,6 +15,8 @@
 #' @param buffer_dist (Optional) A single numeric value indicating the distance to buffer the station search location by (typically units of km). Default is 10.
 #' @param networks (Optional) A character vector indicating which monitoring networks to get data for. Default is "all".
 #' @param sources (Optional) A character vector indicating which data sources to get data from. Default is "all".
+#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be printed
 #'
 #' @description
 #' This is the general use function for gathering air quality observation data in a
@@ -59,95 +61,68 @@
 #'                    networks = "FEM", sources = "AirNow")
 #' }
 get_station_data = function(locations, date_range, buffer_dist = 10,
-                            networks = "all", sources = "all"){
+                            networks = "all", sources = "all", verbose = TRUE){
   if(any(networks == "all")) networks = c("FEM", "LCM")
   if(any(sources == "all")) sources = c("BCgov", "ABgov", "AirNow", "PurpleAir")
-
-  . = NULL # so build check doesn't yell at me
-
-  ## Handle date_range inputs ---
   date_range = handle_date_range(date_range)
-
+  # TODO: allow for station ids/names
+  # Handle locations input being a vector of names
   if(is.character(locations)){
-    if("North America" %in% locations){
+    if("North America" %in% locations)
       locations = c(locations[locations != "North America"],
-                    "Canada", "United States", "Mexico")
-    }
+        "Canada", "United States", "Mexico")
     # Get polygons from OSM for desired locations
-    search_area = on_error(return = NULL,
-      locations |>
-        lapply(\(location) {
-          loc = osmdata::getbb(location, format_out = "sf_polygon") 
-          loc[!sapply(loc, is.null)] |>
-            dplyr::bind_rows() |>
-            sf::st_cast("POLYGON")}) |>
-        dplyr::bind_rows())
-    # Error if that fails
+    search_area = locations |>
+      lapply_and_bind(get_location_polygons)
     if(is.null(search_area))
       stop(paste0("Unable to find a polygonal boundary for specified location."))
+  # Handle locations input being a sf object
   }else if("sf" %in% class(locations)){
-    # TODO: Warn buffer being applied unless buffer_km == 0
+    if(buffer_dist > 0 & verbose) warning(paste(
+      "Adding a search buffer of", buffer_dist, "km to each location (see arg `buffer_dist`)"))
     search_area = locations
   }else{
-    # TODO: improve messaging
     stop("Not sure how to handle provided `locations`")
   }
-  # Avoid warning about assuming attributes are spatially constant
-  sf::st_agr(search_area) = "constant"
   # Add buffer to search if desired
+  sf::st_agr(search_area) = "constant"
   if(buffer_dist > 0) search_area = sf::st_buffer(search_area, buffer_dist)
 
-  # Data collection functions for each network and each source for that network
-  data_funs = data_collection_funs(networks, sources)
-
   # Get station metadata during period
+  data_funs = get_data_collection_funs(networks, sources)
   dates = seq(date_range[1], date_range[2], "30 days")
-  stations = lapply(names(data_funs), \(net){ # For each network
-    network_funs = data_funs[[net]] # Get this networks functions
-    lapply(names(network_funs), \(src){ # For each data source in this network
-      source_funs = network_funs[[src]] # Get this sources functions
-      # Get stations for desired date range
-      source_funs$meta(dates) |>
-        dplyr::mutate(source = src, network = net) # flag as from this source & network
-    }) |> dplyr::bind_rows() # Combine data from all sources for this network
-  }) |> dplyr::bind_rows() # Combine data from all networks
+  stations = lapply_and_bind(names(data_funs), \(net)
+    lapply_and_bind(names(data_funs[[net]]), \(src)
+      on_error(return = NULL, msg = TRUE,
+        data_funs[[net]][[src]]$meta(dates) |>
+        dplyr::mutate(source = src, network = net))))
 
   # Filter to stations in our search area
   stations = sf::st_as_sf(stations, coords = c("lng", "lat"), crs = "WGS84")
-  sf::st_agr(stations) = "constant" # Avoid warning about assuming attributes are spatially constant
+  sf::st_agr(stations) = "constant"
   stations = stations |>
     sf::st_intersection(search_area) |>
     dplyr::select('site_id', 'site_name', 'network', 'source', 'geometry')
 
-  # If no stations, warn and end the function here, returning NULL
   if(nrow(stations) == 0){
-    warning("No stations in location(s) and date range for selected networks/sources.")
-    return(NULL)
+    stop("No stations in location(s) and date range for selected networks/sources.")
   }
 
   # Get data for our stations/date_range
-  data = lapply(unique(stations$network), \(net){ # For each network
-    network_funs = data_funs[[net]] # Get this networks functions
-    lapply(names(network_funs), \(src){ # For each data source in this network
-      source_funs = network_funs[[src]] # Get this sources functions
-      # Get unique site_ids for stations in this source & network
+  data = lapply_and_bind(unique(stations$network), \(net)
+    lapply_and_bind(names(data_funs[[net]]), \(src){ 
       site_ids = unique(dplyr::filter(stations, .data$source == src & .data$network == net)$site_id)
-      # Skip if no stations
-      if(length(site_ids)==0) return(NULL)
-      # Update user on state of data grab
-      message(paste(net, "-", src, ":", length(site_ids), "station(s) to check for data"))
-      # Get data for these stations and desired date range
-      d = on_error(source_funs$data(stations = site_ids, date_range), return = NULL, msg = TRUE) 
-      if(!is.null(d)) d = dplyr::mutate(d, source = src, network = net) # flag as from this source & network
-      return(d)
-    }) |> dplyr::bind_rows() # Combine data from all sources for this network
-  }) |> dplyr::bind_rows() # Combine data from all networks
-
-  # Return a list with metadata and observations
+      if(length(site_ids) == 0) return(NULL) # TODO: handle this in each data fun instead of here
+      if(verbose) message(paste(net, "-", src, ":", length(site_ids), 
+        "station(s) to check for data"))
+      on_error(return = NULL, msg = TRUE,
+        data_funs[[net]][[src]]$data(stations = site_ids, date_range) |>
+          dplyr::mutate(source = src, network = net)) })) 
+  
   return(list(stations = stations, data = data))
 }
 
-data_collection_funs = function(networks, sources){
+get_data_collection_funs = function(networks, sources){
   data_funs = list(
     # Federal Equivalent Method monitors
     FEM = list(
@@ -190,4 +165,13 @@ data_citation = function(source){
         "and are intended research and/or situational awareness ",
         "(NOT for regulatory decision making). ",
         "See `", data_urls[[source]], "` for more information."))
+}
+
+get_location_polygons = function(location_names, verbose = TRUE) {
+  on_error(return = NULL, msg = verbose, {
+    locs = osmdata::getbb(location_names, format_out = "sf_polygon") 
+    locs[!sapply(locs, is.null)] |>
+      dplyr::bind_rows() |>
+      sf::st_cast("POLYGON")
+  })
 }
