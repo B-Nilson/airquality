@@ -480,9 +480,7 @@ CAAQS_so2 = function(obs, thresholds){
 }
 
 CAAQS_meets_standard = function(metric, thresholds, year){
-  . = NULL # so build check doesn't yell at me
-  mgmt_levels = thresholds |>
-    .[as.numeric(names(.)) <= year] |>
+  mgmt_levels = thresholds[as.numeric(names(thresholds)) <= year] |>
     dplyr::last()
   if(length(mgmt_levels) == 0) return(NA)
 
