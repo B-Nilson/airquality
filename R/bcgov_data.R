@@ -261,25 +261,17 @@ bcmoe_col_names = c(
 # Checks the years in the QA/QC'ed data archive for BC MoE data
 # (usually 1-2 years out of date)
 get_bcgov_qaqc_years = function(){
-  . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
-
+  # Load file/dir details and extract names
   qaqc_dirs = ftp_site_qaqc |>
-    # Load file details
     readLines() |>
-    # Split on white space
-    stringr::str_split("\\s", simplify = T) %>%
-    # Keep last column only
-    .[, ncol(.)]
-
+    stringr::str_split("\\s", simplify = T)
+  qaqc_dirs = qaqc_dirs[, ncol(qaqc_dirs)]
+  # Extract years from file/dir names
   years = suppressWarnings(qaqc_dirs %>% # suppress 'NAs introduced due to coercion' warning
-    # Drop directory name prefix
     stringr::str_remove("STATION_DATA_") |>
-    # Convert years from character to numeric, dropping NAs (non-year dirs)
-    as.numeric()) %>%
-    .[!is.na(.)]
-
-  return(years)
+    as.numeric())
+  years[!is.na(years)]
 }
 
 get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
