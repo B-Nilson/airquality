@@ -323,7 +323,7 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
     warning(paste("No data available for provided stations for", year))
     return(NULL)
   }else {
-    stations_data  |>
+    stations_data = stations_data  |>
       # Format date time properly and add a flag for if data are qa/qc'ed
       dplyr::mutate(
         DATE_PST = tryCatch(
@@ -335,8 +335,8 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
       ) |>
       dplyr::relocate("date_utc", .before = "DATE_PST") %>%
       # Drop DATE and TIME columns (erroneous)
-      dplyr::select(-'DATE', -'TIME') |>
-      return()
+      dplyr::select(-'DATE', -'TIME')
+    return(stations_data)
   }
 
 }
