@@ -817,25 +817,24 @@ AQI_formulation = function(obs, bp_low, bp_high, aqi_low, aqi_high){
 
 # Workhorse function to determine risk category, append breakponints, then calc AQI
 AQI_from_con = function(dat, pol){
-  . = NULL # so build check doesn't yell at me
   dat[paste0("cat_",pol)] = NA
   dat[paste0("AQI_",pol)] = NA
-  dat = dat %>%
+  dat = dat |>
     # Determine the risk category based on the concentrations and break points
     dplyr::mutate(dplyr::across(paste0("cat_",pol),
-                     \(x) AQI_bp_cat(dat[[pol]], AQI_breakpoints[[pol]]))) |>
+      \(x) AQI_bp_cat(dat[[pol]], AQI_breakpoints[[pol]]))) |>
     # Append the corresponding break points and AQI breaks for each hour
-    dplyr::left_join(AQI_breakpoints[[pol]] |>
-                       dplyr::rename_with(.cols = 2:5, \(x)paste0(x,"_", pol)),
-                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) 
-  dat |>
-    # Calculate AQI for each hour based on those
-    dplyr::mutate(dplyr::across(paste0("AQI_",pol),
-      \(x) AQI_formulation(
-        dat[[pol]],
-        dat[[paste0("bp_low_", pol)]],
-        dat[[paste0("bp_high_", pol)]],
-        dat[[paste0("aqi_low_", pol)]],
-        dat[[paste0("aqi_high_", pol)]])))
+    dplyr::left_join(
+      AQI_breakpoints[[pol]] |>
+        dplyr::rename_with(.cols = 2:5, \(x) paste0(x,"_", pol)),
+      by = dplyr::join_by(!!paste0("cat_", pol) == "risk_category")) 
+  # Calculate AQI for each hour based on those
+  dplyr::mutate(dat, dplyr::across(paste0("AQI_", pol),
+    \(x) AQI_formulation(
+      dat[[pol]],
+      dat[[paste0("bp_low_", pol)]],
+      dat[[paste0("bp_high_", pol)]],
+      dat[[paste0("aqi_low_", pol)]],
+      dat[[paste0("aqi_high_", pol)]])))
 }
 
