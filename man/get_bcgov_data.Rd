@@ -64,6 +64,7 @@ get_bcgov_data(stations, date_range)
 
 Other Data Collection: 
 \code{\link{get_abgov_data}()},
+\code{\link{get_abgov_stations}()},
 \code{\link{get_airnow_data}()},
 \code{\link{purpleair_api}()}
 
@@ -72,6 +73,7 @@ Other Canadian Air Quality:
 \code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
+\code{\link{get_abgov_stations}()},
 \code{\link{purpleair_api}()}
 }
 \concept{Canadian Air Quality}

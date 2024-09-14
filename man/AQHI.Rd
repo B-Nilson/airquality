@@ -4,7 +4,7 @@
 \alias{AQHI}
 \title{Calculate the Canadian AQHI from hourly PM2.5, NO2, and O3 observations}
 \usage{
-AQHI(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE)
+AQHI(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose = TRUE)
 }
 \arguments{
 \item{dates}{Vector of hourly datetimes corresponding to observations. Date gaps will be filled automatically.}
@@ -57,6 +57,7 @@ Other Canadian Air Quality:
 \code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
+\code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_data}()},
 \code{\link{purpleair_api}()}
 

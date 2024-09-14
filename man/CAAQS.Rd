@@ -54,6 +54,7 @@ Other Canadian Air Quality:
 \code{\link{AQHI}()},
 \code{\link{AQHI_plus}()},
 \code{\link{get_abgov_data}()},
+\code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_data}()},
 \code{\link{purpleair_api}()}
 
