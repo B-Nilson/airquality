@@ -144,12 +144,12 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
         paste0("select=", paste0(data_cols, collapse = ",")),
         paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) |>
           paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-      ) %>% paste0(collapse = "&") |> utils::URLencode()
+      ) |> paste0(collapse = "&") |> utils::URLencode()
     })
-  }) %>% as.character() |> unname()
+  }) |> as.character() |> unname()
 
   # Make request
-  stations_data = paste0(ab_api_site, api_endpoint, args) %>%
+  stations_data = paste0(ab_api_site, api_endpoint, args) |>
     lapply(parse_abgov_api_request) |> dplyr::bind_rows()
 
   # Error if no data retrieved
@@ -160,7 +160,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   stations_data = stations_data |>
     # Convert dates, add quality assured column (unknown at the moment)
     # TODO: determine if/what QA/QC'ed
-    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone) %>%
+    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone) |>
                     lubridate::with_tz("UTC"),
                   quality_assured = NA) |>
     # Drop erroneous columns
@@ -173,9 +173,9 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") |>
     # Convert to numeric
-    dplyr::mutate(dplyr::across(-(1:3), as.numeric)) %>%
+    dplyr::mutate(dplyr::across(-(1:3), as.numeric)) |>
     # Rename and select desired columns
-    standardize_colnames(abgov_col_names, raw = raw) %>%
+    standardize_colnames(abgov_col_names, raw = raw) |>
     # Convert date_local to local time
     dplyr::left_join(known_stations |> dplyr::select("site_name", "tz_local"),
                      by = "site_name") |>
@@ -183,7 +183,7 @@ get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
     dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) |>
                     format("%F %H:%M %z")) |>
     dplyr::ungroup() |>
-    dplyr::relocate("date_local", .after = "date_utc") %>%
+    dplyr::relocate("date_local", .after = "date_utc") |>
     dplyr::select(-"tz_local") |>
     tibble::as_tibble()
 
@@ -199,7 +199,7 @@ parse_abgov_api_request = function(api_request){
       e = unlist(entry$content$properties)
       # TODO: handle no data causing error here `get_abgov_data("Calgary Southeast", c("2021-01-05 00", "2021-01-05 23"))`
       data.frame(t(e))
-    }) %>%
+    }) |>
     dplyr::bind_rows()
 }
 

@@ -161,9 +161,9 @@ get_station_timezone = function(lng, lat, method = "accurate"){
 extract_tz_offset = function(date_str){
   offset = stringr::str_extract(date_str, "[+,-]\\d\\d*$")
 
-  hours = as.numeric(stringr::str_sub(offset, end = 3))
-  minutes = as.numeric(stringr::str_sub(offset, start = 4))
-  hours + minutes / 60
+  hours = stringr::str_sub(offset, end = 3)
+  minutes = stringr::str_sub(offset, start = 4)
+  paste0(hours, minutes)
 }
 
 all_conversions = list(

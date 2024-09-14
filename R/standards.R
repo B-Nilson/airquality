@@ -304,9 +304,9 @@ CAAQS = function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
 
   # Assess hours of data for each pollutant annually
   has_enough_obs = obs |>
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
     dplyr::summarise(dplyr::across(-1, \(x) sum(!is.na(x)))) |>
-    dplyr::mutate(dplyr::across(-1, \(x) x/ifelse(.data$year%%4==0, 8784, 8760))) %>%
+    dplyr::mutate(dplyr::across(-1, \(x) x/ifelse(.data$year%%4==0, 8784, 8760))) |>
     dplyr::mutate(dplyr::across(-1, \(x) swap_na(x > min_completeness, F))) |>
     tidyr::complete(year = min(.data$year):max(.data$year))
   # Check for 3 consecutive years for any pollutant
@@ -405,7 +405,7 @@ CAAQS_o3 = function(obs, thresholds){
 CAAQS_no2 = function(obs, thresholds){
   obs |>
     # + annual mean
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
     dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) |>
     # hourly mean -> daily maxima
     dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
@@ -591,7 +591,7 @@ AQI = function(dates = Sys.time(),
            "pm10_24hr_ugm3", "pm10_1hr_ugm3",
            "co_8hr_ppm"    , "co_1hr_ppm",
            "so2_1hr_ppb"   , "no2_1hr_ppb")
-  all_missing = lapply(AQI_pols, \(pol) all(is.na(get(pol)))) %>%
+  all_missing = lapply(AQI_pols, \(pol) all(is.na(get(pol)))) |>
     stats::setNames(AQI_pols)
 
   # Ensure at least one pollutants data is provided
@@ -606,7 +606,7 @@ AQI = function(dates = Sys.time(),
                    pm25_24hr_ugm3, pm25_1hr_ugm3,
                    pm10_24hr_ugm3, pm10_1hr_ugm3,
                    co_8hr_ppm, co_1hr_ppm,
-                   so2_1hr_ppb, no2_1hr_ppb) %>%
+                   so2_1hr_ppb, no2_1hr_ppb) |>
     # Fill hourly date gaps with NA obs
     tidyr::complete(date = seq(min(dates), max(dates), "1 hours"))
 
@@ -800,7 +800,7 @@ AQI_bp_cat = function(obs, bps){
       lapply(\(cat) {
         bp = bps[bps$risk_category == cat, ]
         ifelse(obs >= bp$bp_low & obs <= bp$bp_high, rep(cat, length(obs)), NA)
-      }) %>%
+      }) |>
       dplyr::bind_cols() |>
       apply(1, \(row){
         ifelse(all(is.na(row)), NA, row[!is.na(row)])

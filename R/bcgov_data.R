@@ -105,7 +105,7 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
 
   # Filter data to desired date range
   stations_data = dplyr::filter(stations_data,
-      .data$date_utc %>% dplyr::between(date_range[1], date_range[2])) |>
+      .data$date_utc |> dplyr::between(date_range[1], date_range[2])) |>
     # Drop duplicated dates for a particular station
     dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") |>
     # Replace blank values with NA
@@ -268,7 +268,7 @@ get_bcgov_qaqc_years = function(){
     stringr::str_split("\\s", simplify = T)
   qaqc_dirs = qaqc_dirs[, ncol(qaqc_dirs)]
   # Extract years from file/dir names
-  years = suppressWarnings(qaqc_dirs %>% # suppress 'NAs introduced due to coercion' warning
+  years = suppressWarnings(qaqc_dirs |> # suppress 'NAs introduced due to coercion' warning
     stringr::str_remove("STATION_DATA_") |>
     as.numeric())
   years[!is.na(years)]
@@ -308,6 +308,6 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
         date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
         DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
         quality_assured = loc != loc_raw) |>
-      dplyr::relocate("date_utc", .before = "DATE_PST") %>%
+      dplyr::relocate("date_utc", .before = "DATE_PST") |>
       dplyr::select(-'DATE', -'TIME')
 }
