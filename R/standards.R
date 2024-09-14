@@ -45,54 +45,47 @@
 #'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 #'
 #' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
-AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE){
-  # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
-  . = NULL # so build check doesn't yell at me
+AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose = TRUE){
   aqhi_breakpoints = stats::setNames(
     c(-Inf, 1:10*10, Inf),
-    c(NA, 1:10, "+")
-  )
-  # Join inputs
+    c(NA, 1:10, "+"))
+  # Join inputs and fill in missing hours
   obs = dplyr::bind_cols(
-    date = dates, pm25 = pm25_1hr_ugm3,
-    o3 = o3_1hr_ppb, no2 = no2_1hr_ppb
-  ) |>
-    # Fill in missing hours with NAs
+      date = dates, 
+      pm25 = pm25_1hr_ugm3,
+      o3   = o3_1hr_ppb,
+      no2  = no2_1hr_ppb) |>
     tidyr::complete(date = seq(min(date), max(date), "1 hours")) |>
     dplyr::arrange(date)
 
   # Calculate AQHI+ (pm25 only)
   aqhi_plus = AQHI_plus(obs$pm25) |>
-    # Add columns in case only PM2.5 provided
     dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) |>
     dplyr::relocate('AQHI', .before = "AQHI_plus")
 
-  # Need all 3 pollutants to calculate AQHI
+  # Calculate AQHI if all 3 pollutants provided
   have_all_3_pol = !all(is.na(pm25_1hr_ugm3)) &
     !all(is.na(no2_1hr_ppb)) & !all(is.na(o3_1hr_ppb))
   if (have_all_3_pol) {
     obs = obs |>
-      # +3hr rolling means, + AQHI, +risk levels
       dplyr::mutate(
-        # Calculate rolling 3 hour averages (at least 2 hours per average)
         pm25_rolling_3hr = roll_mean_3hr_min_2(.data$pm25),
-        no2_rolling_3hr = roll_mean_3hr_min_2(.data$no2),
-        o3_rolling_3hr = roll_mean_3hr_min_2(.data$o3),
-        # Calculate AQHI
+        no2_rolling_3hr  = roll_mean_3hr_min_2(.data$no2),
+        o3_rolling_3hr   = roll_mean_3hr_min_2(.data$o3),
         AQHI = cut(AQHI_formula(
-          .data$pm25_rolling_3hr, .data$no2_rolling_3hr, .data$o3_rolling_3hr),
-          breaks = aqhi_breakpoints/10,
+          pm25_rolling_3hr = .data$pm25_rolling_3hr, 
+          no2_rolling_3hr = .data$no2_rolling_3hr, 
+          o3_rolling_3hr = .data$o3_rolling_3hr),
+          breaks = aqhi_breakpoints / 10,
           labels = names(aqhi_breakpoints[-1])),
         AQHI_plus = aqhi_plus$AQHI_plus,
-        # Get risk levels
-        risk = AQHI_risk_category(.data$AQHI)
-      ) |>
-      # + health messaging
-      dplyr::bind_cols(., AQHI_health_messaging(.$risk)) %>%
-      # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
+        risk = AQHI_risk_category(.data$AQHI))
+    # Use AQHI levels, risk, and messaging unless AQHI+ exceeds AQHI
+    obs = obs |> dplyr::bind_cols(
+        AQHI_health_messaging(obs$risk)) |>
       AQHI_replace_w_AQHI_plus(aqhi_plus)
   }else{
-    if(!quiet) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
+    if(verbose) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
     obs = aqhi_plus
   }
   return(obs)
