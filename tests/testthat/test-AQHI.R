@@ -11,7 +11,7 @@ test_that("AQHI returns a dataframe of proper size", {
   expect_length(output[1,], n = 13) # cols == 13
 })
 test_that("AQHI (pm25 only) returns a dataframe of proper size", {
-  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, quiet = TRUE)
+  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, verbose = FALSE)
   expect_warning(AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25))
   expect_s3_class(output, "data.frame")
   expect_equal(nrow(output), nrow(obs)) # rows(output) == nrows(input)
@@ -36,7 +36,7 @@ test_that("Returned data.frame has expected column classes", {
 })
 
 test_that("Returned (pm25 only) data.frame has expected column classes", {
-  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, quiet = TRUE)
+  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, verbose = FALSE))
   expect_warning(AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25))
   expect_type(output$pm25, "integer")
   expect_s3_class(output$AQHI, "factor")
