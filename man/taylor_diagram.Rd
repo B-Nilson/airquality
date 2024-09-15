@@ -24,6 +24,7 @@ taylor_diagram(
   obs_label_hjust = -0.05,
   cor_colour = "lightgrey",
   cor_linetype = "solid",
+  cor_label_step = 0.1,
   rmse_colour = "brown",
   rmse_linetype = "dotted",
   rmse_label_pos = 80,
@@ -55,6 +56,8 @@ taylor_diagram(
 \item{obs_label_vjust, obs_label_hjust}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
 
 \item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
+
+\item{cor_label_step}{(Optional) a single value indicating the spacing between each corrlation line.}
 
 \item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
 

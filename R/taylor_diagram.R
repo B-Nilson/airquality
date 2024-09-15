@@ -13,6 +13,7 @@
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
+#' @param cor_label_step (Optional) a single value indicating the spacing between each corrlation line.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
 #' @param rmse_label_pos (Optional) a single value (0-360)indicating the location of the labels for the rmse circles.
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
@@ -71,11 +72,18 @@ taylor_diagram = function(dat,
     obs_colour = "purple", 
     obs_shape = 16, obs_size = 3, obs_stroke = 2, 
     obs_label = "Observed", 
-    obs_label_vjust = -1, obs_label_hjust = -0.05,
-    cor_colour = "lightgrey", cor_linetype = "solid",
-    rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80,
-    sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
-    plot_padding = 2, labels_padding = 2){
+    obs_label_vjust = -1, 
+    obs_label_hjust = -0.05,
+    cor_colour = "lightgrey", 
+    cor_linetype = "solid",
+    cor_label_step = 0.1,
+    rmse_colour = "brown", 
+    rmse_linetype = "dotted", 
+    rmse_label_pos = 80,
+    sd_colour = "black", 
+    sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
+    plot_padding = 2, 
+    labels_padding = 2){
 
   # Make modelled summaries
   modelled = dat |>
@@ -93,6 +101,7 @@ taylor_diagram = function(dat,
       right_sd_limit = right_sd_limit,
       cor_colour = cor_colour,
       cor_linetype = cor_linetype,
+      cor_label_step = cor_label_step,
       rmse_colour = rmse_colour,
       rmse_linetype = rmse_linetype,
       rmse_label_pos = rmse_label_pos,
@@ -280,7 +289,7 @@ make_taylor_rmse_lines = function(sd_obs, sd_max, min_cor, label_pos = 80, n = 5
 
 make_taylor_diagram_template = function(
     observed, modelled, left_cor_limit = NULL, right_sd_limit = NULL,
-    cor_colour = "lightgrey", cor_linetype = "solid", 
+    cor_colour = "lightgrey", cor_linetype = "solid",  cor_label_step = 0.1,
     rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80, 
     sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     padding_limits = 2, nudge_labels = 2){
@@ -303,6 +312,7 @@ make_taylor_diagram_template = function(
   ggplot2::ggplot() |>
     add_taylor_cor_lines(
       min_cor = min_cor, 
+      label_step = cor_label_step,
       sd_max = sd_max, 
       colour = cor_colour, linetype = cor_linetype, 
       nudge_labels = nudge_labels) |> 
