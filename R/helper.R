@@ -26,7 +26,7 @@ roll_mean = function(x, width, direction = "backward", fill = NA, min_n = 0){
                  ifelse(direction == "forward", "left", "center"))
   zoo::rollapply(
     x, width = width, align = align, fill = fill,
-    FUN = mean_if_enough, min_n = min_n) %>%
+    FUN = mean_if_enough, min_n = min_n) |>
     round(1)
 }
 
@@ -80,7 +80,7 @@ standardize_colnames = function(df, all_col_names, raw = FALSE){
   }else{
     col_names = all_col_names[all_col_names %in% names(df)]
     dplyr::rename_with(df, .cols = unname(col_names), 
-        \(x) names(col_names)[col_names == x]) %>%
+        \(x) names(col_names)[col_names == x]) |>
       dplyr::select(dplyr::any_of(names(col_names)))
   }
 }
@@ -161,9 +161,9 @@ get_station_timezone = function(lng, lat, method = "accurate"){
 extract_tz_offset = function(date_str){
   offset = stringr::str_extract(date_str, "[+,-]\\d\\d*$")
 
-  hours = as.numeric(stringr::str_sub(offset, end = 3))
-  minutes = as.numeric(stringr::str_sub(offset, start = 4))
-  hours + minutes / 60
+  hours = stringr::str_sub(offset, end = 3)
+  minutes = stringr::str_sub(offset, start = 4)
+  paste0(hours, minutes)
 }
 
 all_conversions = list(
@@ -239,4 +239,19 @@ convert_units = function(x, in_unit, out_unit, y = NULL){
   converter(x, all_conversions, in_unit, out_unit, y)
 }
 
+lapply_and_bind = function(...){
+  lapply(...) |> dplyr::bind_rows()
+}
 
+convert_date_utc_to_local = function(obs) {
+  obs |> dplyr::mutate(
+    tz_offset = as.numeric(extract_tz_offset(.data$date_local)) / 100,
+    tz_hours = trunc(.data$tz_offset),
+    tz_minutes = floor((.data$tz_offset - trunc(.data$tz_offset)) * 100),
+    # Convert local date string to a datetime
+    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d*$") |>
+      lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
+    # Convert from local to UTC by subtracting timezone offset
+    date_utc_from_local = .data$date_local - lubridate::hours(.data$tz_hours) -
+      (lubridate::minutes(.data$tz_minutes)))
+}

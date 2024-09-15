@@ -70,12 +70,12 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   date_range = handle_date_range(date_range, min_date, max_date)
 
   # Get all years in desired date range
-  desired_years = seq( date_range[1], date_range[2], by = "1 days") %>%
+  desired_years = seq( date_range[1], date_range[2], by = "1 days") |>
     # convert to timezone of BCMoE data
-    lubridate::with_tz(bcmoe_tzone) %>%
+    lubridate::with_tz(bcmoe_tzone) |>
     # extract unique years
-    lubridate::year() %>%
-    unique() %>%
+    lubridate::year() |>
+    unique() |>
     sort()
 
   # Drop all years not in qaqc_years except the first
@@ -86,16 +86,16 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   years_to_get = years_to_get[!is.na(years_to_get)]
 
   # Get all stations during period
-  known_stations = lubridate::ym(paste0(years_to_get, "06")) %>%
-    lapply(get_bcgov_stations) %>%
+  known_stations = lubridate::ym(paste0(years_to_get, "06")) |>
+    lapply(get_bcgov_stations) |>
     dplyr::bind_rows()
 
   # Handle if any/all don't exist in meta data
   check_stations_exist(stations, known_stations$site_id, source = "the BC FTP site")
 
   # Get data for each year for all desired stations
-  stations_data = years_to_get %>%
-    lapply(\(year) get_annual_bcgov_data(stations, year, qaqc_years)) %>%
+  stations_data = years_to_get |>
+    lapply(\(year) get_annual_bcgov_data(stations, year, qaqc_years)) |>
     dplyr::bind_rows()
 
   # Error if no data retrieved
@@ -105,25 +105,25 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
 
   # Filter data to desired date range
   stations_data = dplyr::filter(stations_data,
-      .data$date_utc %>% dplyr::between(date_range[1], date_range[2])) %>%
+      .data$date_utc |> dplyr::between(date_range[1], date_range[2])) |>
     # Drop duplicated dates for a particular station
-    dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") %>%
+    dplyr::filter(!duplicated(.data$DATE_PST), .by = "EMS_ID") |>
     # Replace blank values with NA
-    dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) %>%
+    dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) |>
     # Rename and select desired columns
-    standardize_colnames(bcmoe_col_names, raw = raw) %>%
+    standardize_colnames(bcmoe_col_names, raw = raw) |>
     # Output as tibble
     tibble::as_tibble()
 
   if(nrow(stations_data) & !raw){
-    stations_data = stations_data %>%
+    stations_data = stations_data |>
       # Convert date_local to local time
-      dplyr::left_join(known_stations %>% dplyr::select("site_id", "tz_local"),
-                       by = "site_id") %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) %>%
-                      format("%F %H:%M %z")) %>%
-      dplyr::ungroup() %>%
+      dplyr::left_join(known_stations |> dplyr::select("site_id", "tz_local"),
+                       by = "site_id") |>
+      dplyr::rowwise() |>
+      dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) |>
+                      format("%F %H:%M %z")) |>
+      dplyr::ungroup() |>
       dplyr::select(-"tz_local")
   }else{
     if(!raw) stop("No data available for provided stations and date_range")
@@ -163,35 +163,35 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
     # download and read in meta file for this year
     read_data(file = paste0(ftp_site, stations_file), data.table = FALSE,
               colClasses = c("OPENED" = "character", "CLOSED" = "character"))
-  }) %>%
+  }) |>
     # Combine meta files for each desired year
     dplyr::bind_rows()
 
   # Clean up
-  stations = stations %>%
+  stations = stations |>
     # Fix reversed lat/lng entries
     dplyr::mutate(
-      lat2 = ifelse(.data$LAT %>% dplyr::between(45,60), .data$LAT, .data$LONG),
-      LONG = ifelse(.data$LAT %>% dplyr::between(45,60), .data$LONG, -.data$LAT),
+      lat2 = ifelse(.data$LAT |> dplyr::between(45,60), .data$LAT, .data$LONG),
+      LONG = ifelse(.data$LAT |> dplyr::between(45,60), .data$LONG, -.data$LAT),
       LAT = .data$lat2
-    ) %>%
+    ) |>
     # Choose and rename columns
     dplyr::select(
       site_id = "EMS_ID", site_name = "STATION_NAME",
       city = "CITY", lat = "LAT", lng = "LONG", elev = "ELEVATION",
       date_created = "OPENED", date_removed = "CLOSED"
-    ) %>%
+    ) |>
     # Replace blank values with NA
-    dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) %>%
+    dplyr::mutate_all(\(x) ifelse(x == "", NA, x)) |>
     # Convert date_created and date_removed to date objects
     dplyr::mutate(dplyr::across(c('date_created', 'date_removed'),
-      \(x) lubridate::ymd(stringr::str_sub(x, end = 10)))) %>%
+      \(x) lubridate::ymd(stringr::str_sub(x, end = 10)))) |>
     # Sort alphabetically
-    dplyr::arrange(.data$site_name) %>%
+    dplyr::arrange(.data$site_name) |>
     # Drop duplicated meta entries
-    unique() %>%
+    unique() |>
     # Drop missing lat/lng rows
-    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) %>%
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     # Lookup local timezones
     dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
 
@@ -261,82 +261,53 @@ bcmoe_col_names = c(
 # Checks the years in the QA/QC'ed data archive for BC MoE data
 # (usually 1-2 years out of date)
 get_bcgov_qaqc_years = function(){
-  . = NULL # so build check doesn't yell at me
   ftp_site_qaqc = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
-
-  qaqc_dirs = ftp_site_qaqc %>%
-    # Load file details
-    readLines() %>%
-    # Split on white space
-    stringr::str_split("\\s", simplify = T) %>%
-    # Keep last column only
-    .[, ncol(.)]
-
-  years = suppressWarnings(qaqc_dirs %>% # suppress 'NAs introduced due to coercion' warning
-    # Drop directory name prefix
-    stringr::str_remove("STATION_DATA_") %>%
-    # Convert years from character to numeric, dropping NAs (non-year dirs)
-    as.numeric()) %>%
-    .[!is.na(.)]
-
-  return(years)
+  # Load file/dir details and extract names
+  qaqc_dirs = ftp_site_qaqc |>
+    readLines() |>
+    stringr::str_split("\\s", simplify = T)
+  qaqc_dirs = qaqc_dirs[, ncol(qaqc_dirs)]
+  # Extract years from file/dir names
+  years = suppressWarnings(qaqc_dirs |> # suppress 'NAs introduced due to coercion' warning
+    stringr::str_remove("STATION_DATA_") |>
+    as.numeric())
+  years[!is.na(years)]
 }
 
 get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
-  . = NULL # so build check doesn't yell at me
   # Where BC MoE AQ/Met data are stored
   ftp_site = "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  # Where to get the QA/QC'ed obs - usually a few years out of date
-  loc_qaqc = ftp_site %>% # "Archieved" lol
+  qaqc_url = ftp_site |> # "Archieved" lol
     paste0("Archieved/STATION_DATA_{year}/{station}.csv")
-  # Where to get the raw obs
-  loc_raw = ftp_site %>% # actually since qa/qc to date, not just this year
+  raw_url = ftp_site |> # actually since qa/qc to date, not just this year
     paste0("Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/{station}.csv")
 
-  # Classes of specific columns found in all files
-  colClasses = c(
-    DATE_PST = "character", # will be converted to date
-    EMS_ID = "character",
-    STATION_NAME = "character")
-
-  # Get list of years that have been qaqc'ed if needed
+  # Determine file to get for this year
   if (is.null(qaqc_years)) qaqc_years = get_bcgov_qaqc_years()
-
-  # If year has qaqc'ed data
   if (year %in% qaqc_years) {
-    # Use qaqc location
-    loc = loc_qaqc %>%
+    data_url = qaqc_url |>
       stringr::str_replace("\\{year\\}", as.character(year))
-    # Otherwise, use raw location
-  }else loc = loc_raw
+  }else data_url = raw_url
 
   # Get each stations data for this year
-  stations_data = stations %>%
-    # Insert station ids into file location
-    stringr::str_replace(loc, "\\{station\\}", .) %>%
-    # Load each stations data if it exists and combine
-    lapply(\(p) on_error(return =  NULL, read_data(file = p, colClasses = colClasses))) %>%
-    # Combine rowise into a single dataframe
+  stations_data = data_url |>
+    stringr::str_replace("\\{station\\}", stations) |>
+    lapply(\(p) on_error(return =  NULL, 
+      read_data(file = p, colClasses = c(DATE_PST = "character",
+        EMS_ID = "character", STATION_NAME = "character")))) |>
     dplyr::bind_rows()
 
   if(nrow(stations_data) == 0){
-    warning(paste("No data available for provided stations for", year))
-    return(NULL)
-  }else {
-    stations_data  %>%
-      # Format date time properly and add a flag for if data are qa/qc'ed
+    stop(paste("No data available for provided stations for", year))
+  }else # Fix date formating and add QA column
+    stations_data  |>
       dplyr::mutate(
         DATE_PST = tryCatch(
           lubridate::ymd_hms(.data$DATE_PST, tz = bcmoe_tzone),
           warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
         date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
         DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
-        quality_assured = loc != loc_raw
-      ) %>%
-      dplyr::relocate("date_utc", .before = "DATE_PST") %>%
-      # Drop DATE and TIME columns (erroneous)
-      dplyr::select(-'DATE', -'TIME') %>%
-      return()
-  }
-
+        quality_assured = data_url != raw_url) |>
+      dplyr::relocate("date_utc", .before = "DATE_PST") |>
+      dplyr::select(-'DATE', -'TIME')
 }

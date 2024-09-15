@@ -45,54 +45,47 @@
 #'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
 #'
 #' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
-AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, quiet = FALSE){
-  # See: https://www.tandfonline.com/doi/abs/10.3155/1047-3289.58.3.435
-  . = NULL # so build check doesn't yell at me
+AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose = TRUE){
   aqhi_breakpoints = stats::setNames(
     c(-Inf, 1:10*10, Inf),
-    c(NA, 1:10, "+")
-  )
-  # Join inputs
+    c(NA, 1:10, "+"))
+  # Join inputs and fill in missing hours
   obs = dplyr::bind_cols(
-    date = dates, pm25 = pm25_1hr_ugm3,
-    o3 = o3_1hr_ppb, no2 = no2_1hr_ppb
-  ) %>%
-    # Fill in missing hours with NAs
-    tidyr::complete(date = seq(min(date), max(date), "1 hours")) %>%
+      date = dates, 
+      pm25 = pm25_1hr_ugm3,
+      o3   = o3_1hr_ppb,
+      no2  = no2_1hr_ppb) |>
+    tidyr::complete(date = seq(min(date), max(date), "1 hours")) |>
     dplyr::arrange(date)
 
   # Calculate AQHI+ (pm25 only)
-  aqhi_plus = AQHI_plus(obs$pm25) %>%
-    # Add columns in case only PM2.5 provided
-    dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) %>%
+  aqhi_plus = AQHI_plus(obs$pm25) |>
+    dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) |>
     dplyr::relocate('AQHI', .before = "AQHI_plus")
 
-  # Need all 3 pollutants to calculate AQHI
+  # Calculate AQHI if all 3 pollutants provided
   have_all_3_pol = !all(is.na(pm25_1hr_ugm3)) &
     !all(is.na(no2_1hr_ppb)) & !all(is.na(o3_1hr_ppb))
   if (have_all_3_pol) {
-    obs = obs %>%
-      # +3hr rolling means, + AQHI, +risk levels
+    obs = obs |>
       dplyr::mutate(
-        # Calculate rolling 3 hour averages (at least 2 hours per average)
         pm25_rolling_3hr = roll_mean_3hr_min_2(.data$pm25),
-        no2_rolling_3hr = roll_mean_3hr_min_2(.data$no2),
-        o3_rolling_3hr = roll_mean_3hr_min_2(.data$o3),
-        # Calculate AQHI
+        no2_rolling_3hr  = roll_mean_3hr_min_2(.data$no2),
+        o3_rolling_3hr   = roll_mean_3hr_min_2(.data$o3),
         AQHI = cut(AQHI_formula(
-          .data$pm25_rolling_3hr, .data$no2_rolling_3hr, .data$o3_rolling_3hr),
-          breaks = aqhi_breakpoints/10,
+          pm25_rolling_3hr = .data$pm25_rolling_3hr, 
+          no2_rolling_3hr = .data$no2_rolling_3hr, 
+          o3_rolling_3hr = .data$o3_rolling_3hr),
+          breaks = aqhi_breakpoints / 10,
           labels = names(aqhi_breakpoints[-1])),
         AQHI_plus = aqhi_plus$AQHI_plus,
-        # Get risk levels
-        risk = AQHI_risk_category(.data$AQHI)
-      ) %>%
-      # + health messaging
-      dplyr::bind_cols(., AQHI_health_messaging(.$risk)) %>%
-      # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
+        risk = AQHI_risk_category(.data$AQHI))
+    # Use AQHI levels, risk, and messaging unless AQHI+ exceeds AQHI
+    obs = obs |> dplyr::bind_cols(
+        AQHI_health_messaging(obs$risk)) |>
       AQHI_replace_w_AQHI_plus(aqhi_plus)
   }else{
-    if(!quiet) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
+    if(verbose) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
     obs = aqhi_plus
   }
   return(obs)
@@ -229,12 +222,12 @@ AQHI_health_messaging = function(risk_categories){
     if (is.null(x)) {
       data.frame(high_risk_pop_message = NA, general_pop_message = NA)
     }else return(x)
-  }) %>% dplyr::bind_rows()
+  }) |> dplyr::bind_rows()
 }
 
 # TODO: make sure AQHI is a column in obs
 AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
-  obs %>%
+  obs |>
     # Use AQHI+ (levels, risk, and messaging) if AQHI+ exceeds AQHI
     dplyr::mutate(
       # Check in AQHI+ > AQHI
@@ -310,14 +303,14 @@ CAAQS = function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
     so2 = so2_1hr_ppb)
 
   # Assess hours of data for each pollutant annually
-  has_enough_obs = obs %>%
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::summarise(dplyr::across(-1, \(x) sum(!is.na(x)))) %>%
-    dplyr::mutate(dplyr::across(-1, \(x) x/ifelse(.data$year%%4==0, 8784, 8760))) %>%
-    dplyr::mutate(dplyr::across(-1, \(x) swap_na(x > min_completeness, F))) %>%
+  has_enough_obs = obs |>
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
+    dplyr::summarise(dplyr::across(-1, \(x) sum(!is.na(x)))) |>
+    dplyr::mutate(dplyr::across(-1, \(x) x/ifelse(.data$year%%4==0, 8784, 8760))) |>
+    dplyr::mutate(dplyr::across(-1, \(x) swap_na(x > min_completeness, F))) |>
     tidyr::complete(year = min(.data$year):max(.data$year))
   # Check for 3 consecutive years for any pollutant
-  has_3_consecutive_years = has_enough_obs %>%
+  has_3_consecutive_years = has_enough_obs |>
     dplyr::summarise(
       dplyr::across(-1, \(x) any((x + dplyr::lag(x) + dplyr::lag(x, 2)) >= 3)))
   # Stop if not enough data provided
@@ -335,8 +328,8 @@ CAAQS = function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
   }
 
   # Fill in missing hours with NAs
-  obs = obs %>%
-    tidyr::complete(date = complete_dates) %>%
+  obs = obs |>
+    tidyr::complete(date = complete_dates) |>
     dplyr::arrange(.data$date)
 
   # Calculate CAAQS attainment where data provided
@@ -351,14 +344,14 @@ CAAQS = function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
 
 ## CAAQS Helpers ----------------------------------------------------------
 CAAQS_pm25 = function(obs, thresholds){
-  obs %>%
+  obs |>
     # Hourly mean -> daily mean
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) %>%
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) |>
+    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) |>
     # Daily mean -> annual 98th percentile and annual mean
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
     dplyr::summarise(perc_98_of_daily_means = unname(stats::quantile(.data$pm25_mean, 0.98, na.rm = T)),
-                     mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) %>%
+                     mean_of_daily_means = mean(.data$pm25_mean, na.rm = T)) |>
     dplyr::ungroup() |>
     # +3 year averages, +whether standard is met
     dplyr::mutate(
@@ -376,25 +369,25 @@ CAAQS_pm25 = function(obs, thresholds){
         \(y) CAAQS_meets_standard(year = y,
                                   metric = .data$`3yr_mean_of_means`[.data$year == y],
                                   thresholds = thresholds$pm25$annual))
-    ) %>%
+    ) |>
     dplyr::relocate("management_level_daily",
-                    .after = "3yr_mean_of_perc_98")%>%
+                    .after = "3yr_mean_of_perc_98") |>
     dplyr::relocate("mean_of_daily_means",
                     .after = "management_level_daily")
 }
 
 CAAQS_o3 = function(obs, thresholds){
-  obs %>%
+  obs |>
     # hourly mean -> 8 hourly mean
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) %>%
-    dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) %>%
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "8 hours")) |>
+    dplyr::summarise(`8hr_mean_o3` = mean(.data$o3, na.rm = T)) |>
     # 8 hourly mean -> daily max
-    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) %>%
+    dplyr::group_by(date = lubridate::floor_date(.data$date, "days")) |>
+    dplyr::summarise(daily_max_8hr_mean_o3 = max_no_na(.data$`8hr_mean_o3`)) |>
     # daily max -> annual 4th highest
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) %>%
-    dplyr::summarise(fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
+    dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) |>
+    dplyr::summarise(fourth_highest_daily_max_8hr_mean_o3 = .data$daily_max_8hr_mean_o3[4]) |>
     dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
@@ -410,20 +403,20 @@ CAAQS_o3 = function(obs, thresholds){
 }
 
 CAAQS_no2 = function(obs, thresholds){
-  obs %>%
+  obs |>
     # + annual mean
-    dplyr::group_by(year = lubridate::year(.data$date)) %>%
-    dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) %>%
+    dplyr::group_by(year = lubridate::year(.data$date)) |>
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$no2, na.rm = T)) |>
     # hourly mean -> daily maxima
     dplyr::group_by(date = lubridate::floor_date(.data$date, "1 days"),
-                    .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") %>%
+                    .data$annual_mean_of_hourly) |>
+    dplyr::summarise(daily_max_hourly_no2 = max_no_na(.data$no2), .groups = "drop") |>
     # daily maxima -> annual 98th percentile
     dplyr::group_by(year = lubridate::year(date),
-                    .data$annual_mean_of_hourly) %>%
+                    .data$annual_mean_of_hourly) |>
     dplyr::summarise(
       perc_98_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") %>%
+        .data$daily_max_hourly_no2, 0.98, na.rm = T)), .groups = "drop") |>
     dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
@@ -440,24 +433,24 @@ CAAQS_no2 = function(obs, thresholds){
         \(y) CAAQS_meets_standard(year = y,
                                   metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
                                   thresholds = thresholds$no2$annual))
-    ) %>%
+    ) |>
     dplyr::relocate("management_level_hourly",
                     .after = "annual_mean_of_hourly")
 }
 
 CAAQS_so2 = function(obs, thresholds){
-  obs %>%
+  obs |>
     # + annual mean
-    dplyr::group_by(year = lubridate::year(date)) %>%
-    dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) %>%
+    dplyr::group_by(year = lubridate::year(date)) |>
+    dplyr::mutate(annual_mean_of_hourly = mean(.data$so2, na.rm = T)) |>
     # hourly mean -> daily maxima
-    dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) %>%
-    dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") %>%
+    dplyr::group_by(date = lubridate::floor_date(date, "1 days"), .data$annual_mean_of_hourly) |>
+    dplyr::summarise(daily_max_hourly_so2 = max_no_na(.data$so2), .groups = "drop") |>
     # daily maxima -> annual 98th percentile
-    dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) %>%
+    dplyr::group_by(year = lubridate::year(date), .data$annual_mean_of_hourly) |>
     dplyr::summarise(
       perc_99_of_daily_maxima = unname(stats::quantile(
-        .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") %>%
+        .data$daily_max_hourly_so2, 0.99, na.rm = T)), .groups = "drop") |>
     dplyr::ungroup() |>
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
@@ -474,15 +467,13 @@ CAAQS_so2 = function(obs, thresholds){
         \(y) CAAQS_meets_standard(year = y,
                                   metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
                                   thresholds = thresholds$so2$annual))
-    ) %>%
+    ) |>
     dplyr::relocate("management_level_hourly",
                     .after = "annual_mean_of_hourly")
 }
 
 CAAQS_meets_standard = function(metric, thresholds, year){
-  . = NULL # so build check doesn't yell at me
-  mgmt_levels = thresholds %>%
-    .[as.numeric(names(.)) <= year] %>%
+  mgmt_levels = thresholds[as.numeric(names(thresholds)) <= year] |>
     dplyr::last()
   if(length(mgmt_levels) == 0) return(NA)
 
@@ -600,7 +591,7 @@ AQI = function(dates = Sys.time(),
            "pm10_24hr_ugm3", "pm10_1hr_ugm3",
            "co_8hr_ppm"    , "co_1hr_ppm",
            "so2_1hr_ppb"   , "no2_1hr_ppb")
-  all_missing = lapply(AQI_pols, \(pol) all(is.na(get(pol)))) %>%
+  all_missing = lapply(AQI_pols, \(pol) all(is.na(get(pol)))) |>
     stats::setNames(AQI_pols)
 
   # Ensure at least one pollutants data is provided
@@ -615,7 +606,7 @@ AQI = function(dates = Sys.time(),
                    pm25_24hr_ugm3, pm25_1hr_ugm3,
                    pm10_24hr_ugm3, pm10_1hr_ugm3,
                    co_8hr_ppm, co_1hr_ppm,
-                   so2_1hr_ppb, no2_1hr_ppb) %>%
+                   so2_1hr_ppb, no2_1hr_ppb) |>
     # Fill hourly date gaps with NA obs
     tidyr::complete(date = seq(min(dates), max(dates), "1 hours"))
 
@@ -652,19 +643,19 @@ AQI = function(dates = Sys.time(),
   }
 
   # Get Daily mean values for all pollutants/averaging times
-  dat = dplyr::group_by(dat, date = lubridate::floor_date(.data$date, "days")) %>%
-    dplyr::summarise(dplyr::across(dplyr::everything(), mean_no_na)) %>%
+  dat = dplyr::group_by(dat, date = lubridate::floor_date(.data$date, "days")) |>
+    dplyr::summarise(dplyr::across(dplyr::everything(), mean_no_na)) |>
     dplyr::ungroup() |>
     dplyr::arrange(.data$date) # Sort by date
 
   # Truncate daily means
-  dat = dat %>%
+  dat = dat |>
     # Truncate ozone to 3 decimals
     dplyr::mutate(dplyr::across(dplyr::starts_with("o3"),
-                                \(x) trunc_n(x, 3))) %>%
+                                \(x) trunc_n(x, 3))) |>
     # Truncate PM2.5 and CO to 1 decimal
     dplyr::mutate(dplyr::across(dplyr::starts_with("pm25|co"),
-                                \(x) trunc_n(x, 1))) %>%
+                                \(x) trunc_n(x, 1))) |>
     # Truncate PM10, SO2, and NO2 to no decimals
     dplyr::mutate(dplyr::across(dplyr::starts_with("so2|no2|pm10"),
                                 \(x) trunc_n(x, 0)))
@@ -683,7 +674,7 @@ AQI = function(dates = Sys.time(),
   names(AQI_cols) = stringr::str_split(AQI_cols, "_", simplify = T)[,2]
 
   # Set hourly AQI to the highest of the calculated values
-  dat = dplyr::rowwise(dat) %>% # for each hour
+  dat = dplyr::rowwise(dat) |> # for each hour
     dplyr::mutate(
       # Take the max non-NA value as the AQI
       AQI = max(dplyr::across(dplyr::all_of(AQI_cols)), na.rm = T),
@@ -691,8 +682,8 @@ AQI = function(dates = Sys.time(),
       risk_category = AQI_risk_category(.data$AQI),
       # Determine the principal pollutant for the AQI
       principal_pol = names(AQI_cols)[which.max( # get pol where max
-        dplyr::across(dplyr::all_of(AQI_cols)))] %>% # across AQI columns
-        factor(unique(names(AQI_cols)))) %>% # make it a factor
+        dplyr::across(dplyr::all_of(AQI_cols)))] |> # across AQI columns
+        factor(unique(names(AQI_cols)))) |> # make it a factor
     dplyr::ungroup()
 
   # Return a tibble with datetimes and corresponding AQI
@@ -717,7 +708,7 @@ AQI_risk_category = function(AQI){
     AQI, unlist(aqi_levels),
     unlist(
       sapply(seq_along(aqi_levels), \(i){
-        level = names(aqi_levels)[i] %>%
+        level = names(aqi_levels)[i] |>
           stringr::str_remove("2$")
         rep(level, length(aqi_levels[[i]]))
       })
@@ -805,15 +796,15 @@ AQI_breakpoints = list(
 # Get risk category for breakpoint determination for AQI formulation
 AQI_bp_cat = function(obs, bps){
   suppressMessages(
-    bps$risk_category %>%
+    bps$risk_category |>
       lapply(\(cat) {
         bp = bps[bps$risk_category == cat, ]
         ifelse(obs >= bp$bp_low & obs <= bp$bp_high, rep(cat, length(obs)), NA)
-      }) %>%
-      dplyr::bind_cols() %>%
+      }) |>
+      dplyr::bind_cols() |>
       apply(1, \(row){
         ifelse(all(is.na(row)), NA, row[!is.na(row)])
-      }) %>%
+      }) |>
       unlist())
 }
 
@@ -826,25 +817,24 @@ AQI_formulation = function(obs, bp_low, bp_high, aqi_low, aqi_high){
 
 # Workhorse function to determine risk category, append breakponints, then calc AQI
 AQI_from_con = function(dat, pol){
-  . = NULL # so build check doesn't yell at me
   dat[paste0("cat_",pol)] = NA
   dat[paste0("AQI_",pol)] = NA
-  dat = dat %>%
+  dat = dat |>
     # Determine the risk category based on the concentrations and break points
     dplyr::mutate(dplyr::across(paste0("cat_",pol),
-                     \(x) AQI_bp_cat(dat[[pol]], AQI_breakpoints[[pol]]))) %>%
+      \(x) AQI_bp_cat(dat[[pol]], AQI_breakpoints[[pol]]))) |>
     # Append the corresponding break points and AQI breaks for each hour
-    dplyr::left_join(AQI_breakpoints[[pol]] %>%
-                       dplyr::rename_with(.cols = 2:5, \(x)paste0(x,"_", pol)),
-                     by = dplyr::join_by(!!paste0("cat_",pol) == "risk_category")) 
-  dat %>%
-    # Calculate AQI for each hour based on those
-    dplyr::mutate(dplyr::across(paste0("AQI_",pol),
-      \(x) AQI_formulation(
-        dat[[pol]],
-        dat[[paste0("bp_low_", pol)]],
-        dat[[paste0("bp_high_", pol)]],
-        dat[[paste0("aqi_low_", pol)]],
-        dat[[paste0("aqi_high_", pol)]])))
+    dplyr::left_join(
+      AQI_breakpoints[[pol]] |>
+        dplyr::rename_with(.cols = 2:5, \(x) paste0(x,"_", pol)),
+      by = dplyr::join_by(!!paste0("cat_", pol) == "risk_category")) 
+  # Calculate AQI for each hour based on those
+  dplyr::mutate(dat, dplyr::across(paste0("AQI_", pol),
+    \(x) AQI_formulation(
+      dat[[pol]],
+      dat[[paste0("bp_low_", pol)]],
+      dat[[paste0("bp_high_", pol)]],
+      dat[[paste0("aqi_low_", pol)]],
+      dat[[paste0("aqi_high_", pol)]])))
 }
 

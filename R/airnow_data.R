@@ -78,7 +78,7 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
   }
 
   # Get all stations during period
-  known_stations =  seq(date_range[1], date_range[2], "25 days") %>%
+  known_stations =  seq(date_range[1], date_range[2], "25 days") |>
     get_airnow_stations()
   # If specific stations desired
   if(! "all" %in% stations){
@@ -95,9 +95,9 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
 
   airnow_data = lapply(airnow_paths, \(pth){
     # Try downloading data for each hour, returning NULL if failed (no file)
-    on_error(return = NULL, read_data(file = pth))}) %>%
+    on_error(return = NULL, read_data(file = pth))}) |>
     # Combine rowise into a single dataframe
-    dplyr::bind_rows() %>%
+    dplyr::bind_rows() |>
     # Set the file header
     stats::setNames(
       c('date','time','siteID','site',
@@ -112,9 +112,9 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
   }
 
   # Basic formatting
-  airnow_data = airnow_data %>%
+  airnow_data = airnow_data |>
     # Drop duplicate rows if any
-    unique() %>%
+    unique() |>
     # Datetime formatting
     dplyr::mutate(
       # Join date and time columns, convert to datetime
@@ -136,16 +136,16 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
   }
   ## Otherwise
   # Convert from long format to wide format ("param_unit" column for each param/unit)
-  airnow_data = airnow_data %>%
+  airnow_data = airnow_data |>
     # Convert date_local to local time
-    dplyr::left_join(known_stations %>% dplyr::select(siteID = "site_id", "tz_local"), by = "siteID") %>%
-    dplyr::rowwise() %>%
+    dplyr::left_join(known_stations |> dplyr::select(siteID = "site_id", "tz_local"), by = "siteID") |>
+    dplyr::rowwise() |>
     dplyr::mutate(
-      date_local = lubridate::with_tz(.data$date, as.character(.data$tz_local)) %>%
-                    format("%F %H:%M %z")) %>%
-    dplyr::ungroup() %>%
+      date_local = lubridate::with_tz(.data$date, as.character(.data$tz_local)) |>
+                    format("%F %H:%M %z")) |>
+    dplyr::ungroup() |>
     # drop now erroneous time and tz_offset columns
-    dplyr::select(-"time", -"tz_offset", -"tz_local") %>%
+    dplyr::select(-"time", -"tz_offset", -"tz_local") |>
     # long to wide
     tidyr::pivot_wider(names_from = c("param", "unit"), values_from = "value")
 
@@ -156,9 +156,9 @@ get_airnow_data = function(stations = "all", date_range, raw = FALSE, verbose = 
     airnow_data$co_1hr_ppb = airnow_data$CO_PPM * 1000
 
   # Standardize column names/order
-  airnow_data = airnow_data %>%
+  airnow_data = airnow_data |>
     # All AirNow data is not QA/QC'ed - mark it as such
-    dplyr::mutate(quality_assured = FALSE) %>%
+    dplyr::mutate(quality_assured = FALSE) |>
     # Rename and select desired columns
     standardize_colnames(airnow_col_names)
 
@@ -178,29 +178,29 @@ get_airnow_stations = function(dates = Sys.time(), use_sf = FALSE){
         p = airnow_paths[names(airnow_paths) == as.character(d)]
         # Download meta file, returning NULL if failed
         on_error(return = NULL,
-          read_data(file = p) %>%
+          read_data(file = p) |>
             # Flag file date for later
             dplyr::mutate(file_date = d))
-      }) %>%
+      }) |>
     # Combine rowise into a single dataframe
-    dplyr::bind_rows() %>%
+    dplyr::bind_rows() |>
     # Set header names
     stats::setNames(
       c('siteID', 'param', 'site_location_code', 'site', 'status', 'operator_code',
         'operator', 'usa_region', 'lat', 'lon', 'elev', 'tz_offset', 'country',
         'UNKNOWN', 'UNKNOWN', 'location_code', 'location', 'UNKNOWN', 'region',
-        'UNKNOWN', 'city', 'UNKNOWN', 'UNKNOWN', "file_date")) %>%
+        'UNKNOWN', 'city', 'UNKNOWN', 'UNKNOWN', "file_date")) |>
     # Choose and reorder colummns, standardizing names
     dplyr::select(
       site_id = 'siteID', site_name = "site", city = 'city',
       lat = 'lat', lng = 'lon', elev = 'elev',
       status = 'status', operator = 'operator',
-      tz_offset = 'tz_offset', as_of = "file_date") %>%
+      tz_offset = 'tz_offset', as_of = "file_date") |>
     # Replace placeholders with proper NA values
     dplyr::mutate(dplyr::across(
-      dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) %>%
+      dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x))) |>
     # Drop duplicated entries
-    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) %>%
+    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
     # Lookup local timezones
     dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
 

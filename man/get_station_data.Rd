@@ -9,7 +9,8 @@ get_station_data(
   date_range,
   buffer_dist = 10,
   networks = "all",
-  sources = "all"
+  sources = "all",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ whereas two values will return data between (and including) those times.}
 \item{networks}{(Optional) A character vector indicating which monitoring networks to get data for. Default is "all".}
 
 \item{sources}{(Optional) A character vector indicating which data sources to get data from. Default is "all".}
+
+\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be printed}
 }
 \value{
 A list with two elements, the first called "stations" is an sf POINT object with all
@@ -60,7 +64,7 @@ FEM (Regulatory-grade "Federal Equivalent Method") monitors:
 \donttest{
 # Get data for all stations within 10 km of Fort St. John, BC
 #  for the first hour of Feb 2019
-get_station_data("Fort St. John, BC, Canada", "2019-02-01 01")
+get_station_data(locations = "Fort St. John, BC, Canada", date_range = "2019-02-01 01")
 
 # Get data for all FEM stations within 25 km of 2 BC cities from AirNow only
 #  for the first hour of Feb 2019
