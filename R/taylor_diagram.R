@@ -384,8 +384,9 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke
   }else if(length(groups) == 1) {
     taylor = taylor  + 
       ggplot2::geom_point(
-        data = modelled, size = size, stroke = stroke, shape = shapes,
-          ggplot2::aes(x = x, y = y, colour = .data[[groups[1]]]))
+        data = modelled, size = size, stroke = stroke, 
+        shape = if(shapes[1] == "default") 21 else shapes[1],
+        ggplot2::aes(x = x, y = y, colour = .data[[groups[1]]]))
   }else {
     stop(paste("groups must have a length between 1 and 3, not", length(groups)))
   }
