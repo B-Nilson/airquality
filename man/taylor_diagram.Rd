@@ -108,8 +108,13 @@ taylor_diagram(data, groups = c(Group = "group"),
   plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
 
 # Save plot
-# ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
+# gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+# save_figure(gg, "./test.png")
 }
+}
+\seealso{
+Other Data Visualisation: 
+\code{\link{save_figure}()}
 }
 \concept{Data Visualisation}
 \concept{Model Validation}
