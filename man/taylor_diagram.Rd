@@ -41,7 +41,7 @@ Blah Blah Blah
 # Make test data
 data = data.frame(
   obs = c(3, 2, 3, 3, 4, 5, 6, 6, 7, 3),
-  mod = c(0.1, 0.9, 2.0, 2.9, 3.9, 4.7, 6.1, 7, 7.3, 5.2)
+  mod = c(0.1, 0.9, 2.0, 2.9, 3.9, 4.7, 6.1, 7, 7.3, 5.2),
   group = factor(c(rep(1, 5), rep(2, 5)))
 )
 # Basic usage
