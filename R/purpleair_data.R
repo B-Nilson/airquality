@@ -1,9 +1,9 @@
 
 get_purpleair_data = function(stations, date_range, api_key, raw = FALSE, verbose = TRUE){
-  # Use httr::GET(...,
-    # query = list(lat = 40.7, lon = -74))
 }
 
+get_purpleair_stations = function(date_range, api_key, bounds, use_sf = FALSE){
+}
 #' Interface with the PurpleAir API
 #'
 #' @param read_key (Optional) A single character value of your PurpleAir API read key (see develop.purpleair.com). If NULL, write_key must be provided.
