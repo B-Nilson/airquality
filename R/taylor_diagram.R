@@ -69,17 +69,6 @@ taylor_diagram = function(dat,
     rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80,
     sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     plot_padding = 2, labels_padding = 2){
-  # Define coordinate conversion functions
-  convert_x = function(dist_from_origin, theta, alpha = pi / 6)
-    dist_from_origin * cos(alpha * theta)
-  convert_y = function(dist_from_origin, theta, alpha = pi / 6)
-    dist_from_origin * sin(alpha * theta)
-  convert_cor = function(correlation)
-    3 - correlation * 3
-  get_dist_from_origin = function(x, y)
-    sqrt(x^2 + y^2)
-  get_correlation = function(x, y)
-    atan2(y, x) / pi * -2 + 1
 
   # Make modelled summaries
   modelled = dat |>
@@ -409,3 +398,14 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke
 
   return(taylor)
 }
+
+convert_x = function(dist_from_origin, theta, alpha = pi / 6)
+  dist_from_origin * cos(alpha * theta)
+convert_y = function(dist_from_origin, theta, alpha = pi / 6)
+  dist_from_origin * sin(alpha * theta)
+convert_cor = function(correlation)
+  3 - correlation * 3
+get_dist_from_origin = function(x, y)
+  sqrt(x^2 + y^2)
+get_correlation = function(x, y)
+  atan2(y, x) / pi * -2 + 1
