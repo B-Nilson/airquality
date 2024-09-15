@@ -56,21 +56,20 @@ get_purpleair_stations = function(date_range, api_key, bounds, use_sf = FALSE){
 #'   selat = 63.592657, selng = -135.891057,
 #'   fields = "temperature", 
 #'   sensor_index = 198385, 
-#'   start_timestamp = Sys.time() |> 
-#'     lubridate::with_tz("UTC") - lubridate::minutes(15))
+#'   start_timestamp = lubridate::ymd_h("2024-08-15 00", tz = "UTC") )
 #' 
 #' 
 #'# Get Sensors Data
-#'test = purpleair_api(read_key = read_key, channel = "sensors", 
-#'   parameters = parameters[1:5])
+#'#test = purpleair_api(read_key = read_key, channel = "sensors", 
+#'#   parameters = parameters[1:5])
 #'
 #'# Get Sensor Data
-#'test = purpleair_api(read_key = read_key, channel = "sensors", 
-#'   parameters = parameters[5:6])
+#'#test = purpleair_api(read_key = read_key, channel = "sensors", 
+#' #  parameters = parameters[5:6])
 #'
 #'# Get Sensor History
-#'test = purpleair_api(read_key = read_key, channel = "sensors", 
-#'  parameters = parameters[5:7])
+#'#test = purpleair_api(read_key = read_key, channel = "sensors", 
+#' # parameters = parameters[5:7])
 #'}
 purpleair_api = function(read_key = NULL, write_key = NULL, channel, parameters = NULL, verbose = TRUE){
   # Handle inputs
