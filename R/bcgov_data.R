@@ -307,7 +307,7 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
           warning = \(...) lubridate::ymd_hm(.data$DATE_PST, tz = bcmoe_tzone)),
         date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
         DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
-        quality_assured = loc != loc_raw) |>
+        quality_assured = data_url != raw_url) |>
       dplyr::relocate("date_utc", .before = "DATE_PST") |>
       dplyr::select(-'DATE', -'TIME')
 }
