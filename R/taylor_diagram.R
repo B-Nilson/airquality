@@ -27,14 +27,19 @@
 #'
 #' @export
 #' @examples
+#' \dontrun{
 #' # Make test data
-#' data = data.frame(
-#'   obs = c(3, 2, 3, 3, 4, 5, 6, 6, 7, 3),
-#'   mod = c(0.1, 0.9, 2.0, 2.9, 3.9, 4.7, 6.1, 7, 7.3, 5.2),
-#'   group = factor(c(rep(1, 5), rep(2, 5)))
-#' )
+#' data = as.data.frame(datasets::ChickWeight) |>
+#'   dplyr::filter(.data$Chick == 1) |>
+#'   tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
+#'   dplyr::full_join(
+#'     as.data.frame(datasets::ChickWeight) |>
+#'       dplyr::filter(.data$Chick != 1)
+#'   ) |> 
+#'   dplyr::rename(obs = `1`, mod = "weight") |>
+#'   dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
 #' # Basic usage
-#' taylor_diagram(data, groups = c(Group = "group"))
+#' taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
 #' # Force 0 on left axis
 #' taylor_diagram(data, groups = c(Group = "group"), 
 #'   left_cor_limit = 0, rmse_label_pos = 130)
@@ -55,6 +60,7 @@
 #' 
 #' # Save plot
 #' # ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
+#' }
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     groups,
