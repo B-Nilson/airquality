@@ -2,11 +2,25 @@
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
+#' @param dat Paired observation and model data with (at least) all columns in `data_cols` and `groups`. 
+#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.
+#' @param groups a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#' @param left_cor_limit (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
+#' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
+#' @param mod_size,mod_stroke (Optional) single numeric value indicating the size/stroke of the model data points
+#' @param obs_colour,obs_shape,obs_size (Optional) a single value indicating the colour/shape/size of the observed data point
+#' @param obs_label
+#' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
+#' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
+#' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
+#' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
+#' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
+#' @param plot_padding,label_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
 #' @description
-#' Blah Blah Blah
+#' Blah Blah Blah Taylor (2001) Blah Blah Blah 
 #'
 #' @return
-#' A ggplot object of your taylor diagram
+#' A ggplot object of your taylor diagram.
 #' @family Data Visualisation
 #' @family Model Validation
 #'
@@ -40,7 +54,9 @@
 #' 
 #' # Save plot
 #' # ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
-taylor_diagram = function(dat, groups, 
+taylor_diagram = function(dat, 
+    data_cols = c(obs = "obs", mod = "mod"), 
+    groups,
     left_cor_limit = NULL,
     mod_colours = "default", mod_fills = "default", 
     mod_shapes = "default", mod_size = 3, mod_stroke = 2, 
@@ -66,7 +82,7 @@ taylor_diagram = function(dat, groups,
 
   # Make modelled summaries
   modelled = dat |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
+    dplyr::rename(dplyr::all_of(data_cols)) |> dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
     dplyr::summarise(.groups = "drop",
       sd = sd(mod, na.rm = TRUE),
       cor = cor(obs, mod, use = "pairwise.complete.obs"))
