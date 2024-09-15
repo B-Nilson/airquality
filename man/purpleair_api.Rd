@@ -54,7 +54,7 @@ and the request will be made if desired. Set \code{verbose} to \code{FALSE} to s
 (caution, some calls may cost a lot of points)
 }
 \examples{
-\donttest{
+\dontrun{
 read_key = Sys.getenv("purpleair_api_read")
 write_key = Sys.getenv("purpleair_api_write")
 
@@ -63,21 +63,20 @@ parameters = list( # see api.purpleair.com for more
   selat = 63.592657, selng = -135.891057,
   fields = "temperature", 
   sensor_index = 198385, 
-  start_timestamp = Sys.time() |> 
-    lubridate::with_tz("UTC") - lubridate::minutes(15))
+  start_timestamp = lubridate::ymd_h("2024-08-15 00", tz = "UTC") )
 
 
 # Get Sensors Data
-test = purpleair_api(read_key = read_key, channel = "sensors", 
-  parameters = parameters[1:5])
+#test = purpleair_api(read_key = read_key, channel = "sensors", 
+#   parameters = parameters[1:5])
 
 # Get Sensor Data
-test = purpleair_api(read_key = read_key, channel = "sensors", 
-  parameters = parameters[5:6])
+#test = purpleair_api(read_key = read_key, channel = "sensors", 
+#  parameters = parameters[5:6])
 
 # Get Sensor History
-test = purpleair_api(read_key = read_key, channel = "sensors", 
- parameters = parameters[5:7])
+#test = purpleair_api(read_key = read_key, channel = "sensors", 
+# parameters = parameters[5:7])
 }
 }
 \seealso{
