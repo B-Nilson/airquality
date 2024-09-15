@@ -62,8 +62,8 @@
 #' }
 get_station_data = function(locations, date_range, buffer_dist = 10,
                             networks = "all", sources = "all", verbose = TRUE){
-  if(any(networks == "all")) networks = c("FEM", "LCM")
-  if(any(sources == "all")) sources = c("BCgov", "ABgov", "AirNow", "PurpleAir")
+  if(any(networks == "all")) networks = c("FEM")#, "LCM")
+  if(any(sources == "all")) sources = c("BCgov", "ABgov", "AirNow")#, "PurpleAir")
   date_range = handle_date_range(date_range)
   # TODO: allow for station ids/names
   # Handle locations input being a vector of names
@@ -132,7 +132,7 @@ get_data_collection_funs = function(networks, sources){
       ABgov = list(data = get_abgov_data, meta = get_abgov_stations),
       # USA (and elsewhere...) AirNow
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
-    ),
+    )#,
     # Low-Cost Monitors
     LCM = list(
       # PurpleAir PM monitors
