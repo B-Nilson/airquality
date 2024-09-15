@@ -95,7 +95,8 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
     lapply_and_bind(names(data_funs[[net]]), \(src)
       on_error(return = NULL, msg = TRUE,
         data_funs[[net]][[src]]$meta(dates) |>
-        dplyr::mutate(source = src, network = net))))
+        dplyr::mutate(source = src, network = net)))) |>
+    dplyr::filter(!is.na(lat), !is.na(lng)) # TODO: handle in each meta function instead
 
   # Filter to stations in our search area
   stations = sf::st_as_sf(stations, coords = c("lng", "lat"), crs = "WGS84")
@@ -134,10 +135,10 @@ get_data_collection_funs = function(networks, sources){
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
     )#,
     # Low-Cost Monitors
-    LCM = list(
-      # PurpleAir PM monitors
-      PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
-    )
+    # LCM = list(
+    #   # PurpleAir PM monitors
+    #   PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
+    # )
   )
   data_funs = data_funs[networks] |>
     lapply(\(srcs) srcs[names(srcs) %in% sources])
