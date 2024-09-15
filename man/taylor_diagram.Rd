@@ -6,6 +6,7 @@
 \usage{
 taylor_diagram(
   dat,
+  data_cols = c(obs = "obs", mod = "mod"),
   groups,
   left_cor_limit = NULL,
   mod_colours = "default",
@@ -31,11 +32,40 @@ taylor_diagram(
   labels_padding = 2
 )
 }
+\arguments{
+\item{dat}{Paired observation and model data with (at least) all columns in `data_cols` and `groups`.}
+
+\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.}
+
+\item{groups}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
+
+\item{left_cor_limit}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.}
+
+\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
+
+\item{mod_size, mod_stroke}{(Optional) single numeric value indicating the size/stroke of the model data points}
+
+\item{obs_colour, obs_shape, obs_size}{(Optional) a single value indicating the colour/shape/size of the observed data point}
+
+\item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
+
+\item{obs_label_vjust, obs_label_hjust}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
+
+\item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
+
+\item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
+
+\item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
+
+\item{sd_linetypes}{(Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.}
+
+\item{plot_padding, label_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.}
+}
 \value{
-A ggplot object of your taylor diagram
+A ggplot object of your taylor diagram.
 }
 \description{
-Blah Blah Blah
+Blah Blah Blah Taylor (2001) Blah Blah Blah
 }
 \examples{
 # Make test data

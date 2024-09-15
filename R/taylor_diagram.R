@@ -9,7 +9,7 @@
 #' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) single numeric value indicating the size/stroke of the model data points
 #' @param obs_colour,obs_shape,obs_size (Optional) a single value indicating the colour/shape/size of the observed data point
-#' @param obs_label
+#' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
