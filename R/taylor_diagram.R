@@ -9,14 +9,15 @@
 #' @param right_sd_limit (Optional) a single numeric value indicating the maximum standard deviation value to display (>=0). If not provided, the nearest "pretty" above the maximum standard deviation in the data will be used.
 #' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) single numeric value indicating the size/stroke of the model data points
-#' @param obs_colour,obs_shape,obs_size (Optional) a single value indicating the colour/shape/size of the observed data point
+#' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
+#' @param rmse_label_pos (Optional) a single value (0-360)indicating the location of the labels for the rmse circles.
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
 #' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
-#' @param plot_padding,label_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
+#' @param plot_padding,labels_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
 #' @description
 #' Blah Blah Blah Taylor (2001) Blah Blah Blah 
 #'
