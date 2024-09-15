@@ -1,4 +1,45 @@
 # TODO: add ability to normalize data for multiple obs sites
+
+#' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
+#'
+#' @description
+#' Blah Blah Blah
+#'
+#' @return
+#' A ggplot object of your taylor diagram
+#' @family Data Visualisation
+#' @family Model Validation
+#'
+#' @export
+#' @examples
+#' # Make test data
+#' data = data.frame(
+#'   obs = c(3, 2, 3, 3, 4, 5, 6, 6, 7, 3),
+#'   mod = c(0.1, 0.9, 2.0, 2.9, 3.9, 4.7, 6.1, 7, 7.3, 5.2)
+#'   group = factor(c(rep(1, 5), rep(2, 5)))
+#' )
+#' # Basic usage
+#' taylor_diagram(data, groups = c(Group = "group"))
+#' # Force 0 on left axis
+#' taylor_diagram(data, groups = c(Group = "group"), 
+#'   left_cor_limit = 0, rmse_label_pos = 130)
+#' # Change colours / shapes
+#' taylor_diagram(data, groups = c(Group = "group"), 
+#'   mod_colours = c("AB" = "pink", "BC" = "blue"), 
+#'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
+#'   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
+#'   mod_size = 4, mod_stroke = 6,
+#'   obs_colour = "brown", obs_shape = 23, obs_size = 6, 
+#'   cor_colour = "orange", cor_linetype = "dotdash",
+#'   rmse_colour = "green", rmse_linetype = "longdash",
+#'   sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
+#'   )
+#' # Adjust text positioning
+#' taylor_diagram(data, groups = c(Group = "group"),
+#'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
+#' 
+#' # Save plot
+#' # ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
 taylor_diagram = function(dat, groups, 
     left_cor_limit = NULL,
     mod_colours = "default", mod_fills = "default", 
@@ -349,27 +390,3 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke
 
   return(taylor)
 }
-
-
-# Basic usage
-taylor_diagram(data, groups = c(Province = "province", Colocated = "colocated"))
-# Force 0 on left axis
-taylor_diagram(data, groups = c(Province = "province", Colocated = "colocated", Sensor = "sensor_type"), 
-  left_cor_limit = 0, rmse_label_pos = 130)
-# Change colours / shapes
-taylor_diagram(data, groups = c(Province = "province", Colocated = "colocated", Sensor = "sensor_type"), 
-  mod_colours = c("AB" = "pink", "BC" = "blue"), 
-  mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
-  mod_shapes = c("FALSE" = 23, "TRUE" = 22),
-  mod_size = 4, mod_stroke = 6,
-  obs_colour = "brown", obs_shape = 23, obs_size = 6, 
-  cor_colour = "orange", cor_linetype = "dotdash",
-  rmse_colour = "green", rmse_linetype = "longdash",
-  sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
-  )
-# Adjust text positioning
-taylor_diagram(data, groups = c(Province = "province", Colocated = "colocated", Sensor = "sensor_type"),
-  plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
-
-# Save plot
-# ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
