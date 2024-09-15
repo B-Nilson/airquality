@@ -9,6 +9,7 @@ taylor_diagram(
   data_cols = c(obs = "obs", mod = "mod"),
   groups,
   left_cor_limit = NULL,
+  right_sd_limit = NULL,
   mod_colours = "default",
   mod_fills = "default",
   mod_shapes = "default",
@@ -40,6 +41,8 @@ taylor_diagram(
 \item{groups}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
 
 \item{left_cor_limit}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.}
+
+\item{right_sd_limit}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>=0). If not provided, the nearest "pretty" above the maximum standard deviation in the data will be used.}
 
 \item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
 

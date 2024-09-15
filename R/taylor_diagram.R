@@ -6,6 +6,7 @@
 #' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.
 #' @param groups a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 #' @param left_cor_limit (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
+#' @param right_sd_limit (Optional) a single numeric value indicating the maximum standard deviation value to display (>=0). If not provided, the nearest "pretty" above the maximum standard deviation in the data will be used.
 #' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) single numeric value indicating the size/stroke of the model data points
 #' @param obs_colour,obs_shape,obs_size (Optional) a single value indicating the colour/shape/size of the observed data point
@@ -57,7 +58,7 @@
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     groups,
-    left_cor_limit = NULL,
+    left_cor_limit = NULL, right_sd_limit = NULL,
     mod_colours = "default", mod_fills = "default", 
     mod_shapes = "default", mod_size = 3, mod_stroke = 2, 
     obs_colour = "purple", 
@@ -93,6 +94,7 @@ taylor_diagram = function(dat,
   taylor = make_taylor_diagram_template(
       observed, modelled, 
       left_cor_limit = left_cor_limit,
+      right_sd_limit = right_sd_limit,
       cor_colour = cor_colour,
       cor_linetype = cor_linetype,
       rmse_colour = rmse_colour,
@@ -281,13 +283,14 @@ make_taylor_rmse_lines = function(sd_obs, sd_max, min_cor, label_pos = 80, n = 5
 }
 
 make_taylor_diagram_template = function(
-    observed, modelled, left_cor_limit = NULL,
+    observed, modelled, left_cor_limit = NULL, right_sd_limit = NULL,
     cor_colour = "lightgrey", cor_linetype = "solid", 
     rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80, 
     sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     padding_limits = 2, nudge_labels = 2){
   sd_max = max(c(observed$sd, modelled$sd))
   sd_max = ceiling(sd_max / 10) * 10
+  if(!is.null(right_sd_limit)) sd_max = right_sd_limit
 
   sd_lines_at =  c(pretty(seq(0, sd_max, length.out = 4)), observed$sd, sd_max) |>
     unique()
