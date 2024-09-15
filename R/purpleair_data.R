@@ -47,7 +47,7 @@ get_purpleair_stations = function(date_range, api_key, bounds, use_sf = FALSE){
 #'#'
 #'@export
 #'@examples
-#' \donttest{
+#' \dontrun{
 #'read_key = Sys.getenv("purpleair_api_read")
 #'write_key = Sys.getenv("purpleair_api_write")
 #'
