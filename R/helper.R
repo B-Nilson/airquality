@@ -242,3 +242,16 @@ convert_units = function(x, in_unit, out_unit, y = NULL){
 lapply_and_bind = function(...){
   lapply(...) |> dplyr::bind_rows()
 }
+
+convert_date_utc_to_local = function(obs) {
+  obs |> dplyr::mutate(
+    tz_offset = as.numeric(extract_tz_offset(.data$date_local)) / 100,
+    tz_hours = trunc(.data$tz_offset),
+    tz_minutes = floor((.data$tz_offset - trunc(.data$tz_offset)) * 100),
+    # Convert local date string to a datetime
+    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d*$") |>
+      lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
+    # Convert from local to UTC by subtracting timezone offset
+    date_utc_from_local = .data$date_local - lubridate::hours(.data$tz_hours) -
+      (lubridate::minutes(.data$tz_minutes)))
+}

@@ -82,14 +82,7 @@ test_that("all dates non-na and within requested period", {
 test_that("date_local converts to date_utc correctly", {
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"), tz = "America/Vancouver")
   obs = get_bcgov_data("0450307", date_range, verbose = FALSE)
-  obs = obs |> dplyr::mutate(
-    tz_offset = extract_tz_offset(.data$date_local),
-    # Convert local date string to a datetime
-    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d*$") |>
-      lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
-    # Convert from local to UTC by subtracting timezone offset
-    date_utc_from_local = .data$date_local - lubridate::hours(trunc(tz_offset)) -
-      (lubridate::minutes(tz_offset - trunc(tz_offset))))
+  obs = obs |> convert_date_utc_to_local()
   # Case: date_utc the same as converting date_local to UTC
   expect_equal(obs$date_utc, obs$date_utc_from_local)
 })

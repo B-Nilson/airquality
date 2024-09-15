@@ -93,13 +93,7 @@ test_that("all dates non-na and within requested period", {
 test_that("date_local converts to date_utc correctly", {
   date_range = lubridate::ymd_h(c("2019-01-01 00"))
   obs = get_airnow_data("000010102", date_range, verbose = FALSE)
-  obs = obs |> dplyr::mutate(
-    tz_offset = extract_tz_offset(.data$date_local),
-    # Convert local date string to a datetime
-    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d{4}$") |>
-      lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
-    # Convert from local to UTC by subtracting timezone offset
-    date_utc_from_local = .data$date_local - lubridate::minutes(tz_offset*60))
+  obs = obs |> convert_date_utc_to_local()
   # Case: date_utc the same as converting date_local to UTC
   expect_equal(obs$date_utc, obs$date_utc_from_local)
 })
