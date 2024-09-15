@@ -36,7 +36,7 @@ test_that("Returned data.frame has expected column classes", {
 })
 
 test_that("Returned (pm25 only) data.frame has expected column classes", {
-  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, verbose = FALSE))
+  output = AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, verbose = FALSE)
   expect_warning(AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25))
   expect_type(output$pm25, "integer")
   expect_s3_class(output$AQHI, "factor")
