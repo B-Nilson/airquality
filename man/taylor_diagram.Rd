@@ -48,7 +48,7 @@ taylor_diagram(
 
 \item{mod_size, mod_stroke}{(Optional) single numeric value indicating the size/stroke of the model data points}
 
-\item{obs_colour, obs_shape, obs_size}{(Optional) a single value indicating the colour/shape/size of the observed data point}
+\item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
 \item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
 
@@ -58,11 +58,13 @@ taylor_diagram(
 
 \item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
 
+\item{rmse_label_pos}{(Optional) a single value (0-360)indicating the location of the labels for the rmse circles.}
+
 \item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
 
 \item{sd_linetypes}{(Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.}
 
-\item{plot_padding, label_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.}
+\item{plot_padding, labels_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.}
 }
 \value{
 A ggplot object of your taylor diagram.
