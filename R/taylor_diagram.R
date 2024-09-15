@@ -13,7 +13,7 @@
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
-#' @param cor_label_step (Optional) a single value indicating the spacing between each corrlation line.
+#' @param cor_step (Optional) a single value indicating the spacing between each corrlation line.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
 #' @param rmse_label_pos (Optional) a single value (0-360)indicating the location of the labels for the rmse circles.
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
@@ -83,7 +83,7 @@ taylor_diagram = function(dat,
     obs_label_hjust = -0.05,
     cor_colour = "lightgrey", 
     cor_linetype = "solid",
-    cor_label_step = 0.1,
+    cor_step = 0.1,
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
     rmse_label_pos = 80,
@@ -109,7 +109,7 @@ taylor_diagram = function(dat,
       right_sd_limit = right_sd_limit,
       cor_colour = cor_colour,
       cor_linetype = cor_linetype,
-      cor_label_step = cor_label_step,
+      cor_step = cor_step,
       rmse_colour = rmse_colour,
       rmse_linetype = rmse_linetype,
       rmse_label_pos = rmse_label_pos,
@@ -173,12 +173,32 @@ taylor_diagram = function(dat,
 #   )
 
 # Add raial correlation lines (and labels) to Taylor Diagrams
-add_taylor_cor_lines = function(taylor, 
-    min_cor = 0, sd_max, label_step = 0.1, nudge_labels = 2, 
-    colour = "lightgrey", linetype = "solid") {
+add_taylor_cor_lines = function(
+    taylor, 
+    min_cor = 0, 
+    sd_max, 
+    colour = "lightgrey", 
+    linetype = "solid",
+    axis_label = "Correlation",
+    step = 0.1, 
+    nudge_labels = 2) {
   
   mean_cor = mean(c(min_cor, 1))
-  draw_at = seq(min_cor, 1, label_step)
+  draw_at = seq(min_cor, 1, step)
+
+  cor_lines = data.frame(
+    x = 0, y = 0,
+    xend = convert_x(sd_max, convert_cor(draw_at)),
+    yend = convert_y(sd_max, convert_cor(draw_at)))
+
+  axis_title = data.frame(
+    x = convert_x(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)),
+    y = convert_y(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)))
+  
+  axis_labels = data.frame(
+    x = convert_x(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
+    y = convert_y(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
+    label = label_at)
 
   dont_label = c(if (min_cor %in% c(0, -1)) 1, length(draw_at))
   # TODO: allow for percents
@@ -187,24 +207,18 @@ add_taylor_cor_lines = function(taylor,
   taylor + 
     # Correlation lines
     ggplot2::annotate(
-      geom = "segment", 
-      x = 0, y = 0,
-      xend = convert_x(sd_max, convert_cor(draw_at)),
-      yend = convert_y(sd_max, convert_cor(draw_at)),
-      linetype = linetype, 
-      colour = colour) +
+      geom = "segment", data = cor_lines,
+      linetype = linetype, colour = colour,
+      ggplot2::aes(x, y, xend = xend, yend = yend)) +
     # Labels for each correlation line
     ggplot2::annotate(
-      geom = "text",
-      x = convert_x(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
-      y = convert_y(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
-      label = label_at) + 
+      geom = "text", data = axis_title,
+      ggplot2::aes(x, y, label = label)) + 
     # Correlation axis label
     ggplot2::annotate(
-      geom = "text",
-      x = convert_x(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)),
-      y = convert_y(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)),
-      label = "Correlation", 
+      geom = "text", data = axis_labels,
+      ggplot2::aes(x, y),
+      label = axis_label, 
       angle = mean_cor * -90) 
 }
 
@@ -308,7 +322,7 @@ make_taylor_diagram_template = function(
     right_sd_limit = NULL,
     cor_colour = "lightgrey", 
     cor_linetype = "solid",  
-    cor_label_step = 0.1,
+    cor_step = 0.1,
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
     rmse_label_pos = 80, 
@@ -342,7 +356,7 @@ make_taylor_diagram_template = function(
   ggplot2::ggplot() |>
     add_taylor_cor_lines(
       min_cor = min_cor, 
-      label_step = cor_label_step,
+      step = cor_step,
       sd_max = sd_max, 
       colour = cor_colour, 
       linetype = cor_linetype, 
