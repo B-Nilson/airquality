@@ -225,7 +225,7 @@ make_taylor_diagram_template = function(
     ifelse(min_cor < 0, get_x(sd_max + padding_limits, min_cor), 0),
     sd_max + padding_limits)
 
-  ggplot2::ggplot() |>
+  taylor = ggplot2::ggplot() |>
     add_taylor_cor_lines(
       min_cor = min_cor, 
       step = cor_step,
@@ -261,7 +261,10 @@ make_taylor_diagram_template = function(
       expand = FALSE, 
       clip = "on") +
     ggplot2::scale_x_continuous(
-      breaks = sd_lines_at[sd_lines_at != observed$sd],
+      breaks = if(min_cor > -1) {
+        sd_lines_at[sd_lines_at != observed$sd]
+      }else c(-sd_lines_at[sd_lines_at != observed$sd], 
+        sd_lines_at[sd_lines_at != observed$sd]),
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
@@ -273,6 +276,7 @@ make_taylor_diagram_template = function(
       panel.border = ggplot2::element_rect(colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
     ggplot2::labs(x = "Standard Deviation")
+  return(taylor)
 }
 
 # Add raial correlation lines (and labels) to Taylor Diagrams
