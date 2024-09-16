@@ -20,13 +20,16 @@ taylor_diagram(
   obs_size = 3,
   obs_stroke = 2,
   obs_label = "Observed",
-  obs_label_vjust = -1,
-  obs_label_hjust = -0.05,
+  obs_label_nudge_x = 0,
+  obs_label_nudge_y = 0,
   cor_colour = "lightgrey",
   cor_linetype = "solid",
+  cor_step = 0.1,
   rmse_colour = "brown",
   rmse_linetype = "dotted",
-  rmse_label_pos = 80,
+  rmse_label_pos = 0.7,
+  rmse_title_nudge_x = 0,
+  rmse_title_nudge_y = 0,
   sd_colour = "black",
   sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
   plot_padding = 2,
@@ -52,13 +55,15 @@ taylor_diagram(
 
 \item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
 
-\item{obs_label_vjust, obs_label_hjust}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
+\item{obs_label_nudge_x, obs_label_nudge_y}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
 
 \item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
 
+\item{cor_step}{(Optional) a single value indicating the spacing between each corrlation line.}
+
 \item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
 
-\item{rmse_label_pos}{(Optional) a single value (0-360)indicating the location of the labels for the rmse circles.}
+\item{rmse_label_pos}{(Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).}
 
 \item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
 
@@ -102,11 +107,16 @@ taylor_diagram(data, groups = c(Group = "group"),
   )
 # Adjust text positioning
 taylor_diagram(data, groups = c(Group = "group"),
-  plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
+  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 
 # Save plot
-# ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
+# gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+# save_figure(gg, "./test.png")
 }
+}
+\seealso{
+Other Data Visualisation: 
+\code{\link{save_figure}()}
 }
 \concept{Data Visualisation}
 \concept{Model Validation}
