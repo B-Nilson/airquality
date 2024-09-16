@@ -1,4 +1,5 @@
 # TODO: add ability to normalize data for multiple obs sites
+# TODO: handle nonstandard left_cor_limit (-.85 gives no labels) 
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -11,10 +12,11 @@
 #' @param mod_size,mod_stroke (Optional) single numeric value indicating the size/stroke of the model data points
 #' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
-#' @param obs_label_vjust,obs_label_hjust (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
+#' @param obs_label_nudge_x,obs_label_nudge_y (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
+#' @param cor_step (Optional) a single value indicating the spacing between each corrlation line.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
-#' @param rmse_label_pos (Optional) a single value (0-360)indicating the location of the labels for the rmse circles.
+#' @param rmse_label_pos (Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
 #' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
 #' @param plot_padding,labels_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
@@ -57,34 +59,56 @@
 #'   )
 #' # Adjust text positioning
 #' taylor_diagram(data, groups = c(Group = "group"),
-#'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
+#'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 #' 
 #' # Save plot
-#' # ggplot2::ggsave("test.png", width = 7, height = 5, units = "in")
+#' # gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+#' # save_figure(gg, "./test.png")
 #' }
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     groups,
-    left_cor_limit = NULL, right_sd_limit = NULL,
-    mod_colours = "default", mod_fills = "default", 
-    mod_shapes = "default", mod_size = 3, mod_stroke = 2, 
+    left_cor_limit = NULL, 
+    right_sd_limit = NULL,
+    mod_colours = "default", 
+    mod_fills = "default", 
+    mod_shapes = "default", 
+    mod_size = 3, 
+    mod_stroke = 2, 
     obs_colour = "purple", 
-    obs_shape = 16, obs_size = 3, obs_stroke = 2, 
+    obs_shape = 16, 
+    obs_size = 3, 
+    obs_stroke = 2, 
     obs_label = "Observed", 
-    obs_label_vjust = -1, obs_label_hjust = -0.05,
-    cor_colour = "lightgrey", cor_linetype = "solid",
-    rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80,
-    sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
-    plot_padding = 2, labels_padding = 2){
+    obs_label_nudge_x = 0, 
+    obs_label_nudge_y = 0,
+    cor_colour = "lightgrey", 
+    cor_linetype = "solid",
+    cor_step = 0.1,
+    rmse_colour = "brown", 
+    rmse_linetype = "dotted", 
+    rmse_label_pos = 0.7,
+    rmse_title_nudge_x = 0,
+    rmse_title_nudge_y = 0,
+    sd_colour = "black", 
+    sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
+    plot_padding = 2, 
+    labels_padding = 2){
+  
+  if(left_cor_limit < -1 | left_cor_limit > 1) {
+    stop(paste("argument `left_cor_limit` must be between -1 and 1, not", left_cor_limit))
+  }
 
-  # Make modelled summaries
+  # Get observed standard deviation and correlation with obs by group(s)
   modelled = dat |>
-    dplyr::rename(dplyr::all_of(data_cols)) |> dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
+    dplyr::rename(dplyr::all_of(data_cols)) |> 
+    dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
     dplyr::summarise(.groups = "drop",
-      sd = sd(mod, na.rm = TRUE),
-      cor = cor(obs, mod, use = "pairwise.complete.obs"))
+      sd = sd(.data$mod, na.rm = TRUE),
+      cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
+      x = get_x(sd, cor), y = get_y(sd, cor))
   # Get observed standard deviation
-  observed = dat |> dplyr::summarise(sd = sd(dat$obs, na.rm = TRUE))
+  observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
 
   # Make Taylor Diagram
   taylor = make_taylor_diagram_template(
@@ -93,22 +117,27 @@ taylor_diagram = function(dat,
       right_sd_limit = right_sd_limit,
       cor_colour = cor_colour,
       cor_linetype = cor_linetype,
+      cor_step = cor_step,
       rmse_colour = rmse_colour,
       rmse_linetype = rmse_linetype,
       rmse_label_pos = rmse_label_pos,
+      rmse_title_nudge_x = rmse_title_nudge_x, 
+      rmse_title_nudge_y = rmse_title_nudge_y,
       sd_colour = sd_colour,
       sd_linetypes = sd_linetypes,
       padding_limits = plot_padding, 
       nudge_labels = labels_padding) |>
-    add_taylor_observed_point(observed, 
+    add_taylor_observed_point(
+      observed, 
       colour = obs_colour,
       shape = obs_shape, 
       size = obs_size, 
       stroke = obs_stroke, 
       label = obs_label,
-      label_vjust = obs_label_vjust, 
-      label_hjust = obs_label_hjust) |>
-    add_taylor_modelled_points(modelled, 
+      label_nudge_x = obs_label_nudge_x, 
+      label_nudge_y = obs_label_nudge_y) |>
+    add_taylor_modelled_points(
+      modelled, 
       groups = groups, 
       stroke = mod_stroke, 
       size = mod_size,
@@ -153,99 +182,215 @@ taylor_diagram = function(dat,
 #       dplyr::mutate(sensor_id = "egg0004a30b00027b24", sensor_type = "EGG", province = "BC", colocated = FALSE) 
 #   )
 
+make_taylor_diagram_template = function(
+    observed, modelled, 
+    left_cor_limit = NULL, 
+    right_sd_limit = NULL,
+    cor_colour = "lightgrey", 
+    cor_linetype = "solid",  
+    cor_step = 0.1,
+    rmse_colour = "brown", 
+    rmse_linetype = "dotted", 
+    rmse_label_pos = 0.5, 
+    rmse_title_nudge_x = 0,
+    rmse_title_nudge_y = 0,
+    sd_colour = "black", 
+    sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
+    sd_step = "default",
+    padding_limits = 2, 
+    nudge_labels = 2){
 
+  sd_max = ceiling(max(c(observed$sd, modelled$sd)) / 5) * 5
+  if(!is.null(right_sd_limit)) sd_max = right_sd_limit
+      
+  if (sd_step == "default") {
+    sd_lines_at =  pretty(seq(0, sd_max, length.out = 4))
+  }else sd_lines_at =  seq(0, sd_max, sd_step)
+  sd_lines_at = unique(c(sd_lines_at, observed$sd, sd_max))
 
+  min_cor = floor(min(modelled$cor, na.rm = TRUE) * 10) / 10
+  if(min_cor > 0.5) min_cor = 0.5
+  if(!is.null(left_cor_limit)) min_cor = left_cor_limit
+
+  y_max = ifelse(min_cor < 0, 
+    sd_max + padding_limits, 
+    get_y(sd_max + padding_limits, min_cor))
+
+  xlims = c(
+    ifelse(min_cor < 0, -sd_max - padding_limits, 0),
+    sd_max + padding_limits)
+
+  ggplot2::ggplot() |>
+    add_taylor_cor_lines(
+      min_cor = min_cor, 
+      step = cor_step,
+      sd_max = sd_max, 
+      colour = cor_colour, 
+      linetype = cor_linetype, 
+      nudge_labels = nudge_labels) |> 
+    add_taylor_sd_lines(
+      min_cor = min_cor, 
+      sd_obs = observed$sd,
+      lines_at = sd_lines_at, 
+      colour = sd_colour, 
+      linetypes = sd_linetypes) |>
+    add_taylor_axes_lines(
+      min_cor = min_cor, 
+      sd_max = sd_max) |>
+    add_taylor_rmse_lines(
+      sd_obs = observed$sd, 
+      sd_max = sd_max,
+      label_pos = rmse_label_pos,
+      min_cor = min_cor, 
+      y_max = y_max - padding_limits, 
+      colour = rmse_colour, 
+      linetype = rmse_linetype,
+      axis_label_nudge_x = rmse_title_nudge_x,
+      axis_label_nudge_y = rmse_title_nudge_y,
+      nudge_labels = nudge_labels, 
+      padding_limits = padding_limits)  +
+    # Presentation
+    ggplot2::coord_equal(
+      xlim = xlims,
+      ylim = c(0, y_max + padding_limits),
+      expand = FALSE, 
+      clip = "on") +
+    ggplot2::scale_x_continuous(
+      labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      axis.line.y  = ggplot2::element_blank(),
+      axis.text.y  = ggplot2::element_blank(),
+      axis.title.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
+      panel.border = ggplot2::element_rect(colour = NA, fill = NA),
+      panel.grid   = ggplot2::element_blank())  +
+    ggplot2::labs(x = "Standard Deviation")
+}
 
 # Add raial correlation lines (and labels) to Taylor Diagrams
-add_taylor_cor_lines = function(taylor, min_cor = 0, sd_max, label_step = 0.1, nudge_labels = 2, colour = "lightgrey", linetype = "solid") {
-  draw_at = seq(min_cor, 1, label_step)
-  dont_label = c(if (min_cor %in% c(0, -1)) 1, length(draw_at))
-  label_at = round( draw_at[-dont_label], 1)
+add_taylor_cor_lines = function(
+    taylor, 
+    min_cor = 0, sd_max, 
+    colour = "lightgrey", 
+    linetype = "solid",
+    axis_label = "Correlation",
+    step = 0.1, 
+    label_type = "decimal",
+    nudge_labels = 2) {
+  draw_at = seq(min_cor, 1, step)
+  dont_label = which(draw_at %in% c(-1, 0, 1))
+  label_at = round(draw_at[-dont_label], 1)
+  # Make location for the label for the axis title
+  dist_from_origin = sd_max + nudge_labels * 1.5
   mean_cor = mean(c(min_cor, 1))
+  axis_title = data.frame(
+    x = get_x(dist_from_origin, mean_cor),
+    y = get_y(dist_from_origin, mean_cor))
+  # Make locations for the label for each cor line
+  dist_from_origin = sd_max + nudge_labels * 0.6
+  axis_labels = data.frame(
+    x = get_x(dist_from_origin, label_at),
+    y = get_y(dist_from_origin, label_at),
+    label = ifelse(rep(label_type, length(label_at)) == "percent",
+        paste(label_at * 100, "%"), label_at))
 
   taylor + 
     # Correlation lines
-    ggplot2::annotate(
-      geom = "segment", x = 0, y = 0,
-      xend = convert_x(sd_max, convert_cor(draw_at)),
-      yend = convert_y(sd_max, convert_cor(draw_at)),
-      linetype = linetype, colour = colour) +
+    ggplot2::geom_segment(
+      data = data.frame(
+        xend = get_x(sd_max, draw_at),
+        yend = get_y(sd_max, draw_at)),
+      linetype = linetype, colour = colour,
+      ggplot2::aes(x = 0, y = 0, 
+        xend = xend, yend = yend)) +
     # Labels for each correlation line
-    ggplot2::annotate(
-      geom = "text",
-      x = convert_x(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
-      y = convert_y(sd_max + nudge_labels * 0.6, convert_cor(label_at)),
-      label = label_at) + 
+    ggplot2::geom_text(
+      data = axis_labels,
+      ggplot2::aes(.data$x, .data$y, label = .data$label)) + 
     # Correlation axis label
-    ggplot2::annotate(
-      geom = "text",
-      x = convert_x(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)),
-      y = convert_y(sd_max + nudge_labels * 1.5, convert_cor(mean_cor)),
-      label = "Correlation", angle = mean_cor * -90) 
+    ggplot2::geom_text(
+      data = axis_title,
+      ggplot2::aes(.data$x, .data$y),
+      label = axis_label, 
+      angle = mean_cor * -90) 
 }
 
 # Add standard deviation arcs to Taylor Diagrams
-add_taylor_sd_lines = function(taylor, min_cor, sd_obs, lines_at,
-    colour = "black", linetypes = c(obs = "dashed", max = "solid", other = "dotted")) {
-  arc_data = data.frame(
-    start =  -0.5 * pi * -min_cor, end = .5 * pi, r = lines_at)
-  arc_data$linetype = ifelse(lines_at == max(lines_at), 
-    "max", ifelse(lines_at == sd_obs, "obs", "other"))
-
+add_taylor_sd_lines = function(
+    taylor, 
+    min_cor, sd_obs, 
+    lines_at, 
+    colour = "black", 
+    linetypes = c(obs = "dashed", max = "solid", other = "dotted")) {
   taylor +
-    # Standard deviation arcs
     ggforce::geom_arc(
-      data = arc_data, colour = colour,
-      ggplot2::aes(x0 = 0, y0 = 0, 
-        r = r, start = start, end = end, linetype = linetype)) +
+      data = data.frame(
+        start =  -0.5 * pi * -min_cor,
+        end = .5 * pi, 
+        r = lines_at,
+        linetype = ifelse(lines_at == max(lines_at), 
+          "max", ifelse(lines_at == sd_obs, "obs", "other"))), 
+      colour = colour,
+      ggplot2::aes(
+        x0 = 0, y0 = 0, r = r, 
+        start = start, end = end, 
+        linetype = linetype)) +
     ggplot2::scale_linetype_manual(
       values = linetypes, guide = "none") 
 }
 
 # Add SD axes lines to Taylor Diagrams
+# TODO: add customizability
 add_taylor_axes_lines = function(taylor, min_cor, sd_max) {
   taylor +
     ggplot2::annotate(
       geom = "segment", x = 0, y = 0,
-      xend = convert_x(sd_max, convert_cor(c(min_cor, 1))),
-      yend = convert_y(sd_max, convert_cor(c(min_cor, 1))))
+      xend = get_x(sd_max, c(min_cor, 1)),
+      yend = get_y(sd_max, c(min_cor, 1)))
 }
 
 add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max, 
-    label_pos = 80,
+    label_pos = 0.6,
     n = 5, colour = "brown", linetype = "dotted", axis_label = "centered\nRMS error", 
+    axis_label_nudge_x = 0, axis_label_nudge_y = 0,
     nudge_labels, padding_limits) {
-  rms_lines = make_taylor_rmse_lines(sd_obs, sd_max, min_cor, label_pos = label_pos, n)
+  rms_lines = make_taylor_rmse_lines(
+    sd_obs = sd_obs, sd_max = sd_max, min_cor = min_cor, 
+    label_pos = ((1-label_pos) * 255 - 20), 
+    n = n, 
+    padding_limits = padding_limits)
   taylor +
     # Draw semicircles originating at the observed point for centered RMS error
     ggplot2::geom_line(
-      data = rms_lines$lines |> dplyr::filter(
-        get_dist_from_origin(.data$x, .data$y) < sd_max,
-        get_correlation(.data$x, .data$y) >= min_cor
-      ),
+      data = rms_lines$lines,
       ggplot2::aes(x, y, group = rmse_values),
       linetype = linetype, colour = colour) +
     # Line labels
     ggplot2::geom_text(
-      data = rms_lines$labels |> dplyr::filter(
-        get_dist_from_origin(.data$x, .data$y) < sd_max-padding_limits,
-        get_correlation(.data$x, .data$y) >= min_cor),
+      data = rms_lines$labels,
       ggplot2::aes(x, y, label = label), 
       vjust = 0, colour = colour,
       nudge_y = nudge_labels * -0.75) +
-    # Legend entry
-    ggplot2::annotate(
-      geom = "text", x = sd_max, y = y_max, 
+    # Legend text
+    ggplot2::geom_text(
+      x = sd_max, y = y_max, 
       label = axis_label, colour = colour,
-      hjust = 1, vjust = 1.4
+      nudge_x = axis_label_nudge_x, 
+      nudge_y = axis_label_nudge_y,
+      hjust = 1, vjust = 1.4 # TODO: better locating control
     )
-    
 }
 
-make_taylor_rmse_lines = function(sd_obs, sd_max, min_cor, label_pos = 80, n = 5){
-  rmse_values = seq(0, ifelse(min_cor < 0, sd_max + sd_max * -min_cor, sd_max), length.out = n+1) |>
-    pretty()
+make_taylor_rmse_lines = function(
+    sd_obs, sd_max, min_cor, 
+    label_pos = 80, n = 5, 
+    padding_limits = 2){
+  max_rmse = ifelse(min_cor < 0, sd_max + sd_max * -min_cor, sd_max)
+  rmse_values = pretty(seq(0, max_rmse, length.out = n + 1)[-1]) # TODO: allow for manual specification
   labelpos = seq(45, 70, length.out = length(rmse_values)) + label_pos
+
   rmse_lines = lapply(1:length(rmse_values), \(i) {
     if(rmse_values[i] == 0) return(NULL)
     # Get x coordinates of a half-circle transposed to x=sd_obs for each rmse_value
@@ -256,164 +401,117 @@ make_taylor_rmse_lines = function(sd_obs, sd_max, min_cor, label_pos = 80, n = 5
     # Get y coordinates of a circle for each rmse_value
     ycurve = sin(seq(0, pi, by = 0.01)) * rmse_values[i]
     # a2 + b2 = c2
-    maxcurve = xcurve * xcurve + ycurve * ycurve
-    startcurve = which(maxcurve > sd_max * sd_max)
+    maxcurve = xcurve^2 + ycurve^2
+    startcurve = which(maxcurve > sd_max^2)
     startcurve = ifelse(length(startcurve), max(startcurve) + 1, 0)
     
-    curve_data = data.frame(
-      x = xcurve[startcurve:endcurve],
-      y = ycurve[startcurve:endcurve],
-      rmse_values = as.factor(rmse_values[i]))
-    
-    labels = data.frame(
-      x = xcurve[labelpos[i]],
-      y = ycurve[labelpos[i]],
-      label = as.character(rmse_values[i]),
-      rmse_values = as.factor(rmse_values[i]))
-    list(lines = curve_data, labels = labels)
-  })
+    list(
+      lines = data.frame(
+          x = xcurve[startcurve:endcurve],
+          y = ycurve[startcurve:endcurve],
+          rmse_values = as.factor(rmse_values[i])) |> 
+        dplyr::filter(
+          get_standard_deviation(.data$x, .data$y) < sd_max,
+          get_correlation(.data$x, .data$y) >= min_cor), 
+      labels = data.frame(
+          x = xcurve[labelpos[i]],
+          y = ycurve[labelpos[i]],
+          label = as.character(rmse_values[i]),
+          rmse_values = as.factor(rmse_values[i])) |> 
+        dplyr::filter(
+          get_standard_deviation(.data$x, .data$y) < sd_max - padding_limits,
+          get_correlation(.data$x, .data$y) >= min_cor))})
   list(
     lines = rmse_lines |> lapply_and_bind(\(x) x$lines),
-    labels = rmse_lines |> lapply_and_bind(\(x) x$labels)
-  )
+    labels = rmse_lines |> lapply_and_bind(\(x) x$labels))
 }
 
-make_taylor_diagram_template = function(
-    observed, modelled, left_cor_limit = NULL, right_sd_limit = NULL,
-    cor_colour = "lightgrey", cor_linetype = "solid", 
-    rmse_colour = "brown", rmse_linetype = "dotted", rmse_label_pos = 80, 
-    sd_colour = "black", sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
-    padding_limits = 2, nudge_labels = 2){
-  sd_max = max(c(observed$sd, modelled$sd))
-  sd_max = ceiling(sd_max / 10) * 10
-  if(!is.null(right_sd_limit)) sd_max = right_sd_limit
-
-  sd_lines_at =  c(pretty(seq(0, sd_max, length.out = 4)), observed$sd, sd_max) |>
-    unique()
-
-  min_cor = min(modelled$cor, na.rm = TRUE)
-  min_cor = floor(min_cor * 10) / 10
-  if(min_cor > 0.5) min_cor = 0.5
-  if(!is.null(left_cor_limit)) min_cor = left_cor_limit
-
-  y_max = ifelse(
-    min_cor < 0, 
-    sd_max + padding_limits, 
-    convert_y(sd_max + padding_limits, convert_cor(min_cor)))
-  ggplot2::ggplot() |>
-    add_taylor_cor_lines(
-      min_cor = min_cor, 
-      sd_max = sd_max, 
-      colour = cor_colour, linetype = cor_linetype, 
-      nudge_labels = nudge_labels) |> 
-    add_taylor_sd_lines(
-      min_cor = min_cor, 
-      sd_obs = observed$sd,
-      lines_at = sd_lines_at, 
-      colour = sd_colour, 
-      linetypes = sd_linetypes) |>
-    add_taylor_axes_lines(min_cor = min_cor, sd_max = sd_max) |>
-    add_taylor_rmse_lines(
-      sd_obs = observed$sd, sd_max = sd_max,
-      label_pos = rmse_label_pos,
-       min_cor = min_cor, y_max = y_max - padding_limits, 
-       colour = rmse_colour, linetype = rmse_linetype,
-       nudge_labels = nudge_labels, padding_limits = padding_limits)  +
-    # Presentation
-    ggplot2::coord_equal(
-      xlim = c(ifelse(min_cor < 0, -sd_max - padding_limits, 0), sd_max + padding_limits),
-      ylim = c(0, y_max + padding_limits),
-      expand = FALSE, clip = "on") +
-    ggplot2::scale_x_continuous(labels = \(l) ifelse(l < 0, "", l)) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      axis.line.y = ggplot2::element_blank(),
-      axis.text.y = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      panel.border = ggplot2::element_rect(colour = NA, fill = NA),
-      panel.grid = ggplot2::element_blank())  +
-    ggplot2::labs(x = "Standard Deviation")
-}
-
-add_taylor_observed_point = function(taylor, observed, shape = 16, size = 3, stroke = 2, colour = "purple", label = "Observed", label_vjust = -1, label_hjust = -0.05){
+add_taylor_observed_point = function(
+    taylor, observed, 
+    shape = 16, size = 3, stroke = 2, 
+    colour = "purple", label = "Observed", 
+    label_nudge_x = 0, label_nudge_y = 0){
   taylor + 
-    # Observed point
     ggplot2::geom_point(
       data = observed, 
-      ggplot2::aes(x = sd, y = 0),
+      ggplot2::aes(x = .data$sd, y = 0),
       shape = shape, 
       stroke = stroke,
       colour = colour, 
       size = size) +
-    # Point label
     ggplot2::geom_text(
       data = observed,
-      ggplot2::aes(x = sd), y = 0, label = label, 
-      colour = colour, size = size,
-      vjust = label_vjust, hjust = label_hjust
+      ggplot2::aes(x = .data$sd, y = 0),  
+      label = label, 
+      colour = colour, 
+      size = size, 
+      nudge_x = label_nudge_x,
+      nudge_y = label_nudge_y,
+      vjust = -1, hjust = -0.05
     )
 }
 
 add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke = 2, shapes = "default", colours = "default", fills = "default") {
-  modelled = modelled |>
-    dplyr::mutate(
-      x = convert_x(sd, convert_cor(cor)),
-      y = convert_y(sd, convert_cor(cor))
-    )
-  
+  # TODO: instead, find matching shapes with fill/no fill and combine last two groups into shape + fill/no fill
   if(length(groups) == 3) {
     taylor = taylor  + 
       ggplot2::geom_point(
-        data = modelled, size = size, stroke = stroke,
-          ggplot2::aes(x = x, y = y,
-          colour = .data[[groups[1]]], shape = .data[[groups[2]]], fill = .data[[groups[3]]])) +
-      ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(shape = 21)))   
-    if(shapes[1] != "default") {
-      taylor = taylor +
-        ggplot2::scale_shape_manual(values = shapes)
-    }else taylor = taylor +
-      ggplot2::scale_shape_manual(values = 21:30)
+        data   = modelled, 
+        size   = size, stroke = stroke,
+        ggplot2::aes(
+          x = get_x(sd, cor), 
+          y = get_y(sd, cor),
+          colour = .data[[groups[1]]], 
+          shape  = .data[[groups[2]]], 
+          fill   = .data[[groups[3]]])) +
+      ggplot2::guides(
+        fill = ggplot2::guide_legend(
+          override.aes = list(shape = 21)))   
     if(fills[1] != "default") {
       taylor = taylor +
         ggplot2::scale_fill_manual(values = fills) 
     }else taylor = taylor +
       ggplot2::scale_fill_viridis_d()
-    }else if(length(groups) == 2) {
+  }else if(length(groups) == 2) {
     taylor = taylor  + 
       ggplot2::geom_point(
-        data = modelled, size = size, stroke = stroke, 
-          ggplot2::aes(x = x, y = y,
-          colour = .data[[groups[1]]], shape = .data[[groups[2]]]))
-    if(shapes[1] != "default") taylor = taylor +
-      ggplot2::scale_shape_manual(values = shapes) 
+        data = modelled, 
+        size = size, stroke = stroke, 
+        ggplot2::aes(x = x, y = y,
+          colour = .data[[groups[1]]], 
+          shape = .data[[groups[2]]]))
   }else if(length(groups) == 1) {
     taylor = taylor  + 
       ggplot2::geom_point(
-        data = modelled, size = size, stroke = stroke, 
-        shape = if(shapes[1] == "default") 21 else shapes[1],
-        ggplot2::aes(x = x, y = y, colour = .data[[groups[1]]]))
+        data = modelled,
+        ggplot2::aes(x = x, y = y, 
+          colour = .data[[groups[1]]]),
+        size = size, stroke = stroke, 
+        shape  = ifelse(shapes[1] == "default", 21, shapes[1]))
   }else {
-    stop(paste("groups must have a length between 1 and 3, not", length(groups)))
+    stop(paste(
+      "groups must have a length between 1 and 3, not", length(groups)))
   }
 
-  if(colours[1] != "default") {
-    taylor = taylor +
-      ggplot2::scale_colour_manual(values = colours) 
-  }else taylor = taylor +
+  if(colours[1] != "default") taylor = taylor +
+    ggplot2::scale_colour_manual(values = colours) 
+  else taylor = taylor +
     ggplot2::scale_colour_brewer(palette = "Dark2") 
-
+  # Add shapes scales if 2+ groups
+  if(length(groups > 1)) {
+    if(shapes[1] != "default") taylor = taylor +
+      ggplot2::scale_shape_manual(values = shapes)
+    else taylor = taylor +
+      ggplot2::scale_shape_manual(values = 21:30)
+  }
   return(taylor)
 }
 
-convert_x = function(dist_from_origin, theta, alpha = pi / 6)
-  dist_from_origin * cos(alpha * theta)
-convert_y = function(dist_from_origin, theta, alpha = pi / 6)
-  dist_from_origin * sin(alpha * theta)
-convert_cor = function(correlation)
-  3 - correlation * 3
-get_dist_from_origin = function(x, y)
+get_x = function(standard_deviation, correlation)
+  standard_deviation * cos(pi / 6 * (3 - 3 * correlation))
+get_y = function(standard_deviation, correlation)
+  standard_deviation * sin((3 - 3 * correlation) * pi / 6)
+get_standard_deviation = function(x, y)
   sqrt(x^2 + y^2)
 get_correlation = function(x, y)
   atan2(y, x) / pi * -2 + 1
