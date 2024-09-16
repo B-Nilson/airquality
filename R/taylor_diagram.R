@@ -446,7 +446,7 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke
         size   = size, stroke = stroke,
         ggplot2::aes(
           x = get_x(sd, cor), 
-          y = get_y(sd, cor)),
+          y = get_y(sd, cor),
           colour = .data[[groups[1]]], 
           shape  = .data[[groups[2]]], 
           fill   = .data[[groups[3]]])) +
