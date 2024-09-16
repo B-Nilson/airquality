@@ -1,4 +1,5 @@
 # TODO: add ability to normalize data for multiple obs sites
+# TODO: handle nonstandard left_cor_limit (-.85 gives no labels) 
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -93,6 +94,10 @@ taylor_diagram = function(dat,
     sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     plot_padding = 2, 
     labels_padding = 2){
+  
+  if(left_cor_limit < -1 | left_cor_limit > 1) {
+    stop(paste("argument `left_cor_limit` must be between -1 and 1, not", left_cor_limit))
+  }
 
   # Get observed standard deviation and correlation with obs by group(s)
   modelled = dat |>
@@ -251,7 +256,7 @@ make_taylor_diagram_template = function(
       expand = FALSE, 
       clip = "on") +
     ggplot2::scale_x_continuous(
-      labels = \(l) ifelse(l < 0, "", l)) +
+      labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       axis.line.y  = ggplot2::element_blank(),
@@ -287,7 +292,9 @@ add_taylor_cor_lines = function(
   dist_from_origin = sd_max + nudge_labels * 0.6
   axis_labels = data.frame(
     x = get_x(dist_from_origin, label_at),
-    y = get_y(dist_from_origin, label_at))
+    y = get_y(dist_from_origin, label_at),
+    label = ifelse(rep(label_type, length(label_at)) == "percent",
+        paste(label_at * 100, "%"), label_at))
 
   taylor + 
     # Correlation lines
@@ -301,9 +308,7 @@ add_taylor_cor_lines = function(
     # Labels for each correlation line
     ggplot2::geom_text(
       data = axis_labels,
-      ggplot2::aes(.data$x, .data$y),
-      label = ifelse(label_type == "percent",
-        paste(label_at * 100, "%"), label_at)) + 
+      ggplot2::aes(.data$x, .data$y, label = .data$label)) + 
     # Correlation axis label
     ggplot2::geom_text(
       data = axis_title,
