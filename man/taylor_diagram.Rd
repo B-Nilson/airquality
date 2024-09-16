@@ -27,7 +27,7 @@ taylor_diagram(
   cor_step = 0.1,
   rmse_colour = "brown",
   rmse_linetype = "dotted",
-  rmse_label_pos = 80,
+  rmse_label_pos = 0.7,
   rmse_title_nudge_x = 0,
   rmse_title_nudge_y = 0,
   sd_colour = "black",
@@ -107,7 +107,7 @@ taylor_diagram(data, groups = c(Group = "group"),
   )
 # Adjust text positioning
 taylor_diagram(data, groups = c(Group = "group"),
-  plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
+  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 
 # Save plot
 # gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
