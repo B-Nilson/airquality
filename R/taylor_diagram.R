@@ -4,7 +4,7 @@
 # TODO: handle non-factor groups
 # TODO: centered RMS as plot caption below x-axis label
 # TODO: handle nonstandard left_cor_limit (-.85 gives no labels) 
-
+# TODO: test patchworking
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -100,7 +100,7 @@ taylor_diagram = function(dat,
     plot_padding = 2, 
     labels_padding = 2){
   
-  if(left_cor_limit < -1 | left_cor_limit > 1) {
+  if(!is.null(left_cor_limit)) if(left_cor_limit < -1 | left_cor_limit > 1) {
     stop(paste("argument `left_cor_limit` must be between -1 and 1, not", left_cor_limit))
   }
 
