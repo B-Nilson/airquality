@@ -285,7 +285,7 @@ add_taylor_cor_lines = function(
     label_type = "decimal",
     nudge_labels = 2) {
   draw_at = seq(min_cor, 1, step)
-  dont_label = which(draw_at %in% c(-1, 0, 1))
+  dont_label = which(draw_at %in% if (min_cor == 0) c(-1, 0, 1) else c(-1, 1))
   label_at = round(draw_at[-dont_label], 1)
   # Make location for the label for the axis title
   dist_from_origin = sd_max + nudge_labels * 1.5
