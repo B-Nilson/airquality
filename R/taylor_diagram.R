@@ -15,7 +15,7 @@
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
 #' @param cor_step (Optional) a single value indicating the spacing between each corrlation line.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
-#' @param rmse_label_pos (Optional) a single value (0-360)indicating the location of the labels for the rmse circles.
+#' @param rmse_label_pos (Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
 #' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
 #' @param plot_padding,labels_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
@@ -149,32 +149,32 @@ taylor_diagram = function(dat,
 }
 
 # Real test data
-# data = data.table::fread(
-#   "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_31411_recent_hourly.csv",
-#   data.table = FALSE) |>
-#   dplyr::select(obs = pm25_80402_0.91km, mod = pm25) |>
-#   dplyr::mutate(sensor_id = "31411", sensor_type = "PA", province = "AB", colocated = TRUE) |>
-#   dplyr::bind_rows(
-#     data.table::fread(
-#       "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_201873_recent_hourly.csv",
-#       data.table = FALSE) |>
-#       dplyr::select(obs = pm25_100202_0.02km, mod = pm25) |>
-#       dplyr::mutate(sensor_id = "201873", sensor_type = "PA", province = "BC", colocated = TRUE) 
-#   ) |>
-#     dplyr::bind_rows(
-#       data.table::fread(
-#         "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_188701_recent_hourly.csv",
-#         data.table = FALSE) |>
-#         dplyr::select(obs = pm25_21100004_107.8km, mod = pm25) |>
-#         dplyr::mutate(sensor_id = "103974", sensor_type = "PA", province = "BC", colocated = FALSE) 
-#     ) |>
-#   dplyr::bind_rows(
-#     data.table::fread(
-#       "https://aqmap.ca/aqmap/data/plotting/aqegg/sensor_egg0004a30b00027b24_recent_hourly.csv",
-#       data.table = FALSE) |>
-#       dplyr::select(obs = pm25_102701_0.43km, mod = pm25) |>
-#       dplyr::mutate(sensor_id = "egg0004a30b00027b24", sensor_type = "EGG", province = "BC", colocated = FALSE) 
-#   )
+data = data.table::fread(
+  "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_31411_recent_hourly.csv",
+  data.table = FALSE) |>
+  dplyr::select(obs = pm25_80402_0.91km, mod = pm25) |>
+  dplyr::mutate(sensor_id = "31411", sensor_type = "PA", province = "AB", colocated = TRUE) |>
+  dplyr::bind_rows(
+    data.table::fread(
+      "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_201873_recent_hourly.csv",
+      data.table = FALSE) |>
+      dplyr::select(obs = pm25_100202_0.02km, mod = pm25) |>
+      dplyr::mutate(sensor_id = "201873", sensor_type = "PA", province = "BC", colocated = TRUE) 
+  ) |>
+    dplyr::bind_rows(
+      data.table::fread(
+        "https://aqmap.ca/aqmap/data/plotting/purpleair/sensor_188701_recent_hourly.csv",
+        data.table = FALSE) |>
+        dplyr::select(obs = pm25_21100004_107.8km, mod = pm25) |>
+        dplyr::mutate(sensor_id = "103974", sensor_type = "PA", province = "BC", colocated = FALSE) 
+    ) |>
+  dplyr::bind_rows(
+    data.table::fread(
+      "https://aqmap.ca/aqmap/data/plotting/aqegg/sensor_egg0004a30b00027b24_recent_hourly.csv",
+      data.table = FALSE) |>
+      dplyr::select(obs = pm25_102701_0.43km, mod = pm25) |>
+      dplyr::mutate(sensor_id = "egg0004a30b00027b24", sensor_type = "EGG", province = "BC", colocated = FALSE) 
+  )
 
 make_taylor_diagram_template = function(
     observed, modelled, 
@@ -197,9 +197,9 @@ make_taylor_diagram_template = function(
   sd_max = ceiling(max(c(observed$sd, modelled$sd)) / 5) * 5
   if(!is.null(right_sd_limit)) sd_max = right_sd_limit
       
-  if (sd_step == "default") 
+  if (sd_step == "default") {
     sd_lines_at =  pretty(seq(0, sd_max, length.out = 4))
-  else sd_lines_at =  seq(0, sd_max, sd_step)
+  }else sd_lines_at =  seq(0, sd_max, sd_step)
   sd_lines_at = unique(c(sd_lines_at, observed$sd, sd_max))
 
   min_cor = floor(min(modelled$cor, na.rm = TRUE) * 10) / 10
@@ -208,7 +208,7 @@ make_taylor_diagram_template = function(
 
   y_max = ifelse(min_cor < 0, 
     sd_max + padding_limits, 
-    convert_y(sd_max + padding_limits, convert_cor(min_cor)))
+    get_y(sd_max + padding_limits, min_cor))
 
   xlims = c(
     ifelse(min_cor < 0, -sd_max - padding_limits, 0),
@@ -266,74 +266,77 @@ make_taylor_diagram_template = function(
 # Add raial correlation lines (and labels) to Taylor Diagrams
 add_taylor_cor_lines = function(
     taylor, 
-    min_cor = 0, 
-    sd_max, 
+    min_cor = 0, sd_max, 
     colour = "lightgrey", 
     linetype = "solid",
     axis_label = "Correlation",
     step = 0.1, 
+    label_type = "decimal",
     nudge_labels = 2) {
-  
-  mean_cor = mean(c(min_cor, 1))
   draw_at = seq(min_cor, 1, step)
-
-  cor_lines = data.frame(
-    x = 0, y = 0,
-    xend = get_x(sd_max, draw_at),
-    yend = get_y(sd_max, draw_at))
-
+  dont_label = which(draw_at %in% c(-1, 0, 1))
+  label_at = round(draw_at[-dont_label], 1)
+  # Make location for the label for the axis title
   dist_from_origin = sd_max + nudge_labels * 1.5
+  mean_cor = mean(c(min_cor, 1))
   axis_title = data.frame(
     x = get_x(dist_from_origin, mean_cor),
     y = get_y(dist_from_origin, mean_cor))
-  
+  # Make locations for the label for each cor line
   dist_from_origin = sd_max + nudge_labels * 0.6
   axis_labels = data.frame(
     x = get_x(dist_from_origin, label_at),
-    y = get_y(dist_from_origin, label_at),
-    label = label_at)
-
-  dont_label = c(if (min_cor %in% c(0, -1)) 1, length(draw_at))
-  # TODO: allow for percents
-  label_at = round(draw_at[-dont_label], 1)
+    y = get_y(dist_from_origin, label_at))
 
   taylor + 
     # Correlation lines
-    ggplot2::annotate(
-      geom = "segment", data = cor_lines,
+    ggplot2::geom_segment(
+      data = data.frame(
+        xend = get_x(sd_max, draw_at),
+        yend = get_y(sd_max, draw_at)),
       linetype = linetype, colour = colour,
-      ggplot2::aes(x, y, xend = xend, yend = yend)) +
+      ggplot2::aes(x = 0, y = 0, 
+        xend = .data$xend, yend = .data$yend)) +
     # Labels for each correlation line
-    ggplot2::annotate(
-      geom = "text", data = axis_title,
-      ggplot2::aes(x, y, label = label)) + 
+    ggplot2::geom_text(
+      data = axis_labels,
+      ggplot2::aes(.data$x, .data$y),
+      label = ifelse(label_type == "percent",
+        paste(label_at * 100, "%"), label_at)) + 
     # Correlation axis label
-    ggplot2::annotate(
-      geom = "text", data = axis_labels,
-      ggplot2::aes(x, y),
+    ggplot2::geom_text(
+      data = axis_title,
+      ggplot2::aes(.data$x, .data$y),
       label = axis_label, 
       angle = mean_cor * -90) 
 }
 
 # Add standard deviation arcs to Taylor Diagrams
 add_taylor_sd_lines = function(
-    taylor, min_cor, sd_obs, lines_at, colour = "black", 
+    taylor, 
+    min_cor, sd_obs, 
+    lines_at, 
+    colour = "black", 
     linetypes = c(obs = "dashed", max = "solid", other = "dotted")) {
-  arc_data = data.frame(
-    start =  -0.5 * pi * -min_cor, end = .5 * pi, r = lines_at)
-  arc_data$linetype = ifelse(lines_at == max(lines_at), 
-    "max", ifelse(lines_at == sd_obs, "obs", "other"))
-
   taylor +
     ggforce::geom_arc(
-      data = arc_data, colour = colour,
-      ggplot2::aes(x0 = 0, y0 = 0, 
-        r = r, start = start, end = end, linetype = linetype)) +
+      data = data.frame(
+        start =  -0.5 * pi * -min_cor,
+        end = .5 * pi, 
+        r = lines_at,
+        linetype = ifelse(lines_at == max(lines_at), 
+          "max", ifelse(lines_at == sd_obs, "obs", "other"))), 
+      colour = colour,
+      ggplot2::aes(
+        x0 = 0, y0 = 0, r = r, 
+        start = start, end = end, 
+        linetype = linetype)) +
     ggplot2::scale_linetype_manual(
       values = linetypes, guide = "none") 
 }
 
 # Add SD axes lines to Taylor Diagrams
+# TODO: add customizability
 add_taylor_axes_lines = function(taylor, min_cor, sd_max) {
   taylor +
     ggplot2::annotate(
@@ -349,7 +352,9 @@ add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max,
     nudge_labels, padding_limits) {
   rms_lines = make_taylor_rmse_lines(
     sd_obs = sd_obs, sd_max = sd_max, min_cor = min_cor, 
-    label_pos = label_pos, n = n)
+    label_pos = ((1-label_pos) * 255 - 20), 
+    n = n, 
+    padding_limits = padding_limits)
   taylor +
     # Draw semicircles originating at the observed point for centered RMS error
     ggplot2::geom_line(
@@ -363,8 +368,8 @@ add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max,
       vjust = 0, colour = colour,
       nudge_y = nudge_labels * -0.75) +
     # Legend text
-    ggplot2::annotate(
-      geom = "text", x = sd_max, y = y_max, 
+    ggplot2::geom_text(
+      x = sd_max, y = y_max, 
       label = axis_label, colour = colour,
       nudge_x = axis_label_nudge_x, 
       nudge_y = axis_label_nudge_y,
@@ -372,10 +377,13 @@ add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max,
     )
 }
 
-make_taylor_rmse_lines = function(sd_obs, sd_max, min_cor, label_pos = 80, n = 5){
+make_taylor_rmse_lines = function(
+    sd_obs, sd_max, min_cor, 
+    label_pos = 80, n = 5, 
+    padding_limits = 2){
   max_rmse = ifelse(min_cor < 0, sd_max + sd_max * -min_cor, sd_max)
   rmse_values = pretty(seq(0, max_rmse, length.out = n + 1)[-1]) # TODO: allow for manual specification
-  labelpos = seq(45, 70, length.out = length(rmse_values)) + label_pos # TODO: better label pos control
+  labelpos = seq(45, 70, length.out = length(rmse_values)) + label_pos
 
   rmse_lines = lapply(1:length(rmse_values), \(i) {
     if(rmse_values[i] == 0) return(NULL)
