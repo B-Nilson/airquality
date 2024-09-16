@@ -218,6 +218,8 @@ make_taylor_diagram_template = function(
   xlims = c(
     ifelse(min_cor < 0, get_x(sd_max + padding_limits, min_cor), 0),
     sd_max + padding_limits)
+  
+  x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1, 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
 
   taylor = ggplot2::ggplot() |>
     add_taylor_cor_lines(
@@ -264,7 +266,8 @@ make_taylor_diagram_template = function(
       axis.text.y  = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      plot.caption = ggplot2::element_text(colour = rmse_colour, hjust = 0.5),
+      plot.caption = ggplot2::element_text(colour = rmse_colour, hjust = x_title_hjust),
+      axis.title.x = ggplot2::element_text(hjust = x_title_hjust),
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       panel.border = ggplot2::element_rect(colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
