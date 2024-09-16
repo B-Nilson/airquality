@@ -261,6 +261,7 @@ make_taylor_diagram_template = function(
       expand = FALSE, 
       clip = "on") +
     ggplot2::scale_x_continuous(
+      breaks = sd_lines_at[sd_lines_at != observed$sd],
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
