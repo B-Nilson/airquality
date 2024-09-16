@@ -1,4 +1,8 @@
 # TODO: add ability to normalize data for multiple obs sites
+# TODO: add facetting option
+# TODO: handle non-standard data_cols names 
+# TODO: handle non-factor groups
+# TODO: centered RMS as plot caption below x-axis label
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -353,6 +357,24 @@ add_taylor_observed_point = function(taylor, observed, shape = 16, size = 3, str
       ggplot2::aes(x = sd), y = 0, label = label, 
       colour = colour, size = size,
       vjust = label_vjust, hjust = label_hjust
+    )
+}
+
+get_shape_pairs = function(shapes){
+  pairs = list(
+    filled = c(21:25),
+    not_filled = c(1, 0, 5, 2, 6) # cirle, square, diamond, tri-up, tri-down
+  )
+  is_filled = shapes %in% pairs$filled
+  is_not_filled = shapes %in% pairs$not_filled
+  if(any(!is_filled & !is_not_filled)) {
+    stop("Cannot find paired filled/not-filled shapes for shape(s)", 
+      paste(collapse = ", ", shapes[!is_filled & !is_not_filled]))
+  }
+  data.frame(shapes) |>
+    dplyr::mutate(
+      filled = ifelse(is_filled, shapes, pairs$filled[match(shapes, pairs$not_filled)]),
+      not_filled = ifelse(is_not_filled, shapes, pairs$not_filled[match(shapes, pairs$filled)])
     )
 }
 
