@@ -78,12 +78,12 @@ taylor_diagram = function(dat,
     mod_colours = "default", 
     mod_fills = "default", 
     mod_shapes = "default", 
-    mod_size = 3, 
-    mod_stroke = 2, 
+    mod_size = 1.5, 
+    mod_stroke = 1, 
     obs_colour = "purple", 
     obs_shape = 16, 
-    obs_size = 3, 
-    obs_stroke = 2, 
+    obs_size = 1.5, 
+    obs_stroke = 1, 
     obs_label = "Observed", 
     obs_label_nudge_x = 0, 
     obs_label_nudge_y = 0,
@@ -429,7 +429,7 @@ make_taylor_rmse_lines = function(
 
 add_taylor_observed_point = function(
     taylor, observed, 
-    shape = 16, size = 3, stroke = 2, 
+    shape = 16, size = 1.5, stroke = 1, 
     colour = "purple", label = "Observed", 
     label_nudge_x = 0, label_nudge_y = 0){
   taylor + 
@@ -470,7 +470,7 @@ get_shape_pairs = function(shapes){
     )
 }
 
-add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke = 2, shapes = "default", colours = "default", fills = "default") {
+add_taylor_modelled_points = function(taylor, modelled, groups, size = 1.5, stroke = 1, shapes = "default", colours = "default", fills = "default") {
   # TODO: instead, find matching shapes with fill/no fill and combine last two groups into shape + fill/no fill
   if(length(groups) == 3) {
     taylor = taylor  + 
