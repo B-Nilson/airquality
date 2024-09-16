@@ -58,7 +58,7 @@
 #'   )
 #' # Adjust text positioning
 #' taylor_diagram(data, groups = c(Group = "group"),
-#'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 80)
+#'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 #' 
 #' # Save plot
 #' # gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
@@ -86,7 +86,7 @@ taylor_diagram = function(dat,
     cor_step = 0.1,
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
-    rmse_label_pos = 80,
+    rmse_label_pos = 0.7,
     rmse_title_nudge_x = 0,
     rmse_title_nudge_y = 0,
     sd_colour = "black", 
@@ -100,7 +100,8 @@ taylor_diagram = function(dat,
     dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
     dplyr::summarise(.groups = "drop",
       sd = sd(.data$mod, na.rm = TRUE),
-      cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"))
+      cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
+      x = get_x(sd, cor), y = get_y(sd, cor))
   # Get observed standard deviation
   observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
 
@@ -185,7 +186,7 @@ make_taylor_diagram_template = function(
     cor_step = 0.1,
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
-    rmse_label_pos = 80, 
+    rmse_label_pos = 0.5, 
     rmse_title_nudge_x = 0,
     rmse_title_nudge_y = 0,
     sd_colour = "black", 
@@ -296,7 +297,7 @@ add_taylor_cor_lines = function(
         yend = get_y(sd_max, draw_at)),
       linetype = linetype, colour = colour,
       ggplot2::aes(x = 0, y = 0, 
-        xend = .data$xend, yend = .data$yend)) +
+        xend = xend, yend = yend)) +
     # Labels for each correlation line
     ggplot2::geom_text(
       data = axis_labels,
@@ -346,7 +347,7 @@ add_taylor_axes_lines = function(taylor, min_cor, sd_max) {
 }
 
 add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max, 
-    label_pos = 80,
+    label_pos = 0.6,
     n = 5, colour = "brown", linetype = "dotted", axis_label = "centered\nRMS error", 
     axis_label_nudge_x = 0, axis_label_nudge_y = 0,
     nudge_labels, padding_limits) {
@@ -502,7 +503,7 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 3, stroke
 }
 
 get_x = function(standard_deviation, correlation)
-  standard_deviation * cos(pi / 6 * correlation)
+  standard_deviation * cos(pi / 6 * (3 - 3 * correlation))
 get_y = function(standard_deviation, correlation)
   standard_deviation * sin((3 - 3 * correlation) * pi / 6)
 get_standard_deviation = function(x, y)
