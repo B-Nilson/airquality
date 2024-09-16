@@ -73,6 +73,7 @@
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     groups,
+    facet_vars = NULL,
     left_cor_limit = NULL, 
     right_sd_limit = NULL,
     mod_colours = "default", 
@@ -102,14 +103,19 @@ taylor_diagram = function(dat,
     stop(paste("argument `left_cor_limit` must be between -1 and 1, not", left_cor_limit))
   }
 
-  # Get observed standard deviation and correlation with obs by group(s)
+  if(!is.null(facet_vars)) dat = dat |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
+  # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat |>
     dplyr::rename(dplyr::all_of(data_cols)) |> 
-    dplyr::group_by(dplyr::across(dplyr::all_of(unname(groups)))) |>
+    dplyr::group_by(.add = TRUE, 
+      dplyr::across(dplyr::all_of(unname(groups))))
+  modelled = modelled |>
     dplyr::summarise(.groups = "drop",
       sd = sd(.data$mod, na.rm = TRUE),
       cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
-      x = get_x(sd, cor), y = get_y(sd, cor))
+      x = get_x(.data$sd, .data$cor), 
+      y = get_y(.data$sd, .data$cor))
   # Get observed standard deviation
   observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
 
@@ -145,6 +151,12 @@ taylor_diagram = function(dat,
       colours = mod_colours,  
       fills = mod_fills, 
       shapes = mod_shapes)
+  if(!is.null(facet_vars)){
+    if(length(facet_vars == 1)) taylor = taylor + 
+      ggplot2::facet_wrap(facets = facet_vars)
+    if(length(facet_vars == 2)) taylor = taylor + 
+      ggplot2::facet_grid(facet_vars[1]~facet_vars[2])
+  }
   while(length(groups) < 3) groups = c(groups, "")
   if(!is.null(names(groups))) 
     taylor = taylor +
@@ -181,7 +193,8 @@ taylor_diagram = function(dat,
 #       data.table = FALSE) |>
 #       dplyr::select(obs = pm25_102701_0.43km, mod = pm25) |>
 #       dplyr::mutate(sensor_id = "egg0004a30b00027b24", sensor_type = "EGG", province = "BC", colocated = FALSE) 
-#   )
+#   ) |>
+#   dplyr::mutate(dplyr::across(-(1:2), factor))
 
 make_taylor_diagram_template = function(
     observed, modelled, 
@@ -231,8 +244,9 @@ make_taylor_diagram_template = function(
       nudge_labels = nudge_labels) |> 
     add_taylor_sd_lines(
       min_cor = min_cor, 
-      sd_obs = observed$sd,
+      observed = observed,
       lines_at = sd_lines_at, 
+      facet_vars = facet_vars,
       colour = sd_colour, 
       linetypes = sd_linetypes) |>
     add_taylor_axes_lines(
@@ -328,19 +342,23 @@ add_taylor_cor_lines = function(
 
 # Add standard deviation arcs to Taylor Diagrams
 add_taylor_sd_lines = function(
-    taylor, 
-    min_cor, sd_obs, 
-    lines_at, 
+    taylor, observed,
+    min_cor, 
+    lines_at, # TODO: don't pass obs/max line here, always display obs/max line
+    facet_vars = NULL,
     colour = "black", 
     linetypes = c(obs = "dashed", max = "solid", other = "dotted")) {
+  arc_data = lapply_and_bind(lines_at, \(at)
+    observed |> dplyr::mutate(
+      start =  -0.5 * pi * -min_cor,
+      end = .5 * pi, 
+      r = at,
+      linetype = ifelse(at == max(lines_at), 
+        "max", ifelse(at %in% .data$sd, "obs", "other"))))
+  
   taylor +
     ggforce::geom_arc(
-      data = data.frame(
-        start =  -0.5 * pi * -min_cor,
-        end = .5 * pi, 
-        r = lines_at,
-        linetype = ifelse(lines_at == max(lines_at), 
-          "max", ifelse(lines_at == sd_obs, "obs", "other"))), 
+      data = arc_data, 
       colour = colour,
       ggplot2::aes(
         x0 = 0, y0 = 0, r = r, 
