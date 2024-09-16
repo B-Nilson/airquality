@@ -362,7 +362,7 @@ add_taylor_axes_lines = function(taylor, min_cor, sd_max) {
 
 add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max, 
     label_pos = 0.6,
-    n = 5, colour = "brown", linetype = "dotted", axis_label = "centered RMS error", 
+    n = 5, colour = "brown", linetype = "dotted", axis_label = "Centered RMS Error", 
     nudge_labels, padding_limits) {
   rms_lines = make_taylor_rmse_lines(
     sd_obs = sd_obs, sd_max = sd_max, min_cor = min_cor, 
