@@ -28,8 +28,6 @@ taylor_diagram(
   rmse_colour = "brown",
   rmse_linetype = "dotted",
   rmse_label_pos = 0.7,
-  rmse_title_nudge_x = 0,
-  rmse_title_nudge_y = 0,
   sd_colour = "black",
   sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
   plot_padding = 2,

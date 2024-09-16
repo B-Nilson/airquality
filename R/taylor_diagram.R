@@ -93,8 +93,6 @@ taylor_diagram = function(dat,
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
     rmse_label_pos = 0.7,
-    rmse_title_nudge_x = 0,
-    rmse_title_nudge_y = 0,
     sd_colour = "black", 
     sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     plot_padding = 2, 
@@ -126,8 +124,6 @@ taylor_diagram = function(dat,
       rmse_colour = rmse_colour,
       rmse_linetype = rmse_linetype,
       rmse_label_pos = rmse_label_pos,
-      rmse_title_nudge_x = rmse_title_nudge_x, 
-      rmse_title_nudge_y = rmse_title_nudge_y,
       sd_colour = sd_colour,
       sd_linetypes = sd_linetypes,
       padding_limits = plot_padding, 
@@ -197,8 +193,6 @@ make_taylor_diagram_template = function(
     rmse_colour = "brown", 
     rmse_linetype = "dotted", 
     rmse_label_pos = 0.5, 
-    rmse_title_nudge_x = 0,
-    rmse_title_nudge_y = 0,
     sd_colour = "black", 
     sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
     sd_step = "default",
@@ -250,8 +244,6 @@ make_taylor_diagram_template = function(
       y_max = y_max - padding_limits, 
       colour = rmse_colour, 
       linetype = rmse_linetype,
-      axis_label_nudge_x = rmse_title_nudge_x,
-      axis_label_nudge_y = rmse_title_nudge_y,
       nudge_labels = nudge_labels, 
       padding_limits = padding_limits)  +
     # Presentation
@@ -272,6 +264,7 @@ make_taylor_diagram_template = function(
       axis.text.y  = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(colour = rmse_colour, hjust = 0.5),
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       panel.border = ggplot2::element_rect(colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
@@ -366,8 +359,7 @@ add_taylor_axes_lines = function(taylor, min_cor, sd_max) {
 
 add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max, 
     label_pos = 0.6,
-    n = 5, colour = "brown", linetype = "dotted", axis_label = "centered\nRMS error", 
-    axis_label_nudge_x = 0, axis_label_nudge_y = 0,
+    n = 5, colour = "brown", linetype = "dotted", axis_label = "centered RMS error", 
     nudge_labels, padding_limits) {
   rms_lines = make_taylor_rmse_lines(
     sd_obs = sd_obs, sd_max = sd_max, min_cor = min_cor, 
@@ -386,14 +378,7 @@ add_taylor_rmse_lines = function(taylor, sd_obs, sd_max, min_cor, y_max,
       ggplot2::aes(x, y, label = label), 
       vjust = 0, colour = colour,
       nudge_y = nudge_labels * -0.75) +
-    # Legend text
-    ggplot2::geom_text(
-      x = sd_max, y = y_max, 
-      label = axis_label, colour = colour,
-      nudge_x = axis_label_nudge_x, 
-      nudge_y = axis_label_nudge_y,
-      hjust = 1, vjust = 1.4 # TODO: better locating control
-    )
+    ggplot2::labs(caption = axis_label)
 }
 
 make_taylor_rmse_lines = function(
