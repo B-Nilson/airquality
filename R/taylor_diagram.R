@@ -5,6 +5,7 @@
 # TODO: centered RMS as plot caption below x-axis label
 # TODO: handle nonstandard left_cor_limit (-.85 gives no labels) 
 # TODO: test patchworking
+# TODO: handle already grouped data being passed
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
