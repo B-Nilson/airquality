@@ -4,8 +4,8 @@
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
-#' @param dat Paired observation and model data with (at least) all columns in `data_cols` and `group_by`. 
-#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
+#' @param dat Paired observation and model data with (at least) all columns in `data_cols`, `group_by`, and (if provided) `facet_by`. 
+#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Default assumes columns "obs" and "mod" exist.
 #' @param group_by a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.
@@ -108,6 +108,18 @@ taylor_diagram = function(dat,
   if(is.null(names(data_cols))) names(data_cols) = c("obs", "mod")
   if(length(data_cols) != 2) {
     stop(paste("argument `data_cols` must have a length of two, not", length(data_cols)))
+  }
+  if(!all(data_cols %in% names(dat))) {
+    stop(paste("All column names in argument `data_cols` must be found in `dat`, these ones are missing:", 
+      paste(data_cols[!data_cols %in% names(dat)], collapse = ", ")))
+  }
+  if(!all(group_by %in% names(dat))) {
+    stop(paste("All column names in argument `group_by` must be found in `dat`, these ones are missing:", 
+      paste(group_by[!group_by %in% names(dat)], collapse = ", ")))
+  }
+  if(!is.null(facet_by)) if(!all(facet_by %in% names(dat))) {
+    stop(paste("All column names in argument `facet_by` must be found in `dat`, these ones are missing:", 
+      paste(facet_by[!facet_by %in% names(dat)], collapse = ", ")))
   }
   if(!is.null(cor_minimum)) if(cor_minimum < -1 | cor_minimum > 1) {
     stop(paste("argument `cor_minimum` must be between -1 and 1, not", cor_minimum))

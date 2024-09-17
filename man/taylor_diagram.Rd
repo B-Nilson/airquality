@@ -8,7 +8,7 @@ taylor_diagram(
   dat,
   data_cols = c(obs = "obs", mod = "mod"),
   group_by,
-  facet_vars = NULL,
+  facet_by = NULL,
   facet_rows = 1,
   obs_colour = "purple",
   obs_shape = 16,
@@ -40,11 +40,15 @@ taylor_diagram(
 )
 }
 \arguments{
-\item{dat}{Paired observation and model data with (at least) all columns in `data_cols` and `group_by`.}
+\item{dat}{Paired observation and model data with (at least) all columns in `data_cols`, `group_by`, and (if provided) `facet_by`.}
 
-\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.}
+\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Default assumes columns "obs" and "mod" exist.}
 
-\item{group_by}{a character vector with between 1 and 3 column names to use as group_by. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
+\item{group_by}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
+
+\item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.}
+
+\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.}
 
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
