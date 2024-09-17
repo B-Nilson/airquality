@@ -351,11 +351,12 @@ make_taylor_diagram_template = function(
       axis.title.x = ggtext::element_markdown(
         hjust = x_title_hjust),
       legend.direction = "horizontal",
-      legend.position = "top",
-      strip.text = ggplot2::element_text(
-        face = "bold", margin = ggplot2::margin(b = 1, t = 1)),
+      legend.position = "bottom",
+      legend.box.spacing = ggplot2::unit("2", "pt"),
+      strip.text = ggplot2::element_text(size = 12,
+        face = "italic", margin = ggplot2::margin(b = 5)),
       plot.background = ggplot2::element_rect(
-        fill = "white", colour = NA),
+        fill = "white", colour = "black"),
       panel.border = ggplot2::element_rect(
         colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
