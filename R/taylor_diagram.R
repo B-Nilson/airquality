@@ -116,7 +116,7 @@ taylor_diagram = function(dat,
     mod_colours = "default", mod_fills = "default", mod_shapes = "default", 
     mod_size = 1.5, mod_stroke = 1, 
     cor_minimum = NULL, cor_step = 0.1,
-    cor_colour = "gray60", cor_linetype = "longdash",
+    cor_colour = "grey30", cor_linetype = "longdash",
     cor_label = "Correlation",
     rmse_minimum = 0, rmse_step = 'default', 
     rmse_colour = "brown", rmse_linetype = "dotted", 
@@ -265,7 +265,7 @@ make_taylor_diagram_template = function(
     facet_by = NULL,
     cor_minimum = NULL, 
     cor_step = 0.1,
-    cor_colour = "grey", 
+    cor_colour = "grey30", 
     cor_linetype = "solid", 
     cor_label = "Correlation",
     rmse_minimum = 0, 
@@ -367,7 +367,7 @@ make_taylor_diagram_template = function(
 add_taylor_cor_lines = function(
     taylor, observed,
     min_cor = 0, sd_max, 
-    colour = "gray70", 
+    colour = "grey30", 
     linetype = "solid",
     axis_label = "Correlation",
     step = 0.1, 
@@ -405,11 +405,11 @@ add_taylor_cor_lines = function(
       data = cor_lines, size = 3, 
       ggplot2::aes(
         .data$x_label, .data$y_label, label = .data$label),
-      colour = colour, fontface = "bold") + 
+      colour = ggplot2::theme_get()$axis.text$colour) + 
     # Correlation axis label
     ggplot2::geom_text(
       data = axis_title,  size = 4,
-      colour = colour, 
+      colour = "black", 
       ggplot2::aes(.data$x, .data$y),
       label = axis_label, 
       angle = mean_cor * -90) 
