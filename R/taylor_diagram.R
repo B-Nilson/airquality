@@ -160,12 +160,13 @@ taylor_diagram = function(dat,
     dplyr::group_by(.add = TRUE, 
       dplyr::across(dplyr::all_of(unname(group_by)))) |>
     dplyr::summarise(.groups = "drop",
-      sd  = sd(.data$mod, na.rm = TRUE),
-      cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
+      sd  = stats::sd(.data$mod, na.rm = TRUE),
+      cor = stats::cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
       x = get_x(.data$sd, .data$cor), 
       y = get_y(.data$sd, .data$cor))
   # Get observed standard deviation (by facet_by if provided)
-  observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
+  observed = dat |> dplyr::summarise(
+    sd = stats::sd(.data$obs, na.rm = TRUE))
 
   # Make Taylor Diagram
   taylor = make_taylor_diagram_template(
@@ -443,7 +444,7 @@ add_taylor_sd_lines = function(
       data = arc_data, 
       colour = colour,
       ggplot2::aes(
-        x0 = 0, y0 = 0, r = r, 
+        x0 = 0, y0 = 0, r = .data$r, 
         start = .data$start, end = .data$end, 
         linewidth = .data$linetype,
         linetype = .data$linetype)) +
