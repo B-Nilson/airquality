@@ -375,21 +375,19 @@ add_taylor_cor_lines = function(
     nudge_labels = 2) {
   draw_at = seq(min_cor, 1, step)
 
-  # Make locations for the correlation line end points
+  # Make locations for the correlation line end points and labels
+  label_dist = sd_max + nudge_labels * 0.6
   cor_lines = lapply_and_bind(draw_at, \(at)
     observed |> dplyr::mutate(
       xend = get_x(sd_max, at),
-      yend = get_y(sd_max, at)))
-  # Make locations for the label for each cor line
-  dist_from_origin = sd_max + nudge_labels * 0.6
-  axis_labels = lapply_and_bind(draw_at, \(at)
-    observed |> dplyr::mutate(
-      x = get_x(dist_from_origin, at),
-      y = get_y(dist_from_origin, at),
-      label = ifelse(label_type == "percent", 
-        paste(at * 100, "%"), at)))
+      yend = get_y(sd_max, at),
+      x_label = get_x(label_dist, at),
+      y_label = get_y(label_dist, at),
+      label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
+        paste(at * 100, "%"), at)
+    ))
   # Make location for the label for the axis title
-  dist_from_origin = dist_from_origin + nudge_labels * 0.75
+  dist_from_origin = label_dist + nudge_labels * 0.75
   mean_cor = mean(c(min_cor, 1))
   axis_title = observed |> dplyr::mutate(
     x = get_x(dist_from_origin, mean_cor),
@@ -404,9 +402,10 @@ add_taylor_cor_lines = function(
         xend = .data$xend, yend = .data$yend)) +
     # Labels for each correlation line
     ggplot2::geom_text(
-      data = axis_labels, size = 3, 
-      colour = colour, fontface = "bold", 
-      ggplot2::aes(.data$x, .data$y, label = .data$label)) + 
+      data = cor_lines, size = 3, 
+      ggplot2::aes(
+        .data$x_label, .data$y_label, label = .data$label),
+      colour = colour, fontface = "bold") + 
     # Correlation axis label
     ggplot2::geom_text(
       data = axis_title,  size = 4,
