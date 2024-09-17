@@ -185,6 +185,7 @@ taylor_diagram = function(dat,
       sd_step = sd_step,
       sd_colour = sd_colour,
       sd_linetypes = sd_linetypes,
+      sd_label = sd_label,
       padding_limits = plot_padding, 
       nudge_labels = labels_padding) |>
     add_taylor_observed_point(
@@ -267,6 +268,7 @@ make_taylor_diagram_template = function(
     sd_step = "default",
     sd_colour = "black", 
     sd_linetypes = c(obs = "dashed", other = "dashed"),
+    sd_label = "Standard Deviation",
     padding_limits = 2, 
     nudge_labels = 2){
 
