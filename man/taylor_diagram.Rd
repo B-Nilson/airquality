@@ -8,29 +8,34 @@ taylor_diagram(
   dat,
   data_cols = c(obs = "obs", mod = "mod"),
   groups,
-  left_cor_limit = NULL,
-  right_sd_limit = NULL,
+  facet_vars = NULL,
+  facet_rows = 1,
+  obs_colour = "purple",
+  obs_shape = 16,
+  obs_size = 1.5,
+  obs_stroke = 1,
+  obs_label = "Obs.",
+  obs_label_nudge_x = 0,
+  obs_label_nudge_y = 0,
   mod_colours = "default",
   mod_fills = "default",
   mod_shapes = "default",
-  mod_size = 3,
-  mod_stroke = 2,
-  obs_colour = "purple",
-  obs_shape = 16,
-  obs_size = 3,
-  obs_stroke = 2,
-  obs_label = "Observed",
-  obs_label_nudge_x = 0,
-  obs_label_nudge_y = 0,
-  cor_colour = "lightgrey",
-  cor_linetype = "solid",
+  mod_size = 1.5,
+  mod_stroke = 1,
+  cor_minimum = NULL,
   cor_step = 0.1,
+  cor_colour = "gray60",
+  cor_linetype = "longdash",
+  rmse_minimum = 0,
+  rmse_step = "default",
   rmse_colour = "brown",
   rmse_linetype = "dotted",
-  rmse_label_pos = 0.7,
+  rmse_label_pos = "default",
+  sd_maximum = NULL,
+  sd_step = "default",
   sd_colour = "black",
-  sd_linetypes = c(obs = "dashed", max = "solid", other = "dotted"),
-  plot_padding = 2,
+  sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+  plot_padding = 0.5,
   labels_padding = 2
 )
 }
@@ -41,27 +46,33 @@ taylor_diagram(
 
 \item{groups}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
 
-\item{left_cor_limit}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.}
-
-\item{right_sd_limit}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>=0). If not provided, the nearest "pretty" above the maximum standard deviation in the data will be used.}
-
-\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
-
-\item{mod_size, mod_stroke}{(Optional) single numeric value indicating the size/stroke of the model data points}
-
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
 \item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
 
 \item{obs_label_nudge_x, obs_label_nudge_y}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
 
+\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
+
+\item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points}
+
+\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.}
+
+\item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.}
+
 \item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
 
-\item{cor_step}{(Optional) a single value indicating the spacing between each corrlation line.}
+\item{rmse_minimum}{(Optional) a single numeric value indicating the minimum rmse value to display (>= 0).}
+
+\item{rmse_step}{(Optional) a single value indicating the spacing between each rmse line. Default produces approximatley 4 lines with "pretty" spacing.}
 
 \item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
 
 \item{rmse_label_pos}{(Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).}
+
+\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). If not provided, the nearest "pretty" value above the maximum standard deviation in the data will be used.}
+
+\item{sd_step}{(Optional) a single value indicating the spacing between each standard deviation line. Default produces approximatley 4 lines with "pretty" spacing.}
 
 \item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
 
@@ -91,7 +102,7 @@ data = as.data.frame(datasets::ChickWeight) |>
 taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
 # Force 0 on left axis
 taylor_diagram(data, groups = c(Group = "group"), 
-  left_cor_limit = 0, rmse_label_pos = 130)
+  cor_minimum = 0, rmse_label_pos = 130)
 # Change colours / shapes
 taylor_diagram(data, groups = c(Group = "group"), 
   mod_colours = c("AB" = "pink", "BC" = "blue"), 
