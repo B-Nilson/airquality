@@ -34,7 +34,7 @@ taylor_diagram(
   sd_maximum = NULL,
   sd_step = "default",
   sd_colour = "black",
-  sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+  sd_linetypes = c(obs = "dashed", other = "dashed"),
   sd_label = "Standard Deviation",
   plot_padding = 0.5,
   labels_padding = 2
@@ -43,51 +43,77 @@ taylor_diagram(
 \arguments{
 \item{dat}{Paired observation and model data with (at least) all columns in `data_cols`, `group_by`, and (if provided) `facet_by`.}
 
-\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Default assumes columns "obs" and "mod" exist.}
+\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
+Default assumes columns "obs" and "mod" exist.}
 
-\item{group_by}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
+\item{group_by}{a character vector with between 1 and 3 column names to use as groups. 
+The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+If names are present they will be used as the corresponding legend titles.}
 
-\item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.}
+\item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
+Default (NULL) does not facet the plot.}
 
-\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.}
+\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
+Default is a single row.}
 
-\item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
+\item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point.
+Default is a full-colour purple circle.}
 
-\item{obs_label}{(Optional) a single character value indicating the text to display for the observed point.}
+\item{obs_label}{(Optional) a single character value indicating the text to display for the observed point.
+Default is "Obs."}
 
-\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
+\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by`
+where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`).
+Default uses "good looking" colours/shapes/fills.}
 
-\item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points}
+\item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points.
+Default matches the size/stroke of the observed point.}
 
-\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.}
+\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). 
+Default uses the nearest 0.1 below the minimum correlation.}
 
-\item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.}
+\item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.
+Default is a step of 0.1 (10%).}
 
-\item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
+\item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.
+Default is grey long-dash lines.}
 
-\item{cor_label}{(Optional) a single character value indicating the text to display for the correlation axis title.}
+\item{cor_label}{(Optional) a single character value indicating the text to display for the correlation axis title.
+Default is "Correlation".}
 
-\item{rmse_minimum}{(Optional) a single numeric value indicating the minimum rmse value to display (>= 0).}
+\item{rmse_minimum}{(Optional) a single numeric value indicating the minimum rmse line to display (>= 0).
+Default is 0 (meaning the first line to display is at `rmse_step`).}
 
-\item{rmse_step}{(Optional) a single value indicating the spacing between each rmse line. Default produces approximatley 4 lines with "pretty" spacing.}
+\item{rmse_step}{(Optional) a single value indicating the spacing between each rmse line.
+Default produces approximatley 4 lines with "pretty" spacing.}
 
-\item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
+\item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
+Default is brown dotted lines.}
 
-\item{rmse_label}{(Optional) a single character value indicating the text to display for the RMSE axis title.}
+\item{rmse_label}{(Optional) a single character value indicating the text to display for the RMSE axis title.
+Default is "Centered RMS Error".}
 
-\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).}
+\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles 
+(0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
+Default is 10% greater than the minimum correlation.}
 
-\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). If not provided, the nearest "pretty" value above the maximum standard deviation in the data will be used.}
+\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). 
+Default is the nearest "pretty" value above the maximum standard deviation.}
 
-\item{sd_step}{(Optional) a single value indicating the spacing between each standard deviation line. Default produces approximatley 4 lines with "pretty" spacing.}
+\item{sd_step}{(Optional) a single value indicating the spacing between each standard deviation line.
+Default produces approximatley 4 lines with "pretty" spacing.}
 
-\item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
+\item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.
+Default is black.}
 
-\item{sd_linetypes}{(Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.}
+\item{sd_linetypes}{(Optional) a character vector with 2 line types and names `"obs", "other"` indicating the line types of standard deviation arcs.
+Default is dashed for the observed line, dotted for others.}
 
-\item{sd_label}{(Optional) a single character value indicating the text to display for the standard deviation axis title.}
+\item{sd_label}{(Optional) a single character value indicating the text to display for the standard deviation axis title.
+Default is "Standard Deviation".}
 
-\item{plot_padding, labels_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.}
+\item{plot_padding, labels_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
+Default is 2 for both, likely needs to be adjusted depeding on the figure size and number of facets.}
 }
 \value{
 A ggplot object of your taylor diagram.
@@ -121,7 +147,7 @@ taylor_diagram(data, group_by = c(Group = "group"),
   obs_colour = "brown", obs_shape = 23, obs_size = 6, 
   cor_colour = "orange", cor_linetype = "dotdash",
   rmse_colour = "green", rmse_linetype = "longdash",
-  sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
+  sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
   )
 # Adjust text positioning
 taylor_diagram(data, group_by = c(Group = "group"),

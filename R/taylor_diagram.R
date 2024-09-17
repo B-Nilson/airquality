@@ -6,29 +6,55 @@
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
 #' @param dat Paired observation and model data with (at least) all columns in `data_cols`, `group_by`, and (if provided) `facet_by`. 
-#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Default assumes columns "obs" and "mod" exist.
-#' @param group_by a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
+#'   Default assumes columns "obs" and "mod" exist.
+#' @param group_by a character vector with between 1 and 3 column names to use as groups. 
+#'   The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#'   If names are present they will be used as the corresponding legend titles.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
-#' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.
-#' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
+#'   Default (NULL) does not facet the plot.
+#' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
+#'   Default is a single row.
+#' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point.
+#'   Default is a full-colour purple circle.
 #' @param obs_label (Optional) a single character value indicating the text to display for the observed point.
-#' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
-#' @param mod_size,mod_stroke (Optional) a single numeric value indicating the size/stroke of the model data points
-#' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
+#'   Default is "Obs."
+#' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `group_by`
+#'   where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`).
+#'   Default uses "good looking" colours/shapes/fills.
+#' @param mod_size,mod_stroke (Optional) a single numeric value indicating the size/stroke of the model data points.
+#'   Default matches the size/stroke of the observed point.
+#' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). 
+#'   Default uses the nearest 0.1 below the minimum correlation.
 #' @param cor_step (Optional) a single value indicating the spacing between each correlation line.
+#'   Default is a step of 0.1 (10%).
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
+#'   Default is grey long-dash lines.
 #' @param cor_label (Optional) a single character value indicating the text to display for the correlation axis title.
-#' @param rmse_minimum (Optional) a single numeric value indicating the minimum rmse value to display (>= 0).
-#' @param rmse_step (Optional) a single value indicating the spacing between each rmse line. Default produces approximatley 4 lines with "pretty" spacing.
+#'   Default is "Correlation".
+#' @param rmse_minimum (Optional) a single numeric value indicating the minimum rmse line to display (>= 0).
+#'   Default is 0 (meaning the first line to display is at `rmse_step`).
+#' @param rmse_step (Optional) a single value indicating the spacing between each rmse line.
+#'   Default produces approximatley 4 lines with "pretty" spacing.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
+#'   Default is brown dotted lines.
 #' @param rmse_label (Optional) a single character value indicating the text to display for the RMSE axis title.
-#' @param rmse_label_pos (Optional) a single value (0-1) indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
-#' @param sd_maximum (Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). If not provided, the nearest "pretty" value above the maximum standard deviation in the data will be used.
-#' @param sd_step (Optional) a single value indicating the spacing between each standard deviation line. Default produces approximatley 4 lines with "pretty" spacing.
+#'   Default is "Centered RMS Error".
+#' @param rmse_label_pos (Optional) a single value (0-1) indicating the location of the labels for the rmse circles 
+#'   (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
+#'   Default is 10% greater than the minimum correlation.
+#' @param sd_maximum (Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). 
+#'   Default is the nearest "pretty" value above the maximum standard deviation.
+#' @param sd_step (Optional) a single value indicating the spacing between each standard deviation line.
+#'   Default produces approximatley 4 lines with "pretty" spacing.
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
-#' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
+#'   Default is black.
+#' @param sd_linetypes (Optional) a character vector with 2 line types and names `"obs", "other"` indicating the line types of standard deviation arcs.
+#'   Default is dashed for the observed line, dotted for others.
 #' @param sd_label (Optional) a single character value indicating the text to display for the standard deviation axis title.
+#'   Default is "Standard Deviation".
 #' @param plot_padding,labels_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
+#'   Default is 2 for both, likely needs to be adjusted depeding on the figure size and number of facets.
 #' @description
 #' Blah Blah Blah Taylor (2001) Blah Blah Blah 
 #'
@@ -64,7 +90,7 @@
 #'   obs_colour = "brown", obs_shape = 23, obs_size = 6, 
 #'   cor_colour = "orange", cor_linetype = "dotdash",
 #'   rmse_colour = "green", rmse_linetype = "longdash",
-#'   sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
+#'   sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
 #'   )
 #' # Adjust text positioning
 #' taylor_diagram(data, group_by = c(Group = "group"),
@@ -90,7 +116,7 @@ taylor_diagram = function(dat,
     rmse_label = "Centered RMS Error", rmse_label_pos = "default",
     sd_maximum = NULL, sd_step = 'default',
     sd_colour = "black", 
-    sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+    sd_linetypes = c(obs = "dashed", other = "dashed"),
     sd_label = "Standard Deviation",
     plot_padding = 0.5, labels_padding = 2){
   
@@ -238,7 +264,7 @@ make_taylor_diagram_template = function(
     sd_maximum = NULL,
     sd_step = "default",
     sd_colour = "black", 
-    sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+    sd_linetypes = c(obs = "dashed", other = "dashed"),
     padding_limits = 2, 
     nudge_labels = 2){
 
@@ -384,8 +410,9 @@ add_taylor_sd_lines = function(
     taylor, observed,
     min_cor, sd_max = "default",
     colour = "black", 
-    linetypes = c(obs = "dashed", max = "solid", other = "dashed")) {
+    linetypes = c(obs = "dashed", other = "dashed")) {
   
+  linetypes = c(linetypes, max = "solid")
   if (sd_step == "default") {
     lines_at = pretty(seq(0, sd_max, length.out = 4))
     lines_at = lines_at[lines_at < sd_max]
@@ -401,7 +428,7 @@ add_taylor_sd_lines = function(
         r = at,
         linetype = ifelse(at == max(at), 
           "max", ifelse(at == observed$sd[i], "obs", "other")))})
-  linewidths = c(0.5, 0.5, 0.25) |>
+  linewidths = c(0.5, 0.25, 0.5) |>
     stats::setNames(names(linetypes))
   
   taylor +
