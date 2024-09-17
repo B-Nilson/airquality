@@ -73,7 +73,7 @@ Default matches the size/stroke of the observed point.}
 Default uses the nearest 0.1 below the minimum correlation.}
 
 \item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.
-Default is a step of 0.1 (10%).}
+Default is a step of 0.1 (10\%).}
 
 \item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.
 Default is grey long-dash lines.}
@@ -95,7 +95,7 @@ Default is "Centered RMS Error".}
 
 \item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles 
 (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
-Default is 10% greater than the minimum correlation.}
+Default is 10\% greater than the minimum correlation.}
 
 \item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). 
 Default is the nearest "pretty" value above the maximum standard deviation.}

@@ -27,7 +27,7 @@
 #' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). 
 #'   Default uses the nearest 0.1 below the minimum correlation.
 #' @param cor_step (Optional) a single value indicating the spacing between each correlation line.
-#'   Default is a step of 0.1 (10%).
+#'   Default is a step of 0.1 (10\%).
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
 #'   Default is grey long-dash lines.
 #' @param cor_label (Optional) a single character value indicating the text to display for the correlation axis title.
@@ -42,7 +42,7 @@
 #'   Default is "Centered RMS Error".
 #' @param rmse_label_pos (Optional) a single value (0-1) indicating the location of the labels for the rmse circles 
 #'   (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
-#'   Default is 10% greater than the minimum correlation.
+#'   Default is 10\% greater than the minimum correlation.
 #' @param sd_maximum (Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). 
 #'   Default is the nearest "pretty" value above the maximum standard deviation.
 #' @param sd_step (Optional) a single value indicating the spacing between each standard deviation line.
@@ -282,8 +282,7 @@ make_taylor_diagram_template = function(
   if(!is.null(cor_minimum)) min_cor = cor_minimum
 
   y_max = ifelse(min_cor < 0, 
-    sd_max + padding_limits, 
-    get_y(sd_max, min_cor))
+    sd_max, get_y(sd_max, min_cor)) + padding_limits
 
   xlims = c(
     ifelse(min_cor < 0, get_x(sd_max, min_cor), 0),
