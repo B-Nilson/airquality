@@ -344,13 +344,16 @@ make_taylor_diagram_template = function(
       axis.text.y  = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      axis.title.x = ggtext::element_markdown(hjust = x_title_hjust),
-      axis.ticks.length.x = ggplot2::unit(0, "in"),
+      axis.title.x = ggtext::element_markdown(
+        hjust = x_title_hjust),
       legend.direction = "horizontal",
       legend.position = "top",
-      strip.text = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 1, t = 1)),
-      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      panel.border = ggplot2::element_rect(colour = NA, fill = NA),
+      strip.text = ggplot2::element_text(
+        face = "bold", margin = ggplot2::margin(b = 1, t = 1)),
+      plot.background = ggplot2::element_rect(
+        fill = "white", colour = NA),
+      panel.border = ggplot2::element_rect(
+        colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
     ggplot2::labs(
       x = paste0(
