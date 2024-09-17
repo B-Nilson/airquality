@@ -335,11 +335,7 @@ make_taylor_diagram_template = function(
       min_cor = min_cor, 
       sd_max = sd_max)   +
     # Presentation
-    ggplot2::coord_equal(
-      ylim = c(0, y_max + padding_limits),
-      # expand = FALSE, 
-      clip = "off"
-    ) +
+    ggplot2::coord_equal(clip = "off") +
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(c(0, 0.03))) +
     ggplot2::theme_minimal() +
