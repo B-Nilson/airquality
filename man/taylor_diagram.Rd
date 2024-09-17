@@ -15,8 +15,6 @@ taylor_diagram(
   obs_size = 1.5,
   obs_stroke = 1,
   obs_label = "Obs.",
-  obs_label_nudge_x = 0,
-  obs_label_nudge_y = 0,
   mod_colours = "default",
   mod_fills = "default",
   mod_shapes = "default",
@@ -53,8 +51,6 @@ taylor_diagram(
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
 \item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
-
-\item{obs_label_nudge_x, obs_label_nudge_y}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
 
 \item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
 

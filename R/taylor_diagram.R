@@ -12,7 +12,6 @@
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.
 #' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
-#' @param obs_label_nudge_x,obs_label_nudge_y (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
 #' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) a single numeric value indicating the size/stroke of the model data points
 #' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
@@ -77,7 +76,7 @@ taylor_diagram = function(dat,
     group_by,
     facet_by = NULL, facet_rows = 1,
     obs_colour = "purple", obs_shape = 16, obs_size = 1.5, obs_stroke = 1, 
-    obs_label = "Obs.", obs_label_nudge_x = 0, obs_label_nudge_y = 0,
+    obs_label = "Obs.", 
     mod_colours = "default", mod_fills = "default", mod_shapes = "default", 
     mod_size = 1.5, mod_stroke = 1, 
     cor_minimum = NULL, cor_step = 0.1,
@@ -162,9 +161,8 @@ taylor_diagram = function(dat,
       shape = obs_shape, 
       size = obs_size, 
       stroke = obs_stroke, 
-      label = obs_label,
-      label_nudge_x = obs_label_nudge_x, 
-      label_nudge_y = obs_label_nudge_y) |>
+      label = obs_label, 
+      nudge_labels = labels_padding) |>
     add_taylor_modelled_points(
       modelled, 
       group_by = group_by, 
@@ -518,7 +516,7 @@ add_taylor_observed_point = function(
     taylor, observed, 
     shape = 16, size = 1.5, stroke = 1, 
     colour = "purple", label = "Obs.", 
-    label_nudge_x = 0, label_nudge_y = 0){
+    nudge_labels = 2){
   taylor + 
     ggplot2::geom_point(
       data = observed, 
@@ -533,9 +531,9 @@ add_taylor_observed_point = function(
       label = label, 
       colour = colour, 
       size = 3, 
-      nudge_x = label_nudge_x,
-      nudge_y = label_nudge_y,
-      vjust = -1, hjust = -0.05
+      nudge_x = nudge_labels/20,
+      nudge_y = nudge_labels/20,
+      vjust = 0, hjust = 0
     )
 }
 
