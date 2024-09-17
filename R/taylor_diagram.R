@@ -1,5 +1,4 @@
 # TODO: add ability to normalize data for multiple obs sites
-# TODO: handle non-standard data_cols names 
 # TODO: handle non-factor groups
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
@@ -108,13 +107,13 @@ taylor_diagram = function(dat,
     stop(paste("argument `cor_minimum` must be between -1 and 1, not", cor_minimum))
   }
 
-  dat = dplyr::ungroup(dat)
+  dat = dplyr::ungroup(dat) |>
+    dplyr::rename(dplyr::all_of(data_cols)) 
 
   if(!is.null(facet_vars)) dat = dat |>
     dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
   # Get modelled standard deviation and correlation with obs by group(s)
-  modelled = dat |>
-    dplyr::rename(dplyr::all_of(data_cols)) |> 
+  modelled = dat|> 
     dplyr::group_by(.add = TRUE, 
       dplyr::across(dplyr::all_of(unname(groups))))
   modelled = modelled |>
