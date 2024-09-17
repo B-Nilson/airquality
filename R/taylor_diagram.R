@@ -3,7 +3,6 @@
 # TODO: handle non-factor groups
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
-# TODO: handle already grouped data being passed
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -108,6 +107,8 @@ taylor_diagram = function(dat,
   if(!is.null(cor_minimum)) if(cor_minimum < -1 | cor_minimum > 1) {
     stop(paste("argument `cor_minimum` must be between -1 and 1, not", cor_minimum))
   }
+
+  dat = dplyr::ungroup(dat)
 
   if(!is.null(facet_vars)) dat = dat |>
     dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
