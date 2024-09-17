@@ -374,8 +374,6 @@ add_taylor_cor_lines = function(
     label_type = "decimal",
     nudge_labels = 2) {
   draw_at = seq(min_cor, 1, step)
-  dont_label = which(draw_at %in% c(min_cor, 1))
-  label_at = round(draw_at[-dont_label], 2)
 
   # Make locations for the correlation line end points
   cor_lines = lapply_and_bind(draw_at, \(at)
@@ -384,7 +382,7 @@ add_taylor_cor_lines = function(
       yend = get_y(sd_max, at)))
   # Make locations for the label for each cor line
   dist_from_origin = sd_max + nudge_labels * 0.6
-  axis_labels = lapply_and_bind(label_at, \(at)
+  axis_labels = lapply_and_bind(draw_at, \(at)
     observed |> dplyr::mutate(
       x = get_x(dist_from_origin, at),
       y = get_y(dist_from_origin, at),
