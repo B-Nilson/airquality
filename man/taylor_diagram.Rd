@@ -7,7 +7,7 @@
 taylor_diagram(
   dat,
   data_cols = c(obs = "obs", mod = "mod"),
-  groups,
+  group_by,
   facet_vars = NULL,
   facet_rows = 1,
   obs_colour = "purple",
@@ -40,11 +40,11 @@ taylor_diagram(
 )
 }
 \arguments{
-\item{dat}{Paired observation and model data with (at least) all columns in `data_cols` and `groups`.}
+\item{dat}{Paired observation and model data with (at least) all columns in `data_cols` and `group_by`.}
 
 \item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.}
 
-\item{groups}{a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
+\item{group_by}{a character vector with between 1 and 3 column names to use as group_by. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.}
 
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
@@ -52,7 +52,7 @@ taylor_diagram(
 
 \item{obs_label_nudge_x, obs_label_nudge_y}{(Optional) a single numeric value indicating how to position the observed label relative to the observed point.}
 
-\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
+\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
 
 \item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points}
 
@@ -99,12 +99,12 @@ data = as.data.frame(datasets::ChickWeight) |>
   dplyr::rename(obs = `1`, mod = "weight") |>
   dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
 # Basic usage
-taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 # Force 0 on left axis
-taylor_diagram(data, groups = c(Group = "group"), 
+taylor_diagram(data, group_by = c(Group = "group"), 
   cor_minimum = 0, rmse_label_pos = 130)
 # Change colours / shapes
-taylor_diagram(data, groups = c(Group = "group"), 
+taylor_diagram(data, group_by = c(Group = "group"), 
   mod_colours = c("AB" = "pink", "BC" = "blue"), 
   mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
@@ -115,11 +115,11 @@ taylor_diagram(data, groups = c(Group = "group"),
   sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
   )
 # Adjust text positioning
-taylor_diagram(data, groups = c(Group = "group"),
+taylor_diagram(data, group_by = c(Group = "group"),
   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 
 # Save plot
-# gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+# gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 # save_figure(gg, "./test.png")
 }
 }

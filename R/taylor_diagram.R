@@ -4,13 +4,13 @@
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
-#' @param dat Paired observation and model data with (at least) all columns in `data_cols` and `groups`. 
+#' @param dat Paired observation and model data with (at least) all columns in `data_cols` and `group_by`. 
 #' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.
-#' @param groups a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#' @param group_by a character vector with between 1 and 3 column names to use as group_by. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 #' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_nudge_x,obs_label_nudge_y (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
-#' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `groups` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
+#' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) a single numeric value indicating the size/stroke of the model data points
 #' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
 #' @param cor_step (Optional) a single value indicating the spacing between each correlation line.
@@ -46,12 +46,12 @@
 #'   dplyr::rename(obs = `1`, mod = "weight") |>
 #'   dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
 #' # Basic usage
-#' taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 #' # Force 0 on left axis
-#' taylor_diagram(data, groups = c(Group = "group"), 
+#' taylor_diagram(data, group_by = c(Group = "group"), 
 #'   cor_minimum = 0, rmse_label_pos = 130)
 #' # Change colours / shapes
-#' taylor_diagram(data, groups = c(Group = "group"), 
+#' taylor_diagram(data, group_by = c(Group = "group"), 
 #'   mod_colours = c("AB" = "pink", "BC" = "blue"), 
 #'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
 #'   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
@@ -62,16 +62,16 @@
 #'   sd_colour = "purple", sd_linetypes = c(obs = "solid", max = "dotted", other = "dashed")
 #'   )
 #' # Adjust text positioning
-#' taylor_diagram(data, groups = c(Group = "group"),
+#' taylor_diagram(data, group_by = c(Group = "group"),
 #'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 #' 
 #' # Save plot
-#' # gg = taylor_diagram(data, groups = c(Diet = "Diet", Chick = "Chick"))
+#' # gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 #' # save_figure(gg, "./test.png")
 #' }
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
-    groups,
+    group_by,
     facet_vars = NULL,
     facet_rows = 1,
     obs_colour = "purple", 
@@ -117,14 +117,14 @@ taylor_diagram = function(dat,
   dat = dplyr::ungroup(dat) |>
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
-      dplyr::across(dplyr::all_of(unname(groups)), as.factor))
-
+      dplyr::across(dplyr::all_of(unname(group_by)), as.factor))
   if(!is.null(facet_vars)) dat = dat |>
     dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
+  
   # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat|> 
     dplyr::group_by(.add = TRUE, 
-      dplyr::across(dplyr::all_of(unname(groups)))) |>
+      dplyr::across(dplyr::all_of(unname(group_by)))) |>
     dplyr::summarise(.groups = "drop",
       sd  = sd(.data$mod, na.rm = TRUE),
       cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
@@ -163,7 +163,7 @@ taylor_diagram = function(dat,
       label_nudge_y = obs_label_nudge_y) |>
     add_taylor_modelled_points(
       modelled, 
-      groups = groups, 
+      group_by = group_by, 
       stroke = mod_stroke, 
       size = mod_size,
       colours = mod_colours,  
@@ -177,13 +177,13 @@ taylor_diagram = function(dat,
         labeller = "label_both", 
         nrow = facet_rows)
   }
-  while(length(groups) < 3) groups = c(groups, "")
-  if(!is.null(names(groups))) 
+  while(length(group_by) < 3) group_by = c(group_by, "")
+  if(!is.null(names(group_by))) 
     taylor = taylor +
       ggplot2::labs(
-        fill = names(groups)[3], 
-        shape = names(groups)[2], 
-        colour = names(groups)[1])
+        fill = names(group_by)[3], 
+        shape = names(group_by)[2], 
+        colour = names(group_by)[1])
   return(taylor)
 }
 
@@ -553,9 +553,9 @@ get_shape_pairs = function(shapes){
     )
 }
 
-add_taylor_modelled_points = function(taylor, modelled, groups, size = 1.5, stroke = 1, shapes = "default", colours = "default", fills = "default") {
-  # TODO: instead, find matching shapes with fill/no fill and combine last two groups into shape + fill/no fill
-  if(length(groups) == 3) {
+add_taylor_modelled_points = function(taylor, modelled, group_by, size = 1.5, stroke = 1, shapes = "default", colours = "default", fills = "default") {
+  # TODO: instead, find matching shapes with fill/no fill and combine last two group_by into shape + fill/no fill
+  if(length(group_by) == 3) {
     taylor = taylor  + 
       ggplot2::geom_point(
         data   = modelled, 
@@ -563,9 +563,9 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 1.5, stro
         ggplot2::aes(
           x = get_x(sd, cor), 
           y = get_y(sd, cor),
-          colour = .data[[groups[1]]], 
-          shape  = .data[[groups[2]]], 
-          fill   = .data[[groups[3]]])) +
+          colour = .data[[group_by[1]]], 
+          shape  = .data[[group_by[2]]], 
+          fill   = .data[[group_by[3]]])) +
       ggplot2::guides(
         fill = ggplot2::guide_legend(
           override.aes = list(shape = 21)))   
@@ -574,33 +574,33 @@ add_taylor_modelled_points = function(taylor, modelled, groups, size = 1.5, stro
         ggplot2::scale_fill_manual(values = fills) 
     }else taylor = taylor +
       ggplot2::scale_fill_viridis_d()
-  }else if(length(groups) == 2) {
+  }else if(length(group_by) == 2) {
     taylor = taylor  + 
       ggplot2::geom_point(
         data = modelled, 
         size = size, stroke = stroke, 
         ggplot2::aes(x = x, y = y,
-          colour = .data[[groups[1]]], 
-          shape = .data[[groups[2]]]))
-  }else if(length(groups) == 1) {
+          colour = .data[[group_by[1]]], 
+          shape = .data[[group_by[2]]]))
+  }else if(length(group_by) == 1) {
     taylor = taylor  + 
       ggplot2::geom_point(
         data = modelled,
         ggplot2::aes(x = x, y = y, 
-          colour = .data[[groups[1]]]),
+          colour = .data[[group_by[1]]]),
         size = size, stroke = stroke, 
         shape  = ifelse(shapes[1] == "default", 21, shapes[1]))
   }else {
     stop(paste(
-      "groups must have a length between 1 and 3, not", length(groups)))
+      "group_by must have a length between 1 and 3, not", length(group_by)))
   }
 
   if(colours[1] != "default") taylor = taylor +
     ggplot2::scale_colour_manual(values = colours) 
   else taylor = taylor +
     ggplot2::scale_colour_brewer(palette = "Dark2") 
-  # Add shapes scales if 2+ groups
-  if(length(groups > 1)) {
+  # Add shapes scales if 2+ group_by
+  if(length(group_by > 1)) {
     if(shapes[1] != "default") taylor = taylor +
       ggplot2::scale_shape_manual(values = shapes)
     else taylor = taylor +
