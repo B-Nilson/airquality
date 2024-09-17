@@ -1,5 +1,4 @@
 # TODO: add ability to normalize data for multiple obs sites
-# TODO: handle non-factor groups
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
 
@@ -108,21 +107,22 @@ taylor_diagram = function(dat,
   }
 
   dat = dplyr::ungroup(dat) |>
-    dplyr::rename(dplyr::all_of(data_cols)) 
+    dplyr::rename(dplyr::all_of(data_cols)) |>
+    dplyr::mutate(
+      dplyr::across(dplyr::all_of(unname(groups)), as.factor))
 
   if(!is.null(facet_vars)) dat = dat |>
     dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
   # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat|> 
     dplyr::group_by(.add = TRUE, 
-      dplyr::across(dplyr::all_of(unname(groups))))
-  modelled = modelled |>
+      dplyr::across(dplyr::all_of(unname(groups)))) |>
     dplyr::summarise(.groups = "drop",
-      sd = sd(.data$mod, na.rm = TRUE),
+      sd  = sd(.data$mod, na.rm = TRUE),
       cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
       x = get_x(.data$sd, .data$cor), 
       y = get_y(.data$sd, .data$cor))
-  # Get observed standard deviation
+  # Get observed standard deviation (by facet_vars if provided)
   observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
 
   # Make Taylor Diagram
