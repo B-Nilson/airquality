@@ -460,6 +460,7 @@ add_taylor_sd_lines = function(
       values = linetypes, guide = "none")  +
     ggplot2::scale_linewidth_manual(
       values = linewidths, guide = "none") +
+    # TODO: get facet pairs in order added, get obs sd for each pair, add to global var whenever labels checked, don't label if global index of obs sd within x% of label
     ggplot2::scale_x_continuous(
       breaks = if(min_cor > -1) lines_at else c(-lines_at, lines_at),
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) 
@@ -580,9 +581,7 @@ add_taylor_observed_point = function(
       label = label, 
       colour = colour, 
       size = 3, 
-      nudge_x = nudge_labels/20,
-      nudge_y = nudge_labels/20,
-      vjust = 0, hjust = 0
+      vjust = 2, hjust = 0.5
     )
 }
 
