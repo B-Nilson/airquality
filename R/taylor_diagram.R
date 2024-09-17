@@ -7,6 +7,7 @@
 # TODO: place observed label on other side of axis
 # TODO: add end labels and test spacing
 # TODO: add description documentation
+# TODO: dark mode option
 # TODO: "solar diagram" variant? (see https://doi.org/10.1016%2Fj.geoderma.2021.115332)
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
