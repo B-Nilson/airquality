@@ -19,6 +19,7 @@
 #'   The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 #'   If names are present they will be used as the corresponding legend titles.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
+#'   If names are present they will be used as the corresponding facet titles.
 #'   Default (NULL) does not facet the plot.
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
 #'   Default is a single row.
@@ -159,8 +160,11 @@ taylor_diagram = function(dat,
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
       dplyr::across(dplyr::all_of(unname(group_by)), as.factor))
-  if(!is.null(facet_by)) dat = dat |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_by))))
+  if(!is.null(facet_by)) {
+    dat = dat |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(facet_by)))
+    if(!is.null(names(facet_by))) facet_by = names(facet_by) 
+  }
   
   # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat|> 

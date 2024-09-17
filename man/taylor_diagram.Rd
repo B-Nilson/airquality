@@ -22,7 +22,7 @@ taylor_diagram(
   mod_stroke = 1,
   cor_minimum = NULL,
   cor_step = 0.1,
-  cor_colour = "gray60",
+  cor_colour = "grey30",
   cor_linetype = "longdash",
   cor_label = "Correlation",
   rmse_minimum = 0,
@@ -51,6 +51,7 @@ The first value will be used for `colour`, the second (if present) will be used 
 If names are present they will be used as the corresponding legend titles.}
 
 \item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
+If names are present they will be used as the corresponding facet titles.
 Default (NULL) does not facet the plot.}
 
 \item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
