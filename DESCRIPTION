@@ -17,6 +17,7 @@ Imports:
     dplyr,
     ggforce,
     ggplot2,
+    ggtext,
     httr,
     lubridate,
     lutz,

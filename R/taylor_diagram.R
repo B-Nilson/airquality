@@ -89,7 +89,7 @@ taylor_diagram = function(dat,
     obs_label = "Obs.", 
     obs_label_nudge_x = 0, 
     obs_label_nudge_y = 0,
-    cor_colour = "grey", 
+    cor_colour = "gray60", 
     cor_linetype = "longdash",
     cor_step = 0.1,
     rmse_colour = "brown", 
@@ -239,7 +239,7 @@ make_taylor_diagram_template = function(
   x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1, 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
 
   if(rmse_label_pos == "default") 
-    rmse_label_pos = ifelse(min_cor < 0, 0.2, 0.8)
+    rmse_label_pos = (min_cor + 1) / 2 * 0.9
   
   taylor = ggplot2::ggplot() |>
     add_taylor_cor_lines(
@@ -277,9 +277,8 @@ make_taylor_diagram_template = function(
       clip = "off"
     ) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(c(0, NA))) +
+      expand = ggplot2::expansion(c(0, 0.03))) +
     ggplot2::scale_x_continuous(
-      # expand = ggplot2::expansion(0.01),
       breaks = if(min_cor > -1) sd_lines_at else c(-sd_lines_at, sd_lines_at),
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) +
     ggplot2::theme_minimal() +
@@ -288,16 +287,19 @@ make_taylor_diagram_template = function(
       axis.text.y  = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      plot.caption = ggplot2::element_text(colour = rmse_colour, hjust = x_title_hjust),
-      axis.title.x = ggplot2::element_text(hjust = x_title_hjust),
+      axis.title.x = ggtext::element_markdown(hjust = x_title_hjust),
       axis.ticks.length.x = ggplot2::unit(0, "in"),
       legend.direction = "horizontal",
       legend.position = "top",
-      strip.text = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 1)),
+      strip.text = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 1, t = 1)),
       plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       panel.border = ggplot2::element_rect(colour = NA, fill = NA),
       panel.grid   = ggplot2::element_blank())  +
-    ggplot2::labs(x = "Standard Deviation")
+    ggplot2::labs(
+      x = paste0(
+        "Standard Deviation","<br>",
+        "<span style='color: ", rmse_colour, "; font-size: 8pt;'>",
+        "Centered RMS Error", "</span>"))
   return(taylor)
 }
 
@@ -305,7 +307,7 @@ make_taylor_diagram_template = function(
 add_taylor_cor_lines = function(
     taylor, observed,
     min_cor = 0, sd_max, 
-    colour = "grey", 
+    colour = "gray70", 
     linetype = "solid",
     axis_label = "Correlation",
     step = 0.1, 
@@ -320,12 +322,6 @@ add_taylor_cor_lines = function(
     observed |> dplyr::mutate(
       xend = get_x(sd_max, at),
       yend = get_y(sd_max, at)))
-  # Make location for the label for the axis title
-  dist_from_origin = sd_max + nudge_labels * 1.2
-  mean_cor = mean(c(min_cor, 1))
-  axis_title = observed |> dplyr::mutate(
-    x = get_x(dist_from_origin, mean_cor),
-    y = get_y(dist_from_origin, mean_cor))
   # Make locations for the label for each cor line
   dist_from_origin = sd_max + nudge_labels * 0.6
   axis_labels = lapply_and_bind(label_at, \(at)
@@ -334,6 +330,12 @@ add_taylor_cor_lines = function(
       y = get_y(dist_from_origin, at),
       label = ifelse(label_type == "percent", 
         paste(at * 100, "%"), at)))
+  # Make location for the label for the axis title
+  dist_from_origin = dist_from_origin + nudge_labels * 0.75
+  mean_cor = mean(c(min_cor, 1))
+  axis_title = observed |> dplyr::mutate(
+    x = get_x(dist_from_origin, mean_cor),
+    y = get_y(dist_from_origin, mean_cor))
 
   taylor + 
     # Correlation lines
@@ -349,8 +351,8 @@ add_taylor_cor_lines = function(
       ggplot2::aes(.data$x, .data$y, label = .data$label)) + 
     # Correlation axis label
     ggplot2::geom_text(
-      data = axis_title,  size = 3,
-      colour = colour, fontface = "bold", 
+      data = axis_title,  size = 4,
+      colour = colour, 
       ggplot2::aes(.data$x, .data$y),
       label = axis_label, 
       angle = mean_cor * -90) 
@@ -409,7 +411,7 @@ add_taylor_axes_lines = function(taylor, observed, min_cor, sd_max) {
 
 add_taylor_rmse_lines = function(taylor, observed, sd_max, min_cor, y_max, 
     label_pos = 0.6,
-    n = 5, colour = "brown", linetype = "dotted", axis_label = "Centered RMS Error", 
+    n = 5, colour = "brown", linetype = "dotted", 
     nudge_labels, padding_limits) {
   rms_lines = make_taylor_rmse_lines(
     observed = observed, sd_max = sd_max, min_cor = min_cor, 
@@ -428,8 +430,9 @@ add_taylor_rmse_lines = function(taylor, observed, sd_max, min_cor, y_max,
       size = 3, # TODO: make input
       ggplot2::aes(x, y, label = label), 
       vjust = 0, colour = colour,
-      nudge_y = nudge_labels * -1) +
-    ggplot2::labs(caption = axis_label)
+      nudge_y = nudge_labels * -0.6,
+      nudge_x = nudge_labels * 
+        ifelse(label_pos <= 0.4, 0.6, ifelse(label_pos >= 0.6, -0.6, 0)))
 }
 
 make_taylor_rmse_lines = function(
