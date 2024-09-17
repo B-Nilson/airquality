@@ -11,20 +11,23 @@
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.
 #' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
-#' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
+#' @param obs_label (Optional) a single character value indicating the text to display for the observed point.
 #' @param mod_colours,mod_shapes,mod_fills (Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)
 #' @param mod_size,mod_stroke (Optional) a single numeric value indicating the size/stroke of the model data points
 #' @param cor_minimum (Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). If not provided, the nearest 0.1 below the minimum correlation in the data will be used.
 #' @param cor_step (Optional) a single value indicating the spacing between each correlation line.
 #' @param cor_colour,cor_linetype (Optional) a single value indicating the colour/linetype of the correlation grid lines.
+#' @param cor_label (Optional) a single character value indicating the text to display for the correlation axis title.
 #' @param rmse_minimum (Optional) a single numeric value indicating the minimum rmse value to display (>= 0).
 #' @param rmse_step (Optional) a single value indicating the spacing between each rmse line. Default produces approximatley 4 lines with "pretty" spacing.
 #' @param rmse_colour,rmse_linetype (Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
-#' @param rmse_label_pos (Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
+#' @param rmse_label (Optional) a single character value indicating the text to display for the RMSE axis title.
+#' @param rmse_label_pos (Optional) a single value (0-1) indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
 #' @param sd_maximum (Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). If not provided, the nearest "pretty" value above the maximum standard deviation in the data will be used.
 #' @param sd_step (Optional) a single value indicating the spacing between each standard deviation line. Default produces approximatley 4 lines with "pretty" spacing.
 #' @param sd_colour (Optional) a single value indicating the colour of the standard deviation arcs.
 #' @param sd_linetypes (Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.
+#' @param sd_label (Optional) a single character value indicating the text to display for the standard deviation axis title.
 #' @param plot_padding,labels_padding (Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
 #' @description
 #' Blah Blah Blah Taylor (2001) Blah Blah Blah 
@@ -81,12 +84,14 @@ taylor_diagram = function(dat,
     mod_size = 1.5, mod_stroke = 1, 
     cor_minimum = NULL, cor_step = 0.1,
     cor_colour = "gray60", cor_linetype = "longdash",
+    cor_label = "Correlation",
     rmse_minimum = 0, rmse_step = 'default', 
     rmse_colour = "brown", rmse_linetype = "dotted", 
-    rmse_label_pos = "default",
+    rmse_label = "Centered RMS Error", rmse_label_pos = "default",
     sd_maximum = NULL, sd_step = 'default',
     sd_colour = "black", 
     sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+    sd_label = "Standard Deviation",
     plot_padding = 0.5, labels_padding = 2){
   
   # Handle inputs
@@ -265,6 +270,7 @@ make_taylor_diagram_template = function(
       sd_max = sd_max, 
       colour = cor_colour, 
       linetype = cor_linetype, 
+      axis_label = cor_label,
       nudge_labels = nudge_labels) |> 
     add_taylor_sd_lines(
       min_cor = min_cor, 
@@ -312,9 +318,9 @@ make_taylor_diagram_template = function(
       panel.grid   = ggplot2::element_blank())  +
     ggplot2::labs(
       x = paste0(
-        "Standard Deviation","<br>",
+        sd_label,"<br>",
         "<span style='color: ", rmse_colour, "; font-size: 8pt;'>",
-        "Centered RMS Error", "</span>"))
+        rmse_label, "</span>"))
   return(taylor)
 }
 

@@ -24,15 +24,18 @@ taylor_diagram(
   cor_step = 0.1,
   cor_colour = "gray60",
   cor_linetype = "longdash",
+  cor_label = "Correlation",
   rmse_minimum = 0,
   rmse_step = "default",
   rmse_colour = "brown",
   rmse_linetype = "dotted",
+  rmse_label = "Centered RMS Error",
   rmse_label_pos = "default",
   sd_maximum = NULL,
   sd_step = "default",
   sd_colour = "black",
   sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
+  sd_label = "Standard Deviation",
   plot_padding = 0.5,
   labels_padding = 2
 )
@@ -50,7 +53,7 @@ taylor_diagram(
 
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point}
 
-\item{obs_label}{(Optional) a single character value indicating the text to displat for the observed point.}
+\item{obs_label}{(Optional) a single character value indicating the text to display for the observed point.}
 
 \item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by` where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`)}
 
@@ -62,13 +65,17 @@ taylor_diagram(
 
 \item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.}
 
+\item{cor_label}{(Optional) a single character value indicating the text to display for the correlation axis title.}
+
 \item{rmse_minimum}{(Optional) a single numeric value indicating the minimum rmse value to display (>= 0).}
 
 \item{rmse_step}{(Optional) a single value indicating the spacing between each rmse line. Default produces approximatley 4 lines with "pretty" spacing.}
 
 \item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.}
 
-\item{rmse_label_pos}{(Optional) a single value (0-1)indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).}
+\item{rmse_label}{(Optional) a single character value indicating the text to display for the RMSE axis title.}
+
+\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).}
 
 \item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). If not provided, the nearest "pretty" value above the maximum standard deviation in the data will be used.}
 
@@ -77,6 +84,8 @@ taylor_diagram(
 \item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.}
 
 \item{sd_linetypes}{(Optional) a character vector with 3 line types and names `"obs", "max", "other"` indicating the line types of standard deviation arcs.}
+
+\item{sd_label}{(Optional) a single character value indicating the text to display for the standard deviation axis title.}
 
 \item{plot_padding, labels_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.}
 }
