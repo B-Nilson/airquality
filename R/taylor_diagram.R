@@ -396,7 +396,7 @@ add_taylor_cor_lines = function(
       data = cor_lines, linewidth = 0.25,
       linetype = linetype, colour = colour,
       ggplot2::aes(x = 0, y = 0, 
-        xend = xend, yend = yend)) +
+        xend = .data$xend, yend = .data$yend)) +
     # Labels for each correlation line
     ggplot2::geom_text(
       data = axis_labels, size = 3, 
@@ -444,9 +444,9 @@ add_taylor_sd_lines = function(
       colour = colour,
       ggplot2::aes(
         x0 = 0, y0 = 0, r = r, 
-        start = start, end = end, 
-        linewidth = linetype,
-        linetype = linetype)) +
+        start = .data$start, end = .data$end, 
+        linewidth = .data$linetype,
+        linetype = .data$linetype)) +
     ggplot2::scale_linetype_manual(
       values = linetypes, guide = "none")  +
     ggplot2::scale_linewidth_manual(
@@ -467,7 +467,7 @@ add_taylor_axes_lines = function(taylor, observed, min_cor, sd_max) {
   taylor +
     ggplot2::geom_segment(
       data = axes_lines,
-      ggplot2::aes(xend = xend, yend = yend),
+      ggplot2::aes(xend = .data$xend, yend = .data$yend),
       x = 0, y = 0)
 }
 
@@ -488,13 +488,13 @@ add_taylor_rmse_lines = function(
     # Draw semicircles originating at the observed point for centered RMS error
     ggplot2::geom_line(
       data = rms_lines$lines,
-      ggplot2::aes(x, y, group = rmse_values),
+      ggplot2::aes(.data$x, .data$y, group = .data$rmse_values),
       linetype = linetype, colour = colour) +
     # Line labels
     ggplot2::geom_text(
       data = rms_lines$labels, 
       size = 3, # TODO: make input
-      ggplot2::aes(x, y, label = label), 
+      ggplot2::aes(.data$x, .data$y, label = .data$label), 
       vjust = 1, hjust = ifelse(label_pos <= 0.4, 0, ifelse(label_pos >= 0.6, 1, 0)),
       colour = colour,
       nudge_y = nudge_labels * -0.1,
@@ -603,8 +603,8 @@ add_taylor_modelled_points = function(taylor, modelled, group_by, size = 1.5, st
         data   = modelled, 
         size   = size, stroke = stroke,
         ggplot2::aes(
-          x = get_x(sd, cor), 
-          y = get_y(sd, cor),
+          x = get_x(.data$sd, .data$cor), 
+          y = get_y(.data$sd, .data$cor),
           colour = .data[[group_by[1]]], 
           shape  = .data[[group_by[2]]], 
           fill   = .data[[group_by[3]]])) +
@@ -621,14 +621,14 @@ add_taylor_modelled_points = function(taylor, modelled, group_by, size = 1.5, st
       ggplot2::geom_point(
         data = modelled, 
         size = size, stroke = stroke, 
-        ggplot2::aes(x = x, y = y,
+        ggplot2::aes(x = .data$x, y = .data$y,
           colour = .data[[group_by[1]]], 
           shape = .data[[group_by[2]]]))
   }else if(length(group_by) == 1) {
     taylor = taylor  + 
       ggplot2::geom_point(
         data = modelled,
-        ggplot2::aes(x = x, y = y, 
+        ggplot2::aes(x = .data$x, y = .data$y, 
           colour = .data[[group_by[1]]]),
         size = size, stroke = stroke, 
         shape  = ifelse(shapes[1] == "default", 21, shapes[1]))
