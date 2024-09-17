@@ -2,6 +2,12 @@
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
 # TODO: handle sd_maximum < sd_observed
+# TODO: add sd_units argument
+# TODO: add y axis (with same labels as x) if min_cor == 0
+# TODO: place observed label on other side of axis
+# TODO: add end labels and test spacing
+# TODO: add description documentation
+# TODO: "solar diagram" variant? (see https://doi.org/10.1016%2Fj.geoderma.2021.115332)
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
