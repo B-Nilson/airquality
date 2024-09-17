@@ -307,6 +307,7 @@ make_taylor_diagram_template = function(
     add_taylor_sd_lines(
       min_cor = min_cor, 
       sd_max = sd_max,
+      sd_step = sd_step,
       observed = observed,
       colour = sd_colour, 
       linetypes = sd_linetypes) |>
@@ -414,7 +415,8 @@ add_taylor_cor_lines = function(
 # Add standard deviation arcs to Taylor Diagrams
 add_taylor_sd_lines = function(
     taylor, observed,
-    min_cor, sd_max = "default",
+    min_cor, sd_max,
+    sd_step = "default",
     colour = "black", 
     linetypes = c(obs = "dashed", other = "dashed")) {
   
