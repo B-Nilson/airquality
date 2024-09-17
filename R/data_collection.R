@@ -96,7 +96,7 @@ get_station_data = function(locations, date_range, buffer_dist = 10,
       on_error(return = NULL, msg = TRUE,
         data_funs[[net]][[src]]$meta(dates) |>
         dplyr::mutate(source = src, network = net)))) |>
-    dplyr::filter(!is.na(lat), !is.na(lng)) # TODO: handle in each meta function instead
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) # TODO: handle in each meta function instead
 
   # Filter to stations in our search area
   stations = sf::st_as_sf(stations, coords = c("lng", "lat"), crs = "WGS84")
