@@ -1,6 +1,7 @@
 # TODO: add ability to normalize data for multiple obs sites
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
+# TODO: handle sd_maximum < sd_observed
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -74,35 +75,20 @@
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     group_by,
-    facet_by = NULL,
-    facet_rows = 1,
-    obs_colour = "purple", 
-    obs_shape = 16, 
-    obs_size = 1.5, 
-    obs_stroke = 1, 
-    obs_label = "Obs.", 
-    obs_label_nudge_x = 0, 
-    obs_label_nudge_y = 0,
-    mod_colours = "default", 
-    mod_fills = "default", 
-    mod_shapes = "default", 
-    mod_size = 1.5, 
-    mod_stroke = 1, 
-    cor_minimum = NULL, 
-    cor_step = 0.1,
-    cor_colour = "gray60", 
-    cor_linetype = "longdash",
-    rmse_minimum = 0, 
-    rmse_step = 'default',
-    rmse_colour = "brown", 
-    rmse_linetype = "dotted", 
+    facet_by = NULL, facet_rows = 1,
+    obs_colour = "purple", obs_shape = 16, obs_size = 1.5, obs_stroke = 1, 
+    obs_label = "Obs.", obs_label_nudge_x = 0, obs_label_nudge_y = 0,
+    mod_colours = "default", mod_fills = "default", mod_shapes = "default", 
+    mod_size = 1.5, mod_stroke = 1, 
+    cor_minimum = NULL, cor_step = 0.1,
+    cor_colour = "gray60", cor_linetype = "longdash",
+    rmse_minimum = 0, rmse_step = 'default', 
+    rmse_colour = "brown", rmse_linetype = "dotted", 
     rmse_label_pos = "default",
-    sd_maximum = NULL,
-    sd_step = 'default',
+    sd_maximum = NULL, sd_step = 'default',
     sd_colour = "black", 
     sd_linetypes = c(obs = "dashed", max = "solid", other = "dashed"),
-    plot_padding = 0.5, 
-    labels_padding = 2){
+    plot_padding = 0.5, labels_padding = 2){
   
   # Handle inputs
   if(is.null(names(data_cols))) names(data_cols) = c("obs", "mod")
