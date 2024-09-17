@@ -102,10 +102,18 @@ taylor_diagram = function(dat,
     plot_padding = 0.5, 
     labels_padding = 2){
   
+  # Handle inputs
   if(!is.null(cor_minimum)) if(cor_minimum < -1 | cor_minimum > 1) {
     stop(paste("argument `cor_minimum` must be between -1 and 1, not", cor_minimum))
   }
+  if(rmse_minimum < 0) {
+    stop(paste("argument `rmse_minimum` must be greater than or equal to 0, not", rmse_minimum))
+  }
+  if(!is.null(sd_maximum)) if(sd_maximum <= 0) {
+    stop(paste("argument `sd_maximum` must be greater than 0, not", sd_maximum))
+  }
 
+  # Cleanup input data
   dat = dplyr::ungroup(dat) |>
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
