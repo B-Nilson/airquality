@@ -3,6 +3,7 @@
 # TODO: handle non-factor groups
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
+# TODO: handle already grouped data being passed
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
