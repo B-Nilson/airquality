@@ -5,8 +5,10 @@
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
 #' @param dat Paired observation and model data with (at least) all columns in `data_cols` and `group_by`. 
-#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values. Must have names `"obs","mod"`.
-#' @param group_by a character vector with between 1 and 3 column names to use as group_by. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#' @param data_cols (Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
+#' @param group_by a character vector with between 1 and 3 column names to use as groups. The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
+#' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
+#' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. Default is a single row.
 #' @param obs_colour,obs_shape,obs_size,obs_stroke (Optional) a single value indicating the colour/shape/size/stroke of the observed data point
 #' @param obs_label (Optional) a single character value indicating the text to displat for the observed point.
 #' @param obs_label_nudge_x,obs_label_nudge_y (Optional) a single numeric value indicating how to position the observed label relative to the observed point.
@@ -72,7 +74,7 @@
 taylor_diagram = function(dat, 
     data_cols = c(obs = "obs", mod = "mod"), 
     group_by,
-    facet_vars = NULL,
+    facet_by = NULL,
     facet_rows = 1,
     obs_colour = "purple", 
     obs_shape = 16, 
@@ -103,6 +105,10 @@ taylor_diagram = function(dat,
     labels_padding = 2){
   
   # Handle inputs
+  if(is.null(names(data_cols))) names(data_cols) = c("obs", "mod")
+  if(length(data_cols) != 2) {
+    stop(paste("argument `data_cols` must have a length of two, not", length(data_cols)))
+  }
   if(!is.null(cor_minimum)) if(cor_minimum < -1 | cor_minimum > 1) {
     stop(paste("argument `cor_minimum` must be between -1 and 1, not", cor_minimum))
   }
@@ -118,8 +124,8 @@ taylor_diagram = function(dat,
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
       dplyr::across(dplyr::all_of(unname(group_by)), as.factor))
-  if(!is.null(facet_vars)) dat = dat |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_vars))))
+  if(!is.null(facet_by)) dat = dat |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_by))))
   
   # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat|> 
@@ -130,13 +136,13 @@ taylor_diagram = function(dat,
       cor = cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
       x = get_x(.data$sd, .data$cor), 
       y = get_y(.data$sd, .data$cor))
-  # Get observed standard deviation (by facet_vars if provided)
+  # Get observed standard deviation (by facet_by if provided)
   observed = dat |> dplyr::summarise(sd = sd(.data$obs, na.rm = TRUE))
 
   # Make Taylor Diagram
   taylor = make_taylor_diagram_template(
       observed, modelled, 
-      facet_vars = facet_vars,
+      facet_by = facet_by,
       cor_minimum = cor_minimum,
       cor_step = cor_step,
       cor_colour = cor_colour,
@@ -169,10 +175,10 @@ taylor_diagram = function(dat,
       colours = mod_colours,  
       fills = mod_fills, 
       shapes = mod_shapes)
-  if(!is.null(facet_vars)){
+  if(!is.null(facet_by)){
     taylor = taylor + 
       ggplot2::facet_wrap(
-        facets = facet_vars, 
+        facets = facet_by, 
         axes = "all",
         labeller = "label_both", 
         nrow = facet_rows)
@@ -218,7 +224,7 @@ taylor_diagram = function(dat,
 
 make_taylor_diagram_template = function(
     observed, modelled, 
-    facet_vars = NULL,
+    facet_by = NULL,
     cor_minimum = NULL, 
     cor_step = 0.1,
     cor_colour = "grey", 
