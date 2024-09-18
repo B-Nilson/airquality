@@ -300,7 +300,7 @@ make_taylor_diagram_template = function(
     ifelse(min_cor < 0, get_x(sd_max, min_cor), 0),
     sd_max)
   
-  x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1, 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
+  x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1 |  !is.null(facet_by), 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
 
   if(rmse_label_pos == "default") 
     rmse_label_pos = (min_cor + 1) / 2 * 0.9
