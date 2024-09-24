@@ -270,7 +270,7 @@ convert_units = function(x, in_unit, out_unit, y = NULL){
   base_unit = base_units[[conversion_type]][1]
   is_base_unit = in_unit == base_unit | out_unit == base_unit
   if (!is_base_unit) {
-    x = converter(x, in_unit, base_unit)
+    x = convert_units(x, in_unit, base_unit)
     in_unit = base_unit
   }
   
