@@ -230,10 +230,10 @@ all_conversions = list(
   ),
   trigonometry = list(
     DEGREES_to_RADIANS = function(degrees) {
-      degrees * pi / 180 %% (2 * pi)
+      (degrees * pi / 180) %% (2 * pi)
     },
     RADIANS_to_DEGREES = function(radians) {
-      radians * 180 / pi %% 360
+      (radians * 180 / pi) %% 360
     }
   )
 
