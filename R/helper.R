@@ -227,6 +227,14 @@ all_conversions = list(
     },
     DEWPOINT_to_RH = function(Td, T)
       saturation_vapour_pressure(Td) / saturation_vapour_pressure(T) * 100
+  ),
+  trigonometry = list(
+    DEGREES_to_RADIANS = function(degrees) {
+      degrees * pi / 180
+    },
+    RADIANS_to_DEGREES = function(radians) {
+      radians * 180 / pi
+    }
   )
 
 )
@@ -247,9 +255,11 @@ saturation_vapour_pressure = function(temperature_c){
 
 converter = function(x, conversions, in_unit, out_unit, y = NULL){
   # Get the common unit used in all conversions (the first one)
-  base_unit = stringr::str_split(names(conversions)[1], "_to_")[[1]][1]
+  base_units = lapply(all_conversions, \(conversions)
+    stringr::str_split(names(conversions)[1], "_to_")[[1]][1])
+
   # If converting to/from the base unit
-  if (in_unit == base_unit | out_unit == base_unit) {
+  if (in_unit %in% base_units | out_unit %in% base_units) {
     # Use a conversion
     conversion = paste0(in_unit, "_to_", out_unit)
   }else{ # If base unit not involved
@@ -258,11 +268,15 @@ converter = function(x, conversions, in_unit, out_unit, y = NULL){
     # Then use a conversion from the base unit
     conversion = paste0(base_unit, "_to_", out_unit)
   }
-  # Convert values and return
+  conversion_fun = all_conversions |>
+    lapply(\(conversions) 
+      conversions[[conversion]])
+  conversion_fun = conversion_fun[[
+    which(sapply(conversion_fun, \(x) !is.null(x)))[1]]]
   if(is.null(y)){
-    x = conversions[[conversion]](x)
+    x = conversion_fun(x)
   }else{
-    x = conversions[[conversion]](x, y)
+    x = conversion_fun(x, y)
   }
   return(x)
 }
