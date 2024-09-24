@@ -253,43 +253,31 @@ saturation_vapour_pressure = function(temperature_c){
   return(e) # units hPa (millibars)
 }
 
-converter = function(x, conversions, in_unit, out_unit, y = NULL){
-  # Get the common unit used in all conversions (the first one)
-  base_units = lapply(all_conversions, \(conversions)
-    stringr::str_split(names(conversions)[1], "_to_")[[1]][1])
-
-  # If converting to/from the base unit
-  if (in_unit %in% base_units | out_unit %in% base_units) {
-    # Use a conversion
-    conversion = paste0(in_unit, "_to_", out_unit)
-  }else{ # If base unit not involved
-    # First convert to the base unit
-    x = converter(x, in_unit, base_unit)
-    # Then use a conversion from the base unit
-    conversion = paste0(base_unit, "_to_", out_unit)
-  }
-  conversion_fun = all_conversions |>
-    lapply(\(conversions) 
-      conversions[[conversion]])
-  conversion_fun = conversion_fun[[
-    which(sapply(conversion_fun, \(x) !is.null(x)))[1]]]
-  if(is.null(y)){
-    x = conversion_fun(x)
-  }else{
-    x = conversion_fun(x, y)
-  }
-  return(x)
-}
-
 convert_units = function(x, in_unit, out_unit, y = NULL){
-  # Force inputs to uppercase
+  # Handle inputs
   in_unit = toupper(in_unit)
   out_unit = toupper(out_unit)
-  # Handle matching in/out units
-  if (in_unit == out_unit) return(x)
+  if (in_unit == out_unit) 
+    return(x)
 
-  # Handle conversion
-  converter(x, all_conversions, in_unit, out_unit, y)
+  # Determine conversion type
+  all_units = all_conversions |> lapply(\(conversions)
+    stringr::str_split(names(conversions), "_to_") |> unlist())
+  conversion_type = sapply(all_units, \(x) in_unit %in% x)
+  conversion_type = names(conversion_type[conversion_type])[1]
+
+  # Convert into shared base units if needed
+  base_unit = base_units[[conversion_type]][1]
+  is_base_unit = in_unit == base_unit | out_unit == base_unit
+  if (!is_base_unit) {
+    x = converter(x, in_unit, base_unit)
+    in_unit = base_unit
+  }
+  
+  # Apply conversion to desired units
+  conversion = paste0(in_unit, "_to_", out_unit)
+  conversion_fun = all_conversions[[conversion_type]][[conversion]]
+  if(is.null(y)) conversion_fun(x) else conversion_fun(x, y)
 }
 
 lapply_and_bind = function(...){
