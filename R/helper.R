@@ -267,7 +267,7 @@ convert_units = function(x, in_unit, out_unit, y = NULL){
   conversion_type = names(conversion_type[conversion_type])[1]
 
   # Convert into shared base units if needed
-  base_unit = base_units[[conversion_type]][1]
+  base_unit = all_units[[conversion_type]][1]
   is_base_unit = in_unit == base_unit | out_unit == base_unit
   if (!is_base_unit) {
     x = convert_units(x, in_unit, base_unit)
