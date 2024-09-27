@@ -23,21 +23,21 @@ wind_rose = function(
     alpha = 0.7) {
   if(is.null(names(data_cols))) names(data_cols) = c("ws", "wd")
   # Get wind speed bins
-  max_ws = max(obs[[data_cols[1]]], na.rm = TRUE) + 0.01
+  max_ws = max(obs[[data_cols[1]]], na.rm = TRUE)
   speed_bins  = unique(c(seq(ws_min, max_ws, by = ws_step), max_ws))
   # Get counts/percents for each ws bin at eac hcardinal direction
   rose_data = obs |>
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::filter(ws >= ws_min) |>
     dplyr::mutate(
-      ws_bin = ws |> cut(breaks = speed_bins, right = FALSE),
+      ws_bin = ws |> cut(breaks = speed_bins, include.lowest = TRUE),
       wd_bin = .data$wd |> get_cardinal_direction()) |>
     dplyr::group_by(ws_bin, wd_bin, dplyr::across(dplyr::all_of(groups))) |> 
     dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
     dplyr::group_by(dplyr::across(dplyr::all_of(groups))) |>
-    dplyr::mutate(p = n / sum(n), .groups = "drop") |>
-    tidyr::complete(wd_bin = factor(levels(wd_bin), levels(wd_bin)), ws_bin) |>
-    dplyr::mutate(p = swap_na(p, 0))
+    dplyr::mutate(p = n / sum(n)) |>
+    tidyr::complete(wd_bin = factor(levels(wd_bin), levels(wd_bin))) |>
+    dplyr::mutate(p = swap_na(p, 0), ws_bin = swap_na(ws_bin, 1) |> factor(labels = levels(ws_bin)))
   # Determine most frequent direction
   most_frequent = rose_data |>
     dplyr::group_by(wd_bin) |>
@@ -51,7 +51,8 @@ wind_rose = function(
     ggplot2::geom_hline(yintercept = most_frequent$p[1] * 1.05) + 
     ggplot2::scale_fill_viridis_d(direction = -1) +
     ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
-    ggplot2::scale_x_discrete(labels = \(x) ifelse(nchar(x) < 3, x, "")) +
+    ggplot2::scale_x_discrete(
+      labels = \(x) ifelse(nchar(x) < 3, x, "")) +
     ggplot2::scale_y_continuous(
       limits = c(0, NA),
       expand = ggplot2::expansion(c(0, 0.02)),
@@ -61,14 +62,14 @@ wind_rose = function(
       y = ggplot2::element_blank())
   # Add data and basic theming
   gg +
-    ggplot2::geom_bar( 
+    ggplot2::geom_col(
       ggplot2::aes(
         x = .data$wd_bin, y = .data$p, 
         fill = forcats::fct_rev(.data$ws_bin)), 
-      colour = "black", alpha = alpha,
-      stat = "identity") +
+      colour = "black", alpha = alpha) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
+      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
       legend.direction = "horizontal", 
       legend.position = "top") +
     ggplot2::labs(fill = "Wind Speed (m/s)")
