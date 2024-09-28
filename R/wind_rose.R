@@ -84,7 +84,7 @@ wind_rose = function(
       ggplot2::aes(
         x = .data$wd_bin, y = .data$p, 
         fill = forcats::fct_rev(.data$ws_bin)), 
-      colour = "black", alpha = alpha) +
+      colour = "black", alpha = alpha, width = 1) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       legend.direction = "horizontal",
