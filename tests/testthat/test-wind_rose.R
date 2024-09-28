@@ -4,6 +4,6 @@ test_that("no errors thrown", {
     dplyr::select("date_local", "site_id", "ws_1hr_ms", "wd_1hr_degrees") |>
     dplyr::distinct()
   expect_no_error(expect_no_warning(
-    wind_rose(obs)))
+    wind_rose(obs, groups = "site_id")))
   # save_figure(wind_rose(obs), "./test.png")
 })
