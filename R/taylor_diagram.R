@@ -64,7 +64,7 @@
 #'   Default is 2 for both, likely needs to be adjusted depeding on the figure size and number of facets.
 #' @description
 #' Blah Blah Blah Taylor (2001) Blah Blah Blah 
-#'
+#' TODO: Add description
 #' @return
 #' A ggplot object of your taylor diagram.
 #' @family Data Visualisation

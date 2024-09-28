@@ -38,6 +38,7 @@ gg = ggplot2::ggplot() +
 }
 \seealso{
 Other Data Visualisation: 
-\code{\link{taylor_diagram}()}
+\code{\link{taylor_diagram}()},
+\code{\link{wind_rose}()}
 }
 \concept{Data Visualisation}

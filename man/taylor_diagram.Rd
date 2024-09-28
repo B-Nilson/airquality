@@ -120,7 +120,8 @@ Default is 2 for both, likely needs to be adjusted depeding on the figure size a
 A ggplot object of your taylor diagram.
 }
 \description{
-Blah Blah Blah Taylor (2001) Blah Blah Blah
+Blah Blah Blah Taylor (2001) Blah Blah Blah 
+TODO: Add description
 }
 \examples{
 \dontrun{
@@ -161,7 +162,8 @@ taylor_diagram(data, group_by = c(Group = "group"),
 }
 \seealso{
 Other Data Visualisation: 
-\code{\link{save_figure}()}
+\code{\link{save_figure}()},
+\code{\link{wind_rose}()}
 }
 \concept{Data Visualisation}
 \concept{Model Validation}
