@@ -84,9 +84,14 @@ wind_rose = function(
       colour = "black", alpha = alpha) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      legend.direction = "horizontal", 
-      legend.position = "top") +
+      legend.direction = "horizontal",
+      legend.position = "bottom",
+      strip.text = ggplot2::element_text(size = 12,
+        face = "italic", margin = ggplot2::margin(b = 5)),
+      plot.background = ggplot2::element_rect(
+        fill = "white", colour = "black"),
+      panel.border = ggplot2::element_rect(
+        colour = NA, fill = NA)) +
     ggplot2::labs(fill = "Wind Speed (m/s)")
 }
 
