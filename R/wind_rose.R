@@ -75,6 +75,9 @@ wind_rose = function(
     ggplot2::labs(
       x = ggplot2::element_blank(),
       y = ggplot2::element_blank())
+  if (!is.null(groups)) gg = gg + 
+    ggplot2::facet_wrap(stats::setNames(names(groups), names(groups)),
+      labeller = "label_both")
   # Add data and basic theming
   gg +
     ggplot2::geom_col(
