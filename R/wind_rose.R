@@ -49,7 +49,7 @@ wind_rose = function(
       wd_bin = get_cardinal_direction(.data$wd, wd_step = wd_step)) |>
     dplyr::group_by(ws_bin, wd_bin, dplyr::across(dplyr::all_of(groups))) |> 
     dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(groups))) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(names(groups)))) |>
     dplyr::mutate(p = n / sum(n)) |>
     tidyr::complete(wd_bin = factor(levels(wd_bin), levels(wd_bin))) |>
     dplyr::mutate(p = swap_na(p, 0), ws_bin = swap_na(ws_bin, 1) |> factor(labels = levels(ws_bin)))
