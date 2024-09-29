@@ -215,15 +215,9 @@ taylor_diagram = function(dat,
       size = mod_size,
       colours = mod_colours,  
       fills = mod_fills, 
-      shapes = mod_shapes)
-  if(!is.null(facet_by)){
-    taylor = taylor + 
-      ggplot2::facet_wrap(
-        facets = facet_by, 
-        axes = "all",
-        labeller = "label_both", 
-        nrow = facet_rows)
-  }
+      shapes = mod_shapes) |>
+    facet_plot(by = facet_by, rows = facet_rows)
+  
   while(length(group_by) < 3) group_by = c(group_by, "")
   if(!is.null(names(group_by))) 
     taylor = taylor +
@@ -304,7 +298,9 @@ make_taylor_diagram_template = function(
   if(rmse_label_pos == "default") 
     rmse_label_pos = (min_cor + 1) / 2 * 0.9
   
+  blank = ggplot2::element_blank()
   taylor = ggplot2::ggplot() |>
+    add_default_theme() |>
     add_taylor_cor_lines(
       observed = observed,
       min_cor = min_cor, 
@@ -341,24 +337,14 @@ make_taylor_diagram_template = function(
     ggplot2::coord_equal(clip = "off") +
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(c(0, 0.03))) +
-    ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.line.y  = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      axis.title.x = ggtext::element_markdown(
-        hjust = x_title_hjust),
-      legend.direction = "horizontal",
-      legend.position = "bottom",
-      legend.box.spacing = ggplot2::unit("2", "pt"),
-      strip.text = ggplot2::element_text(size = 12,
-        face = "italic", margin = ggplot2::margin(b = 5)),
-      plot.background = ggplot2::element_rect(
-        fill = "white", colour = "black"),
-      panel.border = ggplot2::element_rect(
-        colour = NA, fill = NA),
-      panel.grid   = ggplot2::element_blank())  +
+      axis.line.y  = blank,
+      axis.ticks.y = blank,
+      axis.text.y  = blank,
+      axis.title.y = blank,
+      panel.grid   = blank,
+      axis.title.x = ggtext::element_markdown(hjust = x_title_hjust),
+      legend.box.spacing = ggplot2::unit("2", "pt"))  +
     ggplot2::labs(
       x = paste0(
         sd_label,"<br>",

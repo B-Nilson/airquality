@@ -1,7 +1,6 @@
 # TODO: handle other units
 # TODO: handle fill palletes
 # TODO: Present amount of missing values inside center of plot
-# TODO: make shared theme function for airquality plots
 # TODO: add data date range to subtitle or caption
 
 #' Create wind rose diagrams to assess patterns in wind speed and direction
@@ -97,7 +96,9 @@ wind_rose = function(
     dplyr::filter(.data$p == max(.data$p, na.rm = TRUE))
 
   # Make base plot
-  gg = ggplot2::ggplot(rose_data) +
+  gg = ggplot2::ggplot(rose_data) |>
+    facet_plot(by = facet_by, rows = facet_rows) |>
+    add_default_theme() +
     # Radial plot with internal y axis labels and a black border
     ggplot2::coord_radial(r.axis.inside = TRUE,
        start = -convert_units(wd_step / 2, "degrees", "radians")) +
@@ -122,33 +123,14 @@ wind_rose = function(
   if(fills[1] != "default") {
     gg = gg + ggplot2::scale_fill_manual(values = rev(fills)) 
   }else gg = gg + ggplot2::scale_fill_viridis_d(direction = -1)
-
-  # Handle facetting
-  if (!is.null(facet_by)) gg = gg + 
-    ggplot2::facet_wrap(
-      facet_by,
-      nrow = facet_rows,
-      labeller = "label_both")
   
-  # Add data and basic theming
-  gg +
-    ggplot2::geom_col(
-      ggplot2::aes(
-        x = .data$wd_bin,
-        y = .data$p, 
-        fill = forcats::fct_rev(.data$ws_bin)), 
-      colour = "black", alpha = alpha, width = 1) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(
-      legend.direction = "horizontal",
-      legend.position = "bottom",
-      strip.text = ggplot2::element_text(
-        size = 12, face = "italic", 
-        margin = ggplot2::margin(b = 5)),
-      plot.background = ggplot2::element_rect(
-        fill = "white", colour = "black"),
-      panel.border = ggplot2::element_rect(
-        colour = NA, fill = NA))
+  # Add data
+  gg + ggplot2::geom_col(
+    ggplot2::aes(
+      x = .data$wd_bin,
+      y = .data$p, 
+      fill = forcats::fct_rev(.data$ws_bin)), 
+    colour = colour, alpha = alpha, width = bar_width, ...)
 }
 
 cut_wind_speed = function(ws, ws_min = 0, ws_step = 2) {
