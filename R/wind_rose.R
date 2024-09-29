@@ -1,7 +1,7 @@
 # TODO: handle other units
-# TODO: handle fill palletes
 # TODO: Present amount of missing values inside center of plot
 # TODO: add data date range to subtitle or caption
+# TODO: handle when a facet doesn't have any data
 
 #' Create wind rose diagrams to assess patterns in wind speed and direction
 #'
@@ -22,8 +22,14 @@
 #'   Default is 16.
 #' @param fills (Optional) a vector of colours to use for the wind speed breaks
 #'   Default uses "good looking" colours
+#' @param colour (Optional) a single character value indicating the colour to use for the .
+#'   Default is a step of 2 m/s.
 #' @param alpha (Optional) a single value from 0-1 indicating the alpha (opacity) of the wind speed fill colours.
 #'   Default is a step of 2 m/s.
+#' @param bar_width (Optional) a single value from 0-1 indicating the relative width of the observation data bars.
+#'   Default is full width (=1).
+#' @param ... Any other named argument will be passed on to ggplot2::geom_col() when drawing the observation data
+#'   (See ?ggplot2::geom_col for possible arguments)
 #' @description
 #' TODO: Add description
 #' @return
@@ -57,7 +63,9 @@ wind_rose = function(
     ws_min = 0,
     ws_step = 2,
     fills = "default",
-    alpha = 0.8) {
+    colour = "black",
+    alpha = 0.8,
+    bar_width = 1) {
   # Handle inputs
   if(is.null(names(data_cols))) names(data_cols) = c("ws", "wd")
   if(is.null(names(facet_by))) names(facet_by) = facet_by
@@ -72,8 +80,8 @@ wind_rose = function(
     dplyr::all_of(c(data_cols, facet_by))) 
   facet_by = names(facet_by)
 
-  # Get counts/percents for each ws bin at eac hcardinal direction
   rose_data = rose_data |>
+    # Drop too low of winds and make ws/wd bins
     dplyr::filter(.data$ws >= ws_min) |>
     dplyr::mutate(
       ws_bin = cut_wind_speed(.data$ws, ws_min = ws_min, ws_step = ws_step),
@@ -110,7 +118,7 @@ wind_rose = function(
     ggplot2::scale_y_continuous(
       limits = c(0, NA),
       expand = ggplot2::expansion(c(0, 0.02)),
-      labels = \(x) ifelse(x > 0, round(x * 100) |> paste0("%"), ""))  +
+      labels = \(x) ifelse(x > 0, paste0(round(x * 100), "%"), ""))  +
     # Reverse legend colour order (to match reversed bar and colour order)
     ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
     # Add/remove titles
@@ -119,9 +127,10 @@ wind_rose = function(
       y = ggplot2::element_blank(),
       fill = "Wind Speed (m/s)")
   
+  # TODO: handle fill palletes
   # Add fill colours
   if(fills[1] != "default") {
-    gg = gg + ggplot2::scale_fill_manual(values = rev(fills)) 
+    gg = gg + ggplot2::scale_fill_manual(values = rev(fills)) # TODO: test this works as expected
   }else gg = gg + ggplot2::scale_fill_viridis_d(direction = -1)
   
   # Add data
@@ -137,9 +146,9 @@ cut_wind_speed = function(ws, ws_min = 0, ws_step = 2) {
   max_ws = max(ws, na.rm = TRUE)
   speed_bins  = seq(ws_min, max_ws, by = ws_step) |> 
     c(max_ws) |> unique()
-  n_bins = length(speed_bins)
   speed_labels = paste(
-    speed_bins, "-", dplyr::lead(speed_bins))[1:(n_bins - 1)]
+    speed_bins, "-", dplyr::lead(speed_bins))[
+      1:(length(speed_bins) - 1)]
 
   cut(ws, include.lowest = TRUE, 
     breaks = speed_bins, labels = speed_labels)

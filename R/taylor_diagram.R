@@ -74,7 +74,7 @@
 #' @examples
 #' \dontrun{
 #' # Make test data
-#' data = as.data.frame(datasets::ChickWeight) |>
+#' data = as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
 #'   dplyr::filter(.data$Chick == 1) |>
 #'   tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
 #'   dplyr::full_join(
@@ -86,12 +86,12 @@
 #' # Basic usage
 #' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 #' # Force 0 on left axis
-#' taylor_diagram(data, group_by = c(Group = "group"), 
-#'   cor_minimum = 0, rmse_label_pos = 130)
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
+#'   cor_minimum = 0, rmse_label_pos = 130) # TODO: fix this
 #' # Change colours / shapes
-#' taylor_diagram(data, group_by = c(Group = "group"), 
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
 #'   mod_colours = c("AB" = "pink", "BC" = "blue"), 
-#'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
+#'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"), # TODO: update this
 #'   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
 #'   mod_size = 4, mod_stroke = 6,
 #'   obs_colour = "brown", obs_shape = 23, obs_size = 6, 
@@ -100,7 +100,7 @@
 #'   sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
 #'   )
 #' # Adjust text positioning
-#' taylor_diagram(data, group_by = c(Group = "group"),
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"),
 #'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 #' 
 #' # Save plot
