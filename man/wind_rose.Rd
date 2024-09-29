@@ -13,7 +13,9 @@ wind_rose(
   ws_min = 0,
   ws_step = 2,
   fills = "default",
-  alpha = 0.8
+  colour = "black",
+  alpha = 0.8,
+  bar_width = 1
 )
 }
 \arguments{
@@ -42,8 +44,17 @@ Default is a step of 2 m/s.}
 \item{fills}{(Optional) a vector of colours to use for the wind speed breaks
 Default uses "good looking" colours}
 
+\item{colour}{(Optional) a single character value indicating the colour to use for the .
+Default is a step of 2 m/s.}
+
 \item{alpha}{(Optional) a single value from 0-1 indicating the alpha (opacity) of the wind speed fill colours.
 Default is a step of 2 m/s.}
+
+\item{bar_width}{(Optional) a single value from 0-1 indicating the relative width of the observation data bars.
+Default is full width (=1).}
+
+\item{...}{Any other named argument will be passed on to ggplot2::geom_col() when drawing the observation data
+(See ?ggplot2::geom_col for possible arguments)}
 }
 \value{
 A ggplot object of your wind rose.
