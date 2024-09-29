@@ -65,7 +65,8 @@ wind_rose = function(
     fills = "default",
     colour = "black",
     alpha = 0.8,
-    bar_width = 1) {
+    bar_width = 1,
+    ...) {
   # Handle inputs
   if(is.null(names(data_cols))) names(data_cols) = c("ws", "wd")
   if(is.null(names(facet_by))) names(facet_by) = facet_by
