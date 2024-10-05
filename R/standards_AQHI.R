@@ -66,9 +66,9 @@ AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose
   if (have_all_3_pol) {
     obs = obs |>
       dplyr::mutate(
-        pm25_rolling_3hr = roll_mean_3hr_min_2(.data$pm25),
-        no2_rolling_3hr  = roll_mean_3hr_min_2(.data$no2),
-        o3_rolling_3hr   = roll_mean_3hr_min_2(.data$o3),
+        pm25_rolling_3hr = roll_mean(.data$pm25, 3, min_n = 2, digits = 1),
+        no2_rolling_3hr  = roll_mean(.data$no2, 3, min_n = 2, digits = 1),
+        o3_rolling_3hr   = roll_mean(.data$o3, 3, min_n = 2, digits = 1),
         AQHI = cut(AQHI_formula(
           pm25_rolling_3hr = .data$pm25_rolling_3hr, 
           no2_rolling_3hr = .data$no2_rolling_3hr, 

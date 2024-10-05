@@ -86,33 +86,27 @@ AQI = function(dates = Sys.time(),
     tidyr::complete(date = seq(min(dates), max(dates), "1 hours"))
 
   ## Make additional running averages if needed
-  # If no non-NA o3_8hr_ppm values provided, but 1hr ozone is provided
   if(all_missing$o3_8hr_ppm & !all_missing$o3_1hr_ppm){
     # Calculate o3_8hr_ppm from o3_1hr_ppm
-    dat$o3_8hr_ppm = roll_mean_8hr_min_5(dat$o3_1hr_ppm)
+    dat$o3_8hr_ppm = roll_mean(dat$o3_1hr_ppm, 8, min_n = 5)
   }
-  # If no non-NA pm25_24hr_ugm3 values provided, but 1hr pm25 is provided
   if(all_missing$pm25_24hr_ugm3 & !all_missing$pm25_1hr_ugm3){
     # Calculate pm25_24hr_ugm3 from pm25_1hr_ugm3
-    dat$pm25_24hr_ugm3 = roll_mean_24hr_min_15(dat$pm25_1hr_ugm3)
+    dat$pm25_24hr_ugm3 = roll_mean(dat$pm25_1hr_ugm3, 24, min_n = 15)
   }
-  # If no non-NA pm10_24hr_ugm3 values provided, but 1hr pm10 is provided
   if(all_missing$pm10_24hr_ugm3 & !all_missing$pm10_1hr_ugm3){
     # Calculate pm10_24hr_ugm3 from pm10_1hr_ugm3
-    dat$pm10_24hr_ugm3 = roll_mean_24hr_min_15(dat$pm10_1hr_ugm3)
+    dat$pm10_24hr_ugm3 = roll_mean(dat$pm10_1hr_ugm3, 24, min_n = 15)
   }
-  # If no non-NA co_8hr_ppm values provided, but 1hr CO is provided
   if(all_missing$co_8hr_ppm & !all_missing$co_1hr_ppm){
     # Calculate co_8hr_ppm from co_1hr_ppm
-    dat$co_8hr_ppm = roll_mean_8hr_min_5(dat$co_1hr_ppm)
+    dat$co_8hr_ppm = roll_mean(dat$co_1hr_ppm, 8, min_n = 5)
   }
-  # If non-NA so2_1hr_ppb values provided
   if(!all_missing$so2_1hr_ppb){
     # Calculate so2_24hr_ppb from so2_1hr_ppb
-    dat$so2_24hr_ppb = roll_mean_24hr_min_15(dat$so2_1hr_ppb)
+    dat$so2_24hr_ppb = roll_mean(dat$so2_1hr_ppb, 24, min_n = 15)
     all_missing$so2_24hr_ppb = FALSE
   }else{
-    # Otherwise use NA
     dat$so2_24hr_ppb = NA
     all_missing$so2_24hr_ppb = TRUE
   }
