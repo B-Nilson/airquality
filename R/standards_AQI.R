@@ -52,12 +52,13 @@
 #' @examples
 #' AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #' AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
-AQI = function(dates = Sys.time(),
-               o3_8hr_ppm = NA, o3_1hr_ppm = NA,
-               pm25_24hr_ugm3 = NA, pm25_1hr_ugm3 = NA,
-               pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
-               co_8hr_ppm = NA, co_1hr_ppm = NA,
-               so2_1hr_ppb = NA, no2_1hr_ppb = NA){
+AQI = function(
+    dates = Sys.time(),
+    o3_8hr_ppm = NA    , o3_1hr_ppm = NA,
+    pm25_24hr_ugm3 = NA, pm25_1hr_ugm3 = NA,
+    pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
+    co_8hr_ppm = NA    , co_1hr_ppm = NA,
+    so2_1hr_ppb = NA   , no2_1hr_ppb = NA){
   # TODO: Reference https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
 
   # Determine which pollutants provided as input
