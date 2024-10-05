@@ -1,43 +1,3 @@
-#' Save a ggplot2 figure 
-#'
-#' @param gg a single ggplot object you would like to save.
-#' @param out_path A single character value indicating where to save the plot to (i.e. "./plots/my_figure_name.png")
-#' @param taller A single numeric value indicating how many inches to add/remove to the output plot height. Default makes a 5"x6.5" image.
-#' @param page_width A single numeric value indicating the width of the page (minus margins) in inches that the image is intended for.
-#' @param quality A single character value equal to "high" (dpi = 300), "medium" (dpi = 200), or "low" (dpi = 100) indicating the output quality of the figure. 
-#'   Text sizes may need to be adjusted for differenct quality levels. 
-#' @param ... (Optional) addition arguments passed on to ggplot2::ggsave()
-#'
-#' @description
-#' This provides a relatviley simple way to quickly save a ggplot figure as a png etc. 
-#' `save_figure()` is a wrapper around `ggplot2::ggsave()` that saves a high quality 5x7 figure by default. 
-#' You can adjust the sizing from there by changing `wider` and `taller`,
-#' and you can quickly adjust to a lower quality if file size matters.
-#'
-#' @family Data Visualisation
-#'
-#' @return invisible NULL
-#' @export
-#'
-#' @examples
-#' gg = ggplot2::ggplot() + 
-#'   ggplot2::geom_line(
-#'     data = data.frame(x = 1:100, y = (0:99)^2), 
-#'     ggplot2::aes(x, y))
-#' # save_figure(gg, "./test.png", taller = 1)
-save_figure = function(gg, out_path, taller = 0, page_width = 6.5, quality = "high", ...) {
-  dpi = if (quality == "high") 300 else if (quality == "medium") 200 else 100
-  ggplot2::ggsave(
-    filename = out_path,
-    plot = gg, 
-    width = page_width, 
-    height = 5 + taller,
-    units = "in", 
-    dpi = dpi,
-    ...)
-  return(invisible(NULL))
-}
-
 # Specify return value if code fails
 on_error = function(..., return = NULL, msg = FALSE){
   tryCatch(..., error = \(e){
@@ -227,6 +187,14 @@ all_conversions = list(
     },
     DEWPOINT_to_RH = function(Td, T)
       saturation_vapour_pressure(Td) / saturation_vapour_pressure(T) * 100
+  ),
+  trigonometry = list(
+    DEGREES_to_RADIANS = function(degrees) {
+      (degrees * pi / 180) %% (2 * pi)
+    },
+    RADIANS_to_DEGREES = function(radians) {
+      (radians * 180 / pi) %% 360
+    }
   )
 
 )
@@ -245,37 +213,31 @@ saturation_vapour_pressure = function(temperature_c){
   return(e) # units hPa (millibars)
 }
 
-converter = function(x, conversions, in_unit, out_unit, y = NULL){
-  # Get the common unit used in all conversions (the first one)
-  base_unit = stringr::str_split(names(conversions)[1], "_to_")[[1]][1]
-  # If converting to/from the base unit
-  if (in_unit == base_unit | out_unit == base_unit) {
-    # Use a conversion
-    conversion = paste0(in_unit, "_to_", out_unit)
-  }else{ # If base unit not involved
-    # First convert to the base unit
-    x = converter(x, in_unit, base_unit)
-    # Then use a conversion from the base unit
-    conversion = paste0(base_unit, "_to_", out_unit)
-  }
-  # Convert values and return
-  if(is.null(y)){
-    x = conversions[[conversion]](x)
-  }else{
-    x = conversions[[conversion]](x, y)
-  }
-  return(x)
-}
-
 convert_units = function(x, in_unit, out_unit, y = NULL){
-  # Force inputs to uppercase
+  # Handle inputs
   in_unit = toupper(in_unit)
   out_unit = toupper(out_unit)
-  # Handle matching in/out units
-  if (in_unit == out_unit) return(x)
+  if (in_unit == out_unit) 
+    return(x)
 
-  # Handle conversion
-  converter(x, all_conversions, in_unit, out_unit, y)
+  # Determine conversion type
+  all_units = all_conversions |> lapply(\(conversions)
+    stringr::str_split(names(conversions), "_to_") |> unlist())
+  conversion_type = sapply(all_units, \(x) in_unit %in% x)
+  conversion_type = names(conversion_type[conversion_type])[1]
+
+  # Convert into shared base units if needed
+  base_unit = all_units[[conversion_type]][1]
+  is_base_unit = in_unit == base_unit | out_unit == base_unit
+  if (!is_base_unit) {
+    x = convert_units(x, in_unit, base_unit)
+    in_unit = base_unit
+  }
+  
+  # Apply conversion to desired units
+  conversion = paste0(in_unit, "_to_", out_unit)
+  conversion_fun = all_conversions[[conversion_type]][[conversion]]
+  if(is.null(y)) conversion_fun(x) else conversion_fun(x, y)
 }
 
 lapply_and_bind = function(...){
