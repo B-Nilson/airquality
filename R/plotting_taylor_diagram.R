@@ -2,6 +2,12 @@
 # TODO: test patchworking
 # TODO: add ggrepel labels if desired
 # TODO: handle sd_maximum < sd_observed
+# TODO: add sd_units argument
+# TODO: add y axis (with same labels as x) if min_cor == 0
+# TODO: place observed label on other side of axis
+# TODO: add description documentation
+# TODO: dark mode option
+# TODO: "solar diagram" variant? (see https://doi.org/10.1016%2Fj.geoderma.2021.115332)
 
 #' Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
 #'
@@ -12,6 +18,7 @@
 #'   The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 #'   If names are present they will be used as the corresponding legend titles.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
+#'   If names are present they will be used as the corresponding facet titles.
 #'   Default (NULL) does not facet the plot.
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
 #'   Default is a single row.
@@ -57,7 +64,7 @@
 #'   Default is 2 for both, likely needs to be adjusted depeding on the figure size and number of facets.
 #' @description
 #' Blah Blah Blah Taylor (2001) Blah Blah Blah 
-#'
+#' TODO: Add description
 #' @return
 #' A ggplot object of your taylor diagram.
 #' @family Data Visualisation
@@ -67,7 +74,7 @@
 #' @examples
 #' \dontrun{
 #' # Make test data
-#' data = as.data.frame(datasets::ChickWeight) |>
+#' data = as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
 #'   dplyr::filter(.data$Chick == 1) |>
 #'   tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
 #'   dplyr::full_join(
@@ -79,12 +86,12 @@
 #' # Basic usage
 #' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 #' # Force 0 on left axis
-#' taylor_diagram(data, group_by = c(Group = "group"), 
-#'   cor_minimum = 0, rmse_label_pos = 130)
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
+#'   cor_minimum = 0, rmse_label_pos = 130) # TODO: fix this
 #' # Change colours / shapes
-#' taylor_diagram(data, group_by = c(Group = "group"), 
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
 #'   mod_colours = c("AB" = "pink", "BC" = "blue"), 
-#'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"),
+#'   mod_fills = c("EGG" = "white", "PA" = "darkgrey"), # TODO: update this
 #'   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
 #'   mod_size = 4, mod_stroke = 6,
 #'   obs_colour = "brown", obs_shape = 23, obs_size = 6, 
@@ -93,7 +100,7 @@
 #'   sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
 #'   )
 #' # Adjust text positioning
-#' taylor_diagram(data, group_by = c(Group = "group"),
+#' taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"),
 #'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
 #' 
 #' # Save plot
@@ -109,7 +116,7 @@ taylor_diagram = function(dat,
     mod_colours = "default", mod_fills = "default", mod_shapes = "default", 
     mod_size = 1.5, mod_stroke = 1, 
     cor_minimum = NULL, cor_step = 0.1,
-    cor_colour = "gray60", cor_linetype = "longdash",
+    cor_colour = "grey30", cor_linetype = "longdash",
     cor_label = "Correlation",
     rmse_minimum = 0, rmse_step = 'default', 
     rmse_colour = "brown", rmse_linetype = "dotted", 
@@ -152,8 +159,11 @@ taylor_diagram = function(dat,
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
       dplyr::across(dplyr::all_of(unname(group_by)), as.factor))
-  if(!is.null(facet_by)) dat = dat |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(unname(facet_by))))
+  if(!is.null(facet_by)) {
+    dat = dat |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(facet_by)))
+    if(!is.null(names(facet_by))) facet_by = names(facet_by) 
+  }
   
   # Get modelled standard deviation and correlation with obs by group(s)
   modelled = dat|> 
@@ -205,15 +215,9 @@ taylor_diagram = function(dat,
       size = mod_size,
       colours = mod_colours,  
       fills = mod_fills, 
-      shapes = mod_shapes)
-  if(!is.null(facet_by)){
-    taylor = taylor + 
-      ggplot2::facet_wrap(
-        facets = facet_by, 
-        axes = "all",
-        labeller = "label_both", 
-        nrow = facet_rows)
-  }
+      shapes = mod_shapes) |>
+    facet_plot(by = facet_by, rows = facet_rows)
+  
   while(length(group_by) < 3) group_by = c(group_by, "")
   if(!is.null(names(group_by))) 
     taylor = taylor +
@@ -258,7 +262,7 @@ make_taylor_diagram_template = function(
     facet_by = NULL,
     cor_minimum = NULL, 
     cor_step = 0.1,
-    cor_colour = "grey", 
+    cor_colour = "grey30", 
     cor_linetype = "solid", 
     cor_label = "Correlation",
     rmse_minimum = 0, 
@@ -289,12 +293,14 @@ make_taylor_diagram_template = function(
     ifelse(min_cor < 0, get_x(sd_max, min_cor), 0),
     sd_max)
   
-  x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1, 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
+  x_title_hjust = ifelse(min_cor >= 0 | min_cor == -1 |  !is.null(facet_by), 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))) 
 
   if(rmse_label_pos == "default") 
     rmse_label_pos = (min_cor + 1) / 2 * 0.9
   
+  blank = ggplot2::element_blank()
   taylor = ggplot2::ggplot() |>
+    add_default_theme() |>
     add_taylor_cor_lines(
       observed = observed,
       min_cor = min_cor, 
@@ -328,27 +334,17 @@ make_taylor_diagram_template = function(
       min_cor = min_cor, 
       sd_max = sd_max)   +
     # Presentation
-    ggplot2::coord_equal(
-      ylim = c(0, y_max + padding_limits),
-      # expand = FALSE, 
-      clip = "off"
-    ) +
+    ggplot2::coord_equal(clip = "off") +
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(c(0, 0.03))) +
-    ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.line.y  = ggplot2::element_blank(),
-      axis.text.y  = ggplot2::element_blank(),
-      axis.title.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
+      axis.line.y  = blank,
+      axis.ticks.y = blank,
+      axis.text.y  = blank,
+      axis.title.y = blank,
+      panel.grid   = blank,
       axis.title.x = ggtext::element_markdown(hjust = x_title_hjust),
-      axis.ticks.length.x = ggplot2::unit(0, "in"),
-      legend.direction = "horizontal",
-      legend.position = "top",
-      strip.text = ggplot2::element_text(face = "bold", margin = ggplot2::margin(b = 1, t = 1)),
-      plot.background = ggplot2::element_rect(fill = "white", colour = NA),
-      panel.border = ggplot2::element_rect(colour = NA, fill = NA),
-      panel.grid   = ggplot2::element_blank())  +
+      legend.box.spacing = ggplot2::unit("2", "pt"))  +
     ggplot2::labs(
       x = paste0(
         sd_label,"<br>",
@@ -361,31 +357,27 @@ make_taylor_diagram_template = function(
 add_taylor_cor_lines = function(
     taylor, observed,
     min_cor = 0, sd_max, 
-    colour = "gray70", 
+    colour = "grey30", 
     linetype = "solid",
     axis_label = "Correlation",
     step = 0.1, 
     label_type = "decimal",
     nudge_labels = 2) {
   draw_at = seq(min_cor, 1, step)
-  dont_label = which(draw_at %in% c(min_cor, 1))
-  label_at = round(draw_at[-dont_label], 2)
 
-  # Make locations for the correlation line end points
+  # Make locations for the correlation line end points and labels
+  label_dist = sd_max + nudge_labels * 0.6
   cor_lines = lapply_and_bind(draw_at, \(at)
     observed |> dplyr::mutate(
       xend = get_x(sd_max, at),
-      yend = get_y(sd_max, at)))
-  # Make locations for the label for each cor line
-  dist_from_origin = sd_max + nudge_labels * 0.6
-  axis_labels = lapply_and_bind(label_at, \(at)
-    observed |> dplyr::mutate(
-      x = get_x(dist_from_origin, at),
-      y = get_y(dist_from_origin, at),
-      label = ifelse(label_type == "percent", 
-        paste(at * 100, "%"), at)))
+      yend = get_y(sd_max, at),
+      x_label = get_x(label_dist, at),
+      y_label = get_y(label_dist, at),
+      label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
+        paste(at * 100, "%"), at)
+    ))
   # Make location for the label for the axis title
-  dist_from_origin = dist_from_origin + nudge_labels * 0.75
+  dist_from_origin = label_dist + nudge_labels * 0.75
   mean_cor = mean(c(min_cor, 1))
   axis_title = observed |> dplyr::mutate(
     x = get_x(dist_from_origin, mean_cor),
@@ -400,13 +392,14 @@ add_taylor_cor_lines = function(
         xend = .data$xend, yend = .data$yend)) +
     # Labels for each correlation line
     ggplot2::geom_text(
-      data = axis_labels, size = 3, 
-      colour = colour, fontface = "bold", 
-      ggplot2::aes(.data$x, .data$y, label = .data$label)) + 
+      data = cor_lines, size = 3, 
+      ggplot2::aes(
+        .data$x_label, .data$y_label, label = .data$label),
+      colour = ggplot2::theme_get()$axis.text$colour) + 
     # Correlation axis label
     ggplot2::geom_text(
       data = axis_title,  size = 4,
-      colour = colour, 
+      colour = "black", 
       ggplot2::aes(.data$x, .data$y),
       label = axis_label, 
       angle = mean_cor * -90) 
@@ -452,6 +445,7 @@ add_taylor_sd_lines = function(
       values = linetypes, guide = "none")  +
     ggplot2::scale_linewidth_manual(
       values = linewidths, guide = "none") +
+    # TODO: get facet pairs in order added, get obs sd for each pair, add to global var whenever labels checked, don't label if global index of obs sd within x% of label
     ggplot2::scale_x_continuous(
       breaks = if(min_cor > -1) lines_at else c(-lines_at, lines_at),
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))) 
@@ -572,9 +566,7 @@ add_taylor_observed_point = function(
       label = label, 
       colour = colour, 
       size = 3, 
-      nudge_x = nudge_labels/20,
-      nudge_y = nudge_labels/20,
-      vjust = 0, hjust = 0
+      vjust = 2, hjust = 0.5
     )
 }
 
