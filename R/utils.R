@@ -45,8 +45,8 @@ swap = function(x, what, with) {
     x[x == what] = with
   return(x)
 }
-swap_na = function(x, val = -99) swap(x, NA, val)
-swap_inf = function(x, val = NA) swap(x, Inf, val)
+swap_na = function(x, with = -99) swap(x, NA, with)
+swap_inf = function(x, with = NA) swap(x, Inf, with)
 
 # General function for loading in data quickly and quietly
 # TODO: document
