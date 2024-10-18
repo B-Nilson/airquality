@@ -202,7 +202,7 @@ get_airnow_stations = function(dates = Sys.time(), use_sf = FALSE){
     # Drop duplicated entries
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
     # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))

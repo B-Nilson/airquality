@@ -62,8 +62,7 @@ read_data = function(..., showProgress = FALSE, verbose = FALSE, data.table = FA
 
 # Wrapper for looking up timezone of locations from lat/lng coords
 # TODO: document
-# TODO: rename to get_timezone()
-get_station_timezone = function(lng, lat, method = "accurate"){
+get_timezone = function(lng, lat, method = "accurate"){
   lutz::tz_lookup_coords(lat, lng, method = method)
 }
 

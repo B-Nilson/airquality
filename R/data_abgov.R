@@ -51,7 +51,7 @@ get_abgov_stations = function(use_sf = FALSE){
       ifelse(col %in% c("Not Available", "Unknown"), NA, col))) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
     # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))

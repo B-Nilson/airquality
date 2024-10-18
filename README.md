@@ -35,7 +35,7 @@ lapply(data_file_paths,
   \(fp) on_error(read.csv(fp), return = NULL))
 
 # lookup function for location time zones [under development]
-get_station_timezone(lat = 51.9357, lng = -170.3222)
+get_timezone(lat = 51.9357, lng = -170.3222)
 
 ```
 

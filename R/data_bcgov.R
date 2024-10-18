@@ -193,7 +193,7 @@ get_bcgov_stations = function(dates = Sys.time(), use_sf = FALSE){
     # Drop missing lat/lng rows
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
   if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
