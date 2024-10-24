@@ -71,7 +71,8 @@ AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose
       AQHI = AQHI_formula(
         pm25_rolling_3hr = .data$pm25_rolling_3hr, 
         no2_rolling_3hr  = .data$no2_rolling_3hr, 
-        o3_rolling_3hr   = .data$o3_rolling_3hr),
+        o3_rolling_3hr   = .data$o3_rolling_3hr,
+        aqhi_breakpoints = aqhi_breakpoints),
       AQHI_plus = aqhi_plus$AQHI_plus,
       risk = AQHI_risk_category(.data$AQHI))
     obs |> dplyr::bind_cols(
@@ -152,7 +153,7 @@ AQHI_plus = function(pm25_1hr_ugm3, min_allowed_pm25 = 0){
 }
 
 ## AQHI Helpers -----------------------------------------------------------
-AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr){
+AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr, aqhi_breakpoints){
   cut(
     round(10 / 10.4 * 100 * (
       (exp(0.000537 * o3_rolling_3hr) - 1) +

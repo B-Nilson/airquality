@@ -45,8 +45,8 @@ swap = function(x, what, with) {
     x[x == what] = with
   return(x)
 }
-swap_na = function(x, with = -99) swap(x, NA, with)
-swap_inf = function(x, with = NA) swap(x, Inf, with)
+swap_na  = function(x, with = -99) swap(x, NA , with)
+swap_inf = function(x, with = NA)  swap(x, Inf, with)
 
 # General function for loading in data quickly and quietly
 # TODO: document
@@ -160,7 +160,7 @@ convert_date_utc_to_local = function(obs) {
 
 extract_tz_offset = function(date_str){
   offset = stringr::str_extract(date_str, "[+,-]\\d\\d*$")
-  hours = stringr::str_sub(offset, end = 3)
+  hours = stringr::str_sub(offset, end = 3) # TODO: Does this just split it and recombine it??
   minutes = stringr::str_sub(offset, start = 4)
   paste0(hours, minutes)
 }
