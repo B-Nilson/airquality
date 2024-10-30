@@ -199,12 +199,12 @@ AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
   dplyr::mutate(obs,
     AQHI_plus_exceeds_AQHI = swap_na(with = TRUE,
       as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)),
-    AQHI = ifelse(AQHI_plus_exceeds_AQHI, 
+    AQHI = ifelse(.data$AQHI_plus_exceeds_AQHI, 
       aqhi_plus$AQHI_plus, .data$AQHI),
-    risk = ifelse(AQHI_plus_exceeds_AQHI, 
+    risk = ifelse(.data$AQHI_plus_exceeds_AQHI, 
       aqhi_plus$risk, .data$risk),
-    high_risk_pop_message = ifelse(AQHI_plus_exceeds_AQHI, 
+    high_risk_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI, 
       aqhi_plus$high_risk_pop_message, .data$high_risk_pop_message),
-    general_pop_message = ifelse(AQHI_plus_exceeds_AQHI, 
+    general_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI, 
       aqhi_plus$general_pop_message, .data$general_pop_message))
 }
