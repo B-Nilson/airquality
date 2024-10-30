@@ -8,7 +8,6 @@
 #' @description
 #' `convert_units` provides a simple way to convert between common units in air quality / meteorology. 
 #'
-#' @references \url{https://ccme.ca/en/air-quality-report}
 #' @family Utilities
 #'
 #' @return a vector of `x` converted from `in_unit` to `out_unit` 
