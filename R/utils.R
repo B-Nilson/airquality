@@ -58,6 +58,27 @@ swap = function(x, what, with) {
 swap_na  = function(x, with = -99) swap(x, NA , with)
 swap_inf = function(x, with = NA)  swap(x, Inf, with)
 
+#' Wrapper for looking up timezone of locations from lat/lng coords
+#'
+#' @param lng Vector of numeric values indicating location longitudes (decimal degrees) to lookup.
+#' @param lat Vector of numeric values indicating location latitudes (decimal degrees) to lookup.
+#' @param method A single character value indicating the lookup method to use (see `?lutz::tz_lookup_coords`)
+#' @param ... (Optional) Additional paramaters to pass to `lutz::tz_lookup_coords`
+#' 
+#' @description
+#' `get_timezone` is a wrapper for the `lutz::tz_lookup_coords` function. See `?lutz::tz_lookup_coords` for more details.
+#'
+#' @family Utilities
+#'
+#' @return a character vector with the same length as `lat` and `lng` indicating the locations likely timezone.
+#' @export
+#'
+#' @examples
+#' get_timezone(-105.053144, 69.116178)
+get_timezone = function(lng, lat, method = "accurate", ...){
+  lutz::tz_lookup_coords(lat, lng, method = method, ...)
+}
+
 # Calculates rolling mean if enough non-na provided
 # TODO: code without zoo (use dplyr::lag/lead)
 # TODO: document, test, and export
@@ -95,12 +116,6 @@ read_data = function(..., showProgress = FALSE, verbose = FALSE, data.table = FA
     invisible(data.table::fread(..., showProgress = showProgress,
       verbose = verbose, data.table = data.table))
   }
-}
-
-# Wrapper for looking up timezone of locations from lat/lng coords
-# TODO: document
-get_timezone = function(lng, lat, method = "accurate"){
-  lutz::tz_lookup_coords(lat, lng, method = method)
 }
 
 lapply_and_bind = function(...){
