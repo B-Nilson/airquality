@@ -136,7 +136,7 @@ AQI = function(
       AQI = max_no_na(dplyr::across(dplyr::all_of(AQI_cols))) |>
         swap_inf(NA),
       risk_category = AQI_risk_category(.data$AQI)) |>
-    get_AQI_principal_pol() |>
+    get_AQI_principal_pol(AQI_cols) |>
     dplyr::ungroup() |>
     dplyr::select("date", "AQI", "risk_category", "principal_pol")
 }
@@ -289,5 +289,6 @@ get_AQI_principal_pol = function(dat, AQI_cols) {
         dplyr::across(dplyr::all_of(unname(AQI_cols)), 
             \(x) swap_na(x, 0))),
       principal_pol = names(AQI_cols)[principal_pol_index],
-      principal_pol = ifelse(!is.na(.data$AQI), .data$principal_pol, NA))
+      principal_pol = ifelse(!is.na(.data$AQI), .data$principal_pol, NA) |>
+        factor(unique(names(AQI_cols))))
 }

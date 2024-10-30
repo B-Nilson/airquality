@@ -47,3 +47,5 @@ test_that("AQI for multi-pollutant is correct", {
 })
 
 # TODO: write test for concentration beyond the AQI
+
+# TODO: test that principal pol determination is correct
