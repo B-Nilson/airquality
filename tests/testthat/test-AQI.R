@@ -22,10 +22,10 @@ test_that("AQI for NO2 is correct", {
 
 test_that("AQI for O3 is correct", {
   output = AQI(
-    dates = rep(Sys.time(), 2), 
+    dates = c(Sys.time(), Sys.time() - lubridate::days(1)), 
     o3_8hr_ppm = c(0.07853333, 0.078), 
     o3_1hr_ppm = c(NA, 0.162))
-  expect_equal(output$AQI, c(126, 148))
+  expect_equal(output$AQI, c(148, 126))
 })
 
 # TODO: write test
