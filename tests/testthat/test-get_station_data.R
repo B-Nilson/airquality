@@ -25,6 +25,7 @@ test_that("invalid date_range causes error", {
 
 test_that("expected data returned", {
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-  obs = get_station_data("Vanderhoof, BC, Canada", date_range)$data
+  obs = get_station_data(
+    "Vanderhoof, BC, Canada", date_range, verbose = FALSE)$data
   expect_snapshot(obs)
 })
