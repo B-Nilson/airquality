@@ -1,4 +1,22 @@
-# TODO: document
+#' Convert between common units
+#'
+#' @param x Vector of values to be converted.
+#' @param in_unit A single character value indicating the units of `x`.
+#' @param out_unit A single character value indicating the units to convert `x` to.
+#' @param y (Optional) [UNDER DEVELOPMENT] Vector of extra values required for certain conversions. (i.e. temperature for converting RH to DEWPOINT)
+#' 
+#' @description
+#' `convert_units` provides a simple way to convert between common units in air quality / meteorology. 
+#'
+#' @references \url{https://ccme.ca/en/air-quality-report}
+#' @family Utilities
+#'
+#' @return a vector of `x` converted from `in_unit` to `out_unit` 
+#' @export
+#'
+#' @examples
+#' convert_units(c(-20:20), in_unit = "C", out_unit = "F")
+#' convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
 convert_units = function(x, in_unit, out_unit, y = NULL){
   # Handle inputs
   in_unit = toupper(in_unit)
