@@ -27,6 +27,7 @@ convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
 }
 \seealso{
 Other Utilities: 
+\code{\link{on_error}()},
 \code{\link{swap}()}
 }
 \concept{Utilities}
