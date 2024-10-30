@@ -57,14 +57,6 @@ test_that("too late date_range causes warning/error", {
   expect_warning(get_bcgov_data(station, date_range, verbose = FALSE))
 })
 
-# Inputs: raw -------------------------------------------------------------
-
-test_that("raw data returned", {
-  obs_raw = get_bcgov_data(stations = "0450307", date_range = "2018-02-01 00", raw = TRUE, verbose = FALSE)
-
-  expect_snapshot(obs_raw)
-})
-
 # Outputs: dates ---------------------------------------------------------
 
 test_that("all dates non-na and within requested period", {
@@ -89,13 +81,14 @@ test_that("date_local converts to date_utc correctly", {
 
 # Outputs: data -----------------------------------------------------------
 
+# TODO: handle sporadic warning here: Detected an unexpected many-to-many relationship between `x` and `y`
 test_that("expected data returned", {
+  station = "0450307"
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-  obs = get_bcgov_data("0450307", date_range, verbose = FALSE)
-  # Case: tibble is returned
-  expect_true("tbl_df" %in% class(obs))
-  # Case: data.frame has rows
-  expect_true(nrow(obs) > 0)
-  # Case: data.frame has cols
-  expect_true(ncol(obs) > 0)
+  
+  obs = get_bcgov_data(station, date_range, verbose = FALSE)
+  expect_snapshot(obs)
+  
+  obs_raw = get_bcgov_data(station, date_range, raw = TRUE, verbose = FALSE)
+  expect_snapshot(obs_raw)
 })
