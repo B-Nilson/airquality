@@ -1,3 +1,4 @@
+# TODO: add tests
 #' Convert between common units
 #'
 #' @param x Vector of values to be converted.

@@ -1,3 +1,4 @@
+# TODO: add tests
 #' Easy error handler
 #'
 #' @param ... A code block (typically wrapped in `{}`) to run and capture errors (if any).
@@ -28,6 +29,7 @@ on_error = function(..., return = NULL, msg = FALSE, warn = FALSE){
   })
 }
 
+# TODO: add tests
 #' Swap out values in a vector
 #'
 #' @param x Vector of values to be have certain values swapped out.
@@ -58,6 +60,7 @@ swap = function(x, what, with) {
 swap_na  = function(x, with = -99) swap(x, NA , with)
 swap_inf = function(x, with = NA)  swap(x, Inf, with)
 
+# TODO: add tests
 #' Wrapper for looking up timezone of locations from lat/lng coords
 #'
 #' @param lng Vector of numeric values indicating location longitudes (decimal degrees) to lookup.
