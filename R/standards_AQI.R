@@ -288,7 +288,7 @@ get_AQI_principal_pol = function(dat, AQI_cols) {
       principal_pol_index = which.max(
         dplyr::across(dplyr::all_of(unname(AQI_cols)), 
             \(x) swap_na(x, 0))),
-      principal_pol = names(AQI_cols)[principal_pol_index],
+      principal_pol = names(AQI_cols)[.data$principal_pol_index],
       principal_pol = ifelse(!is.na(.data$AQI), .data$principal_pol, NA) |>
         factor(unique(names(AQI_cols))))
 }
