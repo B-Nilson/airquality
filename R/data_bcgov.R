@@ -295,9 +295,9 @@ get_annual_bcgov_data = function(stations, year, qaqc_years = NULL){
   # Get each stations data for this year
   stations_data = data_url |>
     stringr::str_replace("\\{station\\}", stations) |>
-    lapply(\(p) on_error(return =  NULL, 
+    lapply(\(p) suppressWarnings(on_error(return =  NULL, 
       read_data(file = p, colClasses = c(DATE_PST = "character",
-        EMS_ID = "character", STATION_NAME = "character")))) |>
+        EMS_ID = "character", STATION_NAME = "character"))))) |>
     dplyr::bind_rows()
 
   if(nrow(stations_data) == 0){
