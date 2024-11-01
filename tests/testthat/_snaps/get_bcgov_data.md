@@ -3,20 +3,20 @@
     Code
       obs
     Output
-      # A tibble: 50 x 29
+      # A tibble: 25 x 29
          date_utc            date_local             site_id site_name  quality_assured
          <dttm>              <chr>                  <chr>   <chr>      <lgl>          
        1 2019-02-01 00:00:00 2019-01-31 16:00 -0800 0450307 Prince Ge~ TRUE           
-       2 2019-02-01 00:00:00 2019-01-31 16:00 -0800 0450307 Prince Ge~ TRUE           
-       3 2019-02-01 01:00:00 2019-01-31 17:00 -0800 0450307 Prince Ge~ TRUE           
-       4 2019-02-01 01:00:00 2019-01-31 17:00 -0800 0450307 Prince Ge~ TRUE           
-       5 2019-02-01 02:00:00 2019-01-31 18:00 -0800 0450307 Prince Ge~ TRUE           
-       6 2019-02-01 02:00:00 2019-01-31 18:00 -0800 0450307 Prince Ge~ TRUE           
-       7 2019-02-01 03:00:00 2019-01-31 19:00 -0800 0450307 Prince Ge~ TRUE           
-       8 2019-02-01 03:00:00 2019-01-31 19:00 -0800 0450307 Prince Ge~ TRUE           
-       9 2019-02-01 04:00:00 2019-01-31 20:00 -0800 0450307 Prince Ge~ TRUE           
-      10 2019-02-01 04:00:00 2019-01-31 20:00 -0800 0450307 Prince Ge~ TRUE           
-      # i 40 more rows
+       2 2019-02-01 01:00:00 2019-01-31 17:00 -0800 0450307 Prince Ge~ TRUE           
+       3 2019-02-01 02:00:00 2019-01-31 18:00 -0800 0450307 Prince Ge~ TRUE           
+       4 2019-02-01 03:00:00 2019-01-31 19:00 -0800 0450307 Prince Ge~ TRUE           
+       5 2019-02-01 04:00:00 2019-01-31 20:00 -0800 0450307 Prince Ge~ TRUE           
+       6 2019-02-01 05:00:00 2019-01-31 21:00 -0800 0450307 Prince Ge~ TRUE           
+       7 2019-02-01 06:00:00 2019-01-31 22:00 -0800 0450307 Prince Ge~ TRUE           
+       8 2019-02-01 07:00:00 2019-01-31 23:00 -0800 0450307 Prince Ge~ TRUE           
+       9 2019-02-01 08:00:00 2019-02-01 00:00 -0800 0450307 Prince Ge~ TRUE           
+      10 2019-02-01 09:00:00 2019-02-01 01:00 -0800 0450307 Prince Ge~ TRUE           
+      # i 15 more rows
       # i 24 more variables: pm25_1hr_ugm3 <dbl>, pm25_1hr_ugm3_instrument <chr>,
       #   pm10_1hr_ugm3 <dbl>, pm10_1hr_ugm3_instrument <chr>, o3_1hr_ppb <dbl>,
       #   o3_1hr_ppb_instrument <chr>, no_1hr_ppb <dbl>, no_1hr_ppb_instrument <chr>,
