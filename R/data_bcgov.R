@@ -88,7 +88,10 @@ get_bcgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
   # Get all stations during period
   known_stations = lubridate::ym(paste0(years_to_get, "06")) |>
     lapply(get_bcgov_stations) |>
-    dplyr::bind_rows()
+    dplyr::bind_rows() |>
+    # TODO: Handle this in get_bcgov_stations?
+    dplyr::arrange(dplyr::desc(.data$date_created)) |>
+    dplyr::filter(!duplicated(site_id))
 
   # Handle if any/all don't exist in meta data
   check_stations_exist(stations, known_stations$site_id, source = "the BC FTP site")

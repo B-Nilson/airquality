@@ -85,7 +85,7 @@ test_that("date_local converts to date_utc correctly", {
 test_that("expected data returned", {
   station = "0450307"
   date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-  
+
   obs = get_bcgov_data(station, date_range, verbose = FALSE)
   expect_snapshot(obs)
   
