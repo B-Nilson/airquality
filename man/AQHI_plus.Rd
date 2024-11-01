@@ -34,18 +34,24 @@ and has been adopted by all Canadian provinces/territories as of 2024
 }
 \examples{
 # Hourly pm2.5 concentrations
-obs = data.frame(
-  date = seq(lubridate::ymd_h("2024-01-01 00"),
-             lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-  pm25 = sample(1:150, 24))
+obs <- data.frame(
+  date = seq(
+    lubridate::ymd_h("2024-01-01 00"),
+    lubridate::ymd_h("2024-01-01 23"), "1 hours"
+  ),
+  pm25 = sample(1:150, 24)
+)
 # Calculate the AQHI+
 AQHI_plus(obs$pm25)
 
 # Hourly pm2.5 concentrations (with negative values)
-obs = data.frame(
-  date = seq(lubridate::ymd_h("2024-01-01 00"),
-             lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-  pm25 = c(-2, -0.1, sample(1:150, 22)))
+obs <- data.frame(
+  date = seq(
+    lubridate::ymd_h("2024-01-01 00"),
+    lubridate::ymd_h("2024-01-01 23"), "1 hours"
+  ),
+  pm25 = c(-2, -0.1, sample(1:150, 22))
+)
 # Calculate the AQHI+ for each hour, except for hours where pm2.5 is < -0.5
 AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 }

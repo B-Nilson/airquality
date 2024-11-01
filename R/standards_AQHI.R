@@ -34,52 +34,66 @@
 #' @export
 #'
 #' @examples
-#' obs = data.frame(
-#'   date = seq(lubridate::ymd_h("2024-01-01 00"),
-#'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-#'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-#' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
-#'      o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
+#' obs <- data.frame(
+#'   date = seq(
+#'     lubridate::ymd_h("2024-01-01 00"),
+#'     lubridate::ymd_h("2024-01-01 23"), "1 hours"
+#'   ),
+#'   pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24)
+#' )
+#' AQHI(
+#'   dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
+#'   o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2
+#' )
 #'
 #' AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
-AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose = TRUE){
-  aqhi_breakpoints = stats::setNames(
+AQHI <- function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose = TRUE) {
+  aqhi_breakpoints <- stats::setNames(
     c(-Inf, 1:10, Inf),
-    c(NA  , 1:10, "+"))
-  
-  obs = dplyr::bind_cols(
-      date = dates, 
-      pm25 = pm25_1hr_ugm3,
-      o3   = o3_1hr_ppb,
-      no2  = no2_1hr_ppb) |>
+    c(NA, 1:10, "+")
+  )
+
+  obs <- dplyr::bind_cols(
+    date = dates,
+    pm25 = pm25_1hr_ugm3,
+    o3   = o3_1hr_ppb,
+    no2  = no2_1hr_ppb
+  ) |>
     tidyr::complete(date = seq(min(date), max(date), "1 hours")) |>
     dplyr::arrange(date)
 
-  aqhi_plus = AQHI_plus(obs$pm25) |>
+  aqhi_plus <- AQHI_plus(obs$pm25) |>
     dplyr::mutate(AQHI = .data$AQHI_plus, AQHI_plus_exceeds_AQHI = NA) |>
-    dplyr::relocate('AQHI', .before = "AQHI_plus")
+    dplyr::relocate("AQHI", .before = "AQHI_plus")
 
-  has_all_3_pol = !all(is.na(pm25_1hr_ugm3)) &
+  has_all_3_pol <- !all(is.na(pm25_1hr_ugm3)) &
     !all(is.na(no2_1hr_ppb)) & !all(is.na(o3_1hr_ppb))
   if (has_all_3_pol) {
-    obs = dplyr::mutate(obs, 
+    obs <- dplyr::mutate(obs,
       dplyr::across(
-        c(pm25_rolling_3hr = "pm25", 
-          no2_rolling_3hr  = "no2", 
-          o3_rolling_3hr   = "o3"), 
-        \(x) roll_mean(x, 3, min_n = 2, digits = 1)),
+        c(
+          pm25_rolling_3hr = "pm25",
+          no2_rolling_3hr = "no2",
+          o3_rolling_3hr = "o3"
+        ),
+        \(x) roll_mean(x, 3, min_n = 2, digits = 1)
+      ),
       AQHI = AQHI_formula(
-        pm25_rolling_3hr = .data$pm25_rolling_3hr, 
-        no2_rolling_3hr  = .data$no2_rolling_3hr, 
+        pm25_rolling_3hr = .data$pm25_rolling_3hr,
+        no2_rolling_3hr  = .data$no2_rolling_3hr,
         o3_rolling_3hr   = .data$o3_rolling_3hr,
-        aqhi_breakpoints = aqhi_breakpoints),
+        aqhi_breakpoints = aqhi_breakpoints
+      ),
       AQHI_plus = aqhi_plus$AQHI_plus,
-      risk = AQHI_risk_category(.data$AQHI))
-    obs |> dplyr::bind_cols(
-        AQHI_health_messaging(obs$risk)) |>
+      risk = AQHI_risk_category(.data$AQHI)
+    )
+    obs |>
+      dplyr::bind_cols(
+        AQHI_health_messaging(obs$risk)
+      ) |>
       AQHI_replace_w_AQHI_plus(aqhi_plus)
-  }else{
-    if(verbose) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
+  } else {
+    if (verbose) warning("Returning AQHI+ (PM2.5 only) as no non-missing NO2 / O3 provided.")
     aqhi_plus
   }
 }
@@ -117,43 +131,52 @@ AQHI = function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbose
 #'
 #' @examples
 #' # Hourly pm2.5 concentrations
-#' obs = data.frame(
-#'   date = seq(lubridate::ymd_h("2024-01-01 00"),
-#'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-#'   pm25 = sample(1:150, 24))
+#' obs <- data.frame(
+#'   date = seq(
+#'     lubridate::ymd_h("2024-01-01 00"),
+#'     lubridate::ymd_h("2024-01-01 23"), "1 hours"
+#'   ),
+#'   pm25 = sample(1:150, 24)
+#' )
 #' # Calculate the AQHI+
 #' AQHI_plus(obs$pm25)
 #'
 #' # Hourly pm2.5 concentrations (with negative values)
-#' obs = data.frame(
-#'   date = seq(lubridate::ymd_h("2024-01-01 00"),
-#'              lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-#'   pm25 = c(-2, -0.1, sample(1:150, 22)))
+#' obs <- data.frame(
+#'   date = seq(
+#'     lubridate::ymd_h("2024-01-01 00"),
+#'     lubridate::ymd_h("2024-01-01 23"), "1 hours"
+#'   ),
+#'   pm25 = c(-2, -0.1, sample(1:150, 22))
+#' )
 #' # Calculate the AQHI+ for each hour, except for hours where pm2.5 is < -0.5
 #' AQHI_plus(obs$pm25, min_allowed_pm25 = -0.5)
 #' @importFrom rlang .data
-AQHI_plus = function(pm25_1hr_ugm3, min_allowed_pm25 = 0){
-  aqhi_breakpoints = stats::setNames(
-    c(-Inf, 1:10*10, Inf),
-    c(NA, 1:10, "+"))
+AQHI_plus <- function(pm25_1hr_ugm3, min_allowed_pm25 = 0) {
+  aqhi_breakpoints <- stats::setNames(
+    c(-Inf, 1:10 * 10, Inf),
+    c(NA, 1:10, "+")
+  )
 
-  pm25_1hr_ugm3[pm25_1hr_ugm3 < min_allowed_pm25] = NA
+  pm25_1hr_ugm3[pm25_1hr_ugm3 < min_allowed_pm25] <- NA
 
-  aqhi_p = cut(pm25_1hr_ugm3,
-      breaks = aqhi_breakpoints,
-      labels = names(aqhi_breakpoints)[-1])
-  risk = AQHI_risk_category(aqhi_p)
-  health_messages = AQHI_health_messaging(risk)
+  aqhi_p <- cut(pm25_1hr_ugm3,
+    breaks = aqhi_breakpoints,
+    labels = names(aqhi_breakpoints)[-1]
+  )
+  risk <- AQHI_risk_category(aqhi_p)
+  health_messages <- AQHI_health_messaging(risk)
 
   data.frame(
     pm25_1hr_ugm3 = pm25_1hr_ugm3,
     AQHI_plus = aqhi_p,
     risk = risk,
-    health_messages)
+    health_messages
+  )
 }
 
 ## AQHI Helpers -----------------------------------------------------------
-AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr, aqhi_breakpoints){
+AQHI_formula <- function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr, aqhi_breakpoints) {
   cut(
     round(10 / 10.4 * 100 * (
       (exp(0.000537 * o3_rolling_3hr) - 1) +
@@ -161,50 +184,69 @@ AQHI_formula = function(pm25_rolling_3hr, no2_rolling_3hr, o3_rolling_3hr, aqhi_
         (exp(0.000487 * pm25_rolling_3hr) - 1)
     )),
     breaks = aqhi_breakpoints,
-    labels = names(aqhi_breakpoints[-1]))
+    labels = names(aqhi_breakpoints[-1])
+  )
 }
 
-AQHI_risk_category = function(AQHI){
-  aqhi_levels = list(
-    Low  = 1:3 , Moderate    = 4:6,
-    High = 7:10, "Very High" = "+")
-  aqhi_labels = unlist(sapply(seq_along(aqhi_levels), \(i){
-    rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))}))
+AQHI_risk_category <- function(AQHI) {
+  aqhi_levels <- list(
+    Low = 1:3, Moderate = 4:6,
+    High = 7:10, "Very High" = "+"
+  )
+  aqhi_labels <- unlist(sapply(seq_along(aqhi_levels), \(i){
+    rep(names(aqhi_levels)[i], length(aqhi_levels[[i]]))
+  }))
   factor(AQHI, unlist(aqhi_levels), aqhi_labels)
 }
 
-AQHI_health_messaging = function(risk_categories){
-  aqhi_messaging = list(
+AQHI_health_messaging <- function(risk_categories) {
+  aqhi_messaging <- list(
     Low = data.frame(
       high_risk_pop_message = "Enjoy your usual activities.",
-      general_pop_message = "Ideal air quality for outdoor activities."),
+      general_pop_message = "Ideal air quality for outdoor activities."
+    ),
     Moderate = data.frame(
       high_risk_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms.",
-      general_pop_message = "No need to modify your usual activities unless you experience symptoms."),
+      general_pop_message = "No need to modify your usual activities unless you experience symptoms."
+    ),
     High = data.frame(
       high_risk_pop_message = "Reduce or reschedule activities outdoors.",
-      general_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms."),
+      general_pop_message = "Consider reducing or rescheduling activities outdoors if you experience symptoms."
+    ),
     "Very High" = data.frame(
       high_risk_pop_message = "Avoid strenuous activity outdoors.",
-      general_pop_message = "Reduce or reschedule activities outdoors, especially if you experience symptoms."))
+      general_pop_message = "Reduce or reschedule activities outdoors, especially if you experience symptoms."
+    )
+  )
 
-  lapply_and_bind(aqhi_messaging[risk_categories], 
-    \(x) if (is.null(x)) 
-      data.frame(high_risk_pop_message = NA, general_pop_message = NA) else 
-      x)
+  lapply_and_bind(
+    aqhi_messaging[risk_categories],
+    \(x) if (is.null(x)) {
+      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
+    } else {
+      x
+    }
+  )
 }
 
 # TODO: make sure AQHI is a column in obs
-AQHI_replace_w_AQHI_plus = function(obs, aqhi_plus){
+AQHI_replace_w_AQHI_plus <- function(obs, aqhi_plus) {
   dplyr::mutate(obs,
-    AQHI_plus_exceeds_AQHI = swap_na(with = TRUE,
-      as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)),
-    AQHI = ifelse(.data$AQHI_plus_exceeds_AQHI, 
-      aqhi_plus$AQHI_plus, .data$AQHI),
-    risk = ifelse(.data$AQHI_plus_exceeds_AQHI, 
-      aqhi_plus$risk, .data$risk),
-    high_risk_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI, 
-      aqhi_plus$high_risk_pop_message, .data$high_risk_pop_message),
-    general_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI, 
-      aqhi_plus$general_pop_message, .data$general_pop_message))
+    AQHI_plus_exceeds_AQHI = swap_na(
+      with = TRUE,
+      as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)
+    ),
+    AQHI = ifelse(.data$AQHI_plus_exceeds_AQHI,
+      aqhi_plus$AQHI_plus, .data$AQHI
+    ),
+    risk = ifelse(.data$AQHI_plus_exceeds_AQHI,
+      aqhi_plus$risk, .data$risk
+    ),
+    high_risk_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI,
+      aqhi_plus$high_risk_pop_message, .data$high_risk_pop_message
+    ),
+    general_pop_message = ifelse(.data$AQHI_plus_exceeds_AQHI,
+      aqhi_plus$general_pop_message, .data$general_pop_message
+    )
+  )
 }

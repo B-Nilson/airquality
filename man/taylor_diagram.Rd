@@ -46,7 +46,7 @@ taylor_diagram(
 \item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
 Default assumes columns "obs" and "mod" exist.}
 
-\item{group_by}{a character vector with between 1 and 3 column names to use as groups. 
+\item{group_by}{a character vector with between 1 and 3 column names to use as groups.
 The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
 If names are present they will be used as the corresponding legend titles.}
 
@@ -54,7 +54,7 @@ If names are present they will be used as the corresponding legend titles.}
 If names are present they will be used as the corresponding facet titles.
 Default (NULL) does not facet the plot.}
 
-\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
+\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
 Default is a single row.}
 
 \item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point.
@@ -70,7 +70,7 @@ Default uses "good looking" colours/shapes/fills.}
 \item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points.
 Default matches the size/stroke of the observed point.}
 
-\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1). 
+\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1).
 Default uses the nearest 0.1 below the minimum correlation.}
 
 \item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.
@@ -94,11 +94,11 @@ Default is brown dotted lines.}
 \item{rmse_label}{(Optional) a single character value indicating the text to display for the RMSE axis title.
 Default is "Centered RMS Error".}
 
-\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles 
+\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles
 (0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
 Default is 10\% greater than the minimum correlation.}
 
-\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0). 
+\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0).
 Default is the nearest "pretty" value above the maximum standard deviation.}
 
 \item{sd_step}{(Optional) a single value indicating the spacing between each standard deviation line.
@@ -120,40 +120,45 @@ Default is 2 for both, likely needs to be adjusted depeding on the figure size a
 A ggplot object of your taylor diagram.
 }
 \description{
-Blah Blah Blah Taylor (2001) Blah Blah Blah 
+Blah Blah Blah Taylor (2001) Blah Blah Blah
 TODO: Add description
 }
 \examples{
 \dontrun{
 # Make test data
-data = as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
+data <- as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
   dplyr::filter(.data$Chick == 1) |>
   tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
   dplyr::full_join(
     as.data.frame(datasets::ChickWeight) |>
       dplyr::filter(.data$Chick != 1)
-  ) |> 
+  ) |>
   dplyr::rename(obs = `1`, mod = "weight") |>
   dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
 # Basic usage
 taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
 # Force 0 on left axis
-taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
-  cor_minimum = 0, rmse_label_pos = 130) # TODO: fix this
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  cor_minimum = 0, rmse_label_pos = 130
+) # TODO: fix this
 # Change colours / shapes
-taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"), 
-  mod_colours = c("AB" = "pink", "BC" = "blue"), 
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  mod_colours = c("AB" = "pink", "BC" = "blue"),
   mod_fills = c("EGG" = "white", "PA" = "darkgrey"), # TODO: update this
   mod_shapes = c("FALSE" = 23, "TRUE" = 22),
   mod_size = 4, mod_stroke = 6,
-  obs_colour = "brown", obs_shape = 23, obs_size = 6, 
+  obs_colour = "brown", obs_shape = 23, obs_size = 6,
   cor_colour = "orange", cor_linetype = "dotdash",
   rmse_colour = "green", rmse_linetype = "longdash",
   sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
-  )
+)
 # Adjust text positioning
-taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"),
-  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7)
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
+)
 
 # Save plot
 # gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))

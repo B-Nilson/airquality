@@ -15,7 +15,7 @@ save_figure(gg, out_path, taller = 0, page_width = 6.5, quality = "high", ...)
 
 \item{page_width}{A single numeric value indicating the width of the page (minus margins) in inches that the image is intended for.}
 
-\item{quality}{A single character value equal to "high" (dpi = 300), "medium" (dpi = 200), or "low" (dpi = 100) indicating the output quality of the figure. 
+\item{quality}{A single character value equal to "high" (dpi = 300), "medium" (dpi = 200), or "low" (dpi = 100) indicating the output quality of the figure.
 Text sizes may need to be adjusted for differenct quality levels.}
 
 \item{...}{(Optional) addition arguments passed on to ggplot2::ggsave()}
@@ -24,16 +24,17 @@ Text sizes may need to be adjusted for differenct quality levels.}
 invisible NULL
 }
 \description{
-This provides a relatviley simple way to quickly save a ggplot figure as a png etc. 
-`save_figure()` is a wrapper around `ggplot2::ggsave()` that saves a high quality 5x7 figure by default. 
+This provides a relatviley simple way to quickly save a ggplot figure as a png etc.
+`save_figure()` is a wrapper around `ggplot2::ggsave()` that saves a high quality 5x7 figure by default.
 You can adjust the sizing from there by changing `wider` and `taller`,
 and you can quickly adjust to a lower quality if file size matters.
 }
 \examples{
-gg = ggplot2::ggplot() + 
+gg <- ggplot2::ggplot() +
   ggplot2::geom_line(
-    data = data.frame(x = 1:100, y = (0:99)^2), 
-    ggplot2::aes(x, y))
+    data = data.frame(x = 1:100, y = (0:99)^2),
+    ggplot2::aes(x, y)
+  )
 # save_figure(gg, "./test.png", taller = 1)
 }
 \seealso{

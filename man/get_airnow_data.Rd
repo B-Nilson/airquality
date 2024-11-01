@@ -50,10 +50,10 @@ number of hours of data desired, regardless of the number of stations.
 get_airnow_data("all", c("2019-01-01 01", "2019-01-01 03"))
 
 # Get data for two specific stations for first 3 hours (UTC) of Jan 2019
-get_airnow_data(c("000010102", "000010401"),  c("2019-01-01 01", "2019-01-01 03"))
+get_airnow_data(c("000010102", "000010401"), c("2019-01-01 01", "2019-01-01 03"))
 
 # Get non-standardized data for all stations for first 3 hours (PST) of Jan 2019
-date_range = lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
+date_range <- lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 get_airnow_data("all", date_range, raw = TRUE)
 }
 }

@@ -37,14 +37,18 @@ Management levels (Green -> Yellow -> Orange -> Red) are defined for each pollut
 A "Red" level indicates exceedance of the CAAQS and management plans are typically developed for regions at "Orange" or worse levels.
 }
 \examples{
-obs = data.frame(
-  date = seq(lubridate::ymd_h("2020-01-01 00"),
-             lubridate::ymd_h("2023-12-31 23"), "1 hours"),
+obs <- data.frame(
+  date = seq(
+    lubridate::ymd_h("2020-01-01 00"),
+    lubridate::ymd_h("2023-12-31 23"), "1 hours"
+  ),
   pm25 = sample(1:150, 35064, TRUE), o3 = sample(1:150, 35064, TRUE),
   no2 = sample(1:150, 35064, TRUE), so2 = sample(1:150, 35064, TRUE)
 )
-CAAQS(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
-     o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2)
+CAAQS(
+  dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
+  o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2
+)
 }
 \references{
 \url{https://ccme.ca/en/air-quality-report}

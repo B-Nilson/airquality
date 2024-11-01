@@ -22,14 +22,14 @@ OR an sf object with polygon(s) indicating area of interest.}
 Providing a single value will return data for that hour only,
 whereas two values will return data between (and including) those times.}
 
-\item{buffer_dist}{(Optional) A single numeric value indicating the distance 
-to buffer the station search location by (typically units of km). 
+\item{buffer_dist}{(Optional) A single numeric value indicating the distance
+to buffer the station search location by (typically units of km).
 Default is 10.}
 
-\item{networks}{(Optional) A character vector indicating which monitoring networks to get data for. 
+\item{networks}{(Optional) A character vector indicating which monitoring networks to get data for.
 Default is "all".}
 
-\item{sources}{(Optional) A character vector indicating which data sources to get data from. 
+\item{sources}{(Optional) A character vector indicating which data sources to get data from.
 Default is "all".}
 
 \item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
@@ -73,7 +73,9 @@ get_station_data(locations = "Fort St. John, BC, Canada", date_range = "2019-02-
 # Get data for all FEM stations within 25 km of 2 BC cities from AirNow only
 #  for the first hour of Feb 2019
 get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
-                   "2019-02-01 01", buffer_dist = 25,
-                   networks = "FEM", sources = "AirNow")
+  "2019-02-01 01",
+  buffer_dist = 25,
+  networks = "FEM", sources = "AirNow"
+)
 }
 }
