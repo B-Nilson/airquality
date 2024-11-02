@@ -7,6 +7,9 @@
 get_bcgov_stations(years = lubridate::year(Sys.time()), use_sf = FALSE)
 }
 \arguments{
+\item{years}{(Optional) one or more integer values indicating the year(s) to get metadata for.
+Default is the current year.}
+
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
 }
 \value{

@@ -1,5 +1,7 @@
 #' Download air quality station metadata from the British Columbia (Canada) Government
 #'
+#' @param years (Optional) one or more integer values indicating the year(s) to get metadata for.
+#'   Default is the current year.
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
 #'
 #' @description
