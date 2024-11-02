@@ -12,7 +12,7 @@
 #'
 #' @seealso [get_abgov_data()]
 #' @return
-#' A tibble of station metadata for Alberta FEMs.
+#' A tibble of metadata for Alberta air quality monitoring stations.
 #'
 #' @family Data Collection
 #' @family Canadian Air Quality
