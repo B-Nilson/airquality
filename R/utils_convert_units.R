@@ -26,8 +26,11 @@ convert_units <- function(x, in_unit, out_unit, y = NULL) {
   }
 
   # Determine conversion type
-  all_units <- all_conversions |> lapply(\(conversions)
-  stringr::str_split(names(conversions), "_to_") |> unlist())
+  all_units <- all_conversions |> lapply(\(conversions){
+    names(conversions) |>
+      stringr::str_split("_to_") |>
+      unlist()
+  })
   conversion_type <- sapply(all_units, \(x) in_unit %in% x)
   conversion_type <- names(conversion_type[conversion_type])[1]
 
@@ -35,7 +38,7 @@ convert_units <- function(x, in_unit, out_unit, y = NULL) {
   base_unit <- all_units[[conversion_type]][1]
   is_base_unit <- in_unit == base_unit | out_unit == base_unit
   if (!is_base_unit) {
-    x <- convert_units(x, in_unit, base_unit)
+    x <- x |> convert_units(in_unit, base_unit, y) # TODO: correct to use y here always?
     in_unit <- base_unit
   }
 
@@ -85,15 +88,16 @@ saturation_vapour_pressure <- function(temperature_c) {
     warning("Saturation vapour pressure estimation method only optimized within [-80, 50] celcius")
   }
   # Using the Arden Buck equation (Buck, 1996)
-  e <- ifelse(temperature_c > 0,
-    6.1121 * exp( # over water
+  ifelse(temperature_c > 0,
+    # over water
+    6.1121 * exp(
       (18.678 - temperature_c / 234.5) *
         (temperature_c / (257.14 + temperature_c))
     ),
-    6.1115 * exp( # over ice
+    # over ice
+    6.1115 * exp(
       (23.036 - temperature_c / 333.7) *
         (temperature_c / (279.82 + temperature_c))
     )
-  )
-  return(e) # units hPa (millibars)
+  ) # units hPa (millibars)
 }
