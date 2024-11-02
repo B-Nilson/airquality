@@ -66,7 +66,8 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
 
   # Convert to spatial if desired
   if (use_sf) {
-    stations <- stations |> sf::st_as_sf(coords = c("lng", "lat"))
+    stations <- stations |> 
+      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
   }
 
   return(stations)

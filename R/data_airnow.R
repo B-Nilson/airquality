@@ -63,7 +63,10 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
     dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
-  if (use_sf) stations <- sf::st_as_sf(stations, coords = c("lng", "lat"))
+  if (use_sf) {
+    stations <- stations |>
+      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
+  }
 
   return(stations)
 }

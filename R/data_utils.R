@@ -68,13 +68,25 @@
 #' }
 get_station_data <- function(locations, date_range, buffer_dist = 10,
                              networks = "all", sources = "all", verbose = TRUE) {
-  if (any(networks == "all")) networks <- c("FEM") # , "LCM")
-  if (any(sources == "all")) sources <- c("BCgov", "ABgov", "AirNow") # , "PurpleAir")
-  date_range <- handle_date_range(date_range)
-  # Get polygons of locations to search for stations within
+  # Determine what, when, and where to get data
+  data_funs <- get_data_collection_funs(networks, sources)
+  date_range <- date_range |> handle_date_range()
+  search_area <- locations |>
+    determine_search_area(buffer_dist = buffer_dist)
+
+  # Get data for our stations/date_range
+  stations <- data_funs |>
+    get_stations_in_search_area(search_area, date_range)
+  data <- data_funs |>
+    get_data_for_stations(stations, date_range, verbose)
+  list(stations = stations, data = data)
+}
+
+# Get polygons of locations to search for stations within
+determine_search_area <- function(locations, buffer_dist = 10) {
   # TODO: allow for station ids/names
   if (is.character(locations)) {
-    search_area <- lapply_and_bind(locations, get_location_polygons)
+    search_area <- locations |> lapply_and_bind(get_location_polygons)
     if (is.null(search_area)) {
       stop(paste0("Unable to find a polygonal boundary for specified location."))
     }
@@ -94,49 +106,7 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
     }
     search_area <- sf::st_buffer(search_area, buffer_dist)
   }
-
-  # Get station metadata during period in our search area
-  data_funs <- get_data_collection_funs(networks, sources)
-  dates <- seq(date_range[1], date_range[2], "30 days")
-  stations <- lapply_and_bind(names(data_funs), \(net)
-  lapply_and_bind(names(data_funs[[net]]), \(src)
-  on_error(
-    return = NULL, msg = TRUE,
-    data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
-      dplyr::mutate(source = src, network = net)
-  )))
-  sf::st_agr(stations) <- "constant"
-  stations <- stations |>
-    sf::st_intersection(search_area) |>
-    dplyr::select("site_id", "site_name", "network", "source", "geometry")
-  if (nrow(stations) == 0) {
-    stop("No stations in location(s) and date range for selected networks/sources.")
-  }
-
-  # Get data for our stations/date_range
-  data <- lapply_and_bind(unique(stations$network), \(net)
-  lapply_and_bind(names(data_funs[[net]]), \(src){
-    site_ids <- unique(stations |>
-      dplyr::filter(.data$source == src & .data$network == net) |>
-      dplyr::pull(.data$site_id))
-    if (length(site_ids) == 0) {
-      return(NULL)
-    }
-
-    if (verbose) {
-      message(paste(
-        net, "-", src, ":", length(site_ids),
-        "station(s) to check for data"
-      ))
-    }
-    data_fun <- data_funs[[net]][[src]]$data
-    on_error(
-      return = NULL, msg = TRUE,
-      data_fun(stations = site_ids, date_range, verbose = verbose) |>
-        dplyr::mutate(source = src, network = net)
-    )
-  }))
-  list(stations = stations, data = data)
+  return(search_area)
 }
 
 # TODO: Document
@@ -147,18 +117,73 @@ get_location_polygons <- function(location_name, verbose = TRUE) {
   )
 }
 
-get_data_collection_funs <- function(networks, sources) {
-  list(
+# Get station metadata during period in our search area
+get_stations_in_search_area <- function(data_funs, search_area, date_range) {
+  dates <- seq(date_range[1], date_range[2], "30 days")
+  stations <- lapply_and_bind(names(data_funs), \(net){
+    lapply_and_bind(names(data_funs[[net]]), \(src) {
+      on_error(
+        return = NULL, msg = TRUE,
+        data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
+          dplyr::mutate(source = src, network = net)
+      )
+    })
+  })
+  sf::st_agr(stations) <- "constant"
+  stations <- stations |>
+    sf::st_intersection(search_area) |>
+    dplyr::select("site_id", "site_name", "network", "source", "geometry")
+  if (nrow(stations) == 0) {
+    stop("No stations in location(s) and date range for selected networks/sources.")
+  }
+  return(stations)
+}
+
+get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
+  networks <- unique(stations$network)
+  networks |> lapply_and_bind(\(net){
+    sources <- names(data_funs[[net]])
+    sources |> lapply_and_bind(\(src){
+      site_ids <- stations |>
+        dplyr::filter(.data$source == src & .data$network == net) |>
+        dplyr::pull(.data$site_id) |>
+        unique()
+      if (length(site_ids) == 0) {
+        return(NULL)
+      }
+      if (verbose) {
+        message(paste(
+          net, "-", src, ":", length(site_ids),
+          "station(s) to check for data"
+        ))
+      }
+      data_fun <- data_funs[[net]][[src]]$data
+      on_error(
+        return = NULL, msg = TRUE,
+        data_fun(stations = site_ids, date_range, verbose = verbose) |>
+          dplyr::mutate(source = src, network = net)
+      )
+    })
+  })
+}
+
+get_data_collection_funs <- function(networks = "all", sources = "all") {
+  data_collection_funs <- list(
     FEM = list( # Federal Equivalent Method monitors
       BCgov  = list(data = get_bcgov_data, meta = get_bcgov_stations),
       ABgov  = list(data = get_abgov_data, meta = get_abgov_stations),
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
-    ),
-    LCM = list( # Low-Cost Monitors
-      PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
-    )
-  )[networks] |>
-    lapply(\(srcs) srcs[names(srcs) %in% sources])
+    ) # , Temporarily degraded until testing complete
+    # LCM = list( # Low-Cost Monitors
+    #   PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
+    # )
+  )
+  if (!"all" %in% networks) data_collection_funs <- data_collection_funs[networks]
+  if (!"all" %in% sources) {
+    data_collection_funs <- data_collection_funs |>
+      lapply(\(srcs) srcs[names(srcs) %in% sources])
+  }
+  return(data_collection_funs)
 }
 
 data_citation <- function(source) {
@@ -204,5 +229,5 @@ insert_date_local <- function(obs, stations_meta) {
       format("%F %H:%M %z")) |>
     dplyr::ungroup() |>
     dplyr::relocate("date_local", .after = "date_utc") |>
-    dplyr::select(-"tz_local") 
+    dplyr::select(-"tz_local")
 }

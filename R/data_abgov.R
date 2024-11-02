@@ -55,7 +55,7 @@ get_abgov_stations <- function(use_sf = FALSE) {
   # Convert to spatial if desired
   if (use_sf) {
     stations <- stations |>
-      sf::st_as_sf(coords = c("lng", "lat"))
+      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
   }
 
   return(stations)
