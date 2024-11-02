@@ -54,12 +54,9 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
     standardize_colnames(col_names = col_names) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::arrange(.data$site_name) |>
+    # Drop duplicates and NA placeholders
     unique() |>
-    # Replace blank values with NA
-    dplyr::mutate(dplyr::across(
-      dplyr::everything(),
-      \(x) ifelse(x == "", NA, x)
-    )) |>
+    remove_na_placeholders(na_placeholders = "") |>
     # Convert date_created and date_removed to date objects
     dplyr::mutate(dplyr::across(
       c("date_created", "date_removed"),

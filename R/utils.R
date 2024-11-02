@@ -248,3 +248,10 @@ extract_tz_offset <- function(date_str) {
   minutes <- stringr::str_sub(offset, start = 4)
   paste0(hours, minutes)
 }
+
+remove_na_placeholders <- function(obs, na_placeholders) {
+  obs |>
+    dplyr::mutate(dplyr::across(
+      dplyr::everything(), \(x) swap(x, what = na_placeholders, with = NA)
+    )) 
+}

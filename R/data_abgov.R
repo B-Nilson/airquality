@@ -47,10 +47,7 @@ get_abgov_stations <- function(use_sf = FALSE) {
   na_placeholders <- c("Not Available", "Unknown")
   stations <- stations |>
     standardize_colnames(header) |>
-    dplyr::mutate(dplyr::across(
-      dplyr::everything(),
-      \(col) ifelse(col %in% na_placeholders, NA, col)
-    )) |>
+    remove_na_placeholders(na_placeholders = na_placeholders) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
     dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
