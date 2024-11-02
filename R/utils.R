@@ -81,26 +81,32 @@ swap_inf <- function(x, with = NA) swap(x, Inf, with)
 #' @examples
 #' get_timezone(-105.053144, 69.116178)
 get_timezone <- function(lng, lat, method = "accurate", ...) {
-  lutz::tz_lookup_coords(lat, lng, method = method, ...)
+  lutz::tz_lookup_coords(
+    lat = lat,
+    lon = lng,
+    method = method, ...
+  )
+}
+
+# Calculates the mean if enough values are provided
+# TODO: document, test, and export
+mean_if_enough <- function(x, min_n = 0, ...) {
+  ifelse(sum(!is.na(x)) >= min_n, mean(x, na.rm = T, ...), NA)
 }
 
 # Calculates rolling mean if enough non-na provided
 # TODO: code without zoo (use dplyr::lag/lead)
 # TODO: document, test, and export
 roll_mean <- function(x, width, direction = "backward", fill = NA, min_n = 0, digits = 0) {
-  # Calculates the mean if enough values are provided
-  mean_if_enough <- function(x, min_n = 0, ...) {
-    ifelse(sum(!is.na(x)) >= min_n, mean(x, na.rm = T, ...), NA)
-  }
   align <- ifelse(direction == "backward", "right",
     ifelse(direction == "forward", "left", "center")
   )
-  zoo::rollapply(
-    x,
-    width = width, align = align, fill = fill,
-    FUN = mean_if_enough, min_n = min_n
-  ) |>
-    round(digits)
+  x |>
+    zoo::rollapply(
+      width = width, align = align, fill = fill,
+      FUN = mean_if_enough, min_n = min_n
+    ) |>
+    round(digits = digits)
 }
 
 # make backward looking rolling means (NAs not ignored)
@@ -149,30 +155,30 @@ is_leap_year <- function(year) {
 
 # remove NA by default
 mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
-min_no_na <- function(x, ...) swap_inf(suppressWarnings(min(x, na.rm = T, ...)), NA)
-max_no_na <- function(x, ...) swap_inf(suppressWarnings(max(x, na.rm = T, ...)), NA)
+min_no_na <- function(x, ...) suppressWarnings(min(x, na.rm = T, ...)) |> swap_inf(NA)
+max_no_na <- function(x, ...) suppressWarnings(max(x, na.rm = T, ...)) |> swap_inf(NA)
 
 standardize_colnames <- function(df, col_names, raw = FALSE) {
   if (raw) {
     return(df)
   }
-  dplyr::select(df, dplyr::any_of(col_names))
+  df |> dplyr::select(dplyr::any_of(col_names))
 }
 
 handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowed = NA) {
+  # Handle date_range inputs with length != 2
   if (length(date_range) == 1) date_range <- c(date_range, date_range)
-
   if (length(date_range) != 2) {
     stop("`date_range` must have a length of either 1 or 2.")
   }
-
+  # Handle character inputs
   if (is.character(date_range)) {
-    date_range <- suppressWarnings(lubridate::ymd_h(date_range, tz = "UTC"))
+    date_range <- suppressWarnings(date_range |> lubridate::ymd_h(tz = "UTC"))
     if (any(is.na(date_range))) {
       stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
     }
   }
-
+  # Handle dates before min date allowed
   if (!is.na(min_date_allowed)) {
     if (any(date_range < min_date_allowed)) {
       if (all(date_range < min_date_allowed)) {
@@ -189,7 +195,7 @@ handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowe
       date_range[date_range < min_date_allowed] <- min_date_allowed
     }
   }
-
+  # Handle dates after max date allowed
   if (!is.na(max_date_allowed)) {
     if (any(date_range > max_date_allowed)) {
       if (all(date_range > max_date_allowed)) {
@@ -224,34 +230,32 @@ check_stations_exist <- function(stations, known_stations, source) {
       paste0(unknown_stations, collapse = ", ")
     ))
   }
-  stations[stations %in% known_stations] 
+  stations[stations %in% known_stations]
 }
 
 # TODO: generalize
 convert_date_utc_to_local <- function(obs) {
   obs |> dplyr::mutate(
-    tz_offset = as.numeric(extract_tz_offset(.data$date_local)) / 100,
-    tz_hours = trunc(.data$tz_offset),
+    tz_offset = .data$date_local |>
+      stringr::str_extract("[+,-]\\d\\d*$") |>
+      as.numeric() / 100,
+    tz_hours = .data$tz_offset |> trunc(),
     tz_minutes = floor((.data$tz_offset - trunc(.data$tz_offset)) * 100),
     # Convert local date string to a datetime
-    date_local = stringr::str_remove(.data$date_local, " [+,-]\\d\\d*$") |>
+    date_local = .data$date_local |>
+      stringr::str_remove(" [+,-]\\d\\d*$") |>
       lubridate::ymd_hm(tz = "UTC"), # Set to UTC preemtively (still local time)
     # Convert from local to UTC by subtracting timezone offset
-    date_utc_from_local = .data$date_local - lubridate::hours(.data$tz_hours) -
-      (lubridate::minutes(.data$tz_minutes))
+    date_utc_from_local = .data$date_local -
+      lubridate::hours(.data$tz_hours) -
+      lubridate::minutes(.data$tz_minutes)
   )
-}
-
-extract_tz_offset <- function(date_str) {
-  offset <- stringr::str_extract(date_str, "[+,-]\\d\\d*$")
-  hours <- stringr::str_sub(offset, end = 3) # TODO: Does this just split it and recombine it??
-  minutes <- stringr::str_sub(offset, start = 4)
-  paste0(hours, minutes)
 }
 
 remove_na_placeholders <- function(obs, na_placeholders) {
   obs |>
     dplyr::mutate(dplyr::across(
-      dplyr::everything(), \(x) swap(x, what = na_placeholders, with = NA)
-    )) 
+      dplyr::everything(),
+      \(x) swap(x, what = na_placeholders, with = NA)
+    ))
 }
