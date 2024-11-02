@@ -34,6 +34,7 @@ get_abgov_stations(use_sf = TRUE)
 Other Data Collection: 
 \code{\link{get_abgov_data}()},
 \code{\link{get_airnow_data}()},
+\code{\link{get_airnow_stations}()},
 \code{\link{get_bcgov_data}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}

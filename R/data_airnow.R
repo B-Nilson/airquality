@@ -1,6 +1,86 @@
-# AirNow Data -------------------------------------------------------------
+#' Download air quality station metadata from the US EPA "AirNow" platform
+#'
+#' @param dates (Optional) one or more date values indicating the day(s) to get metadata for.
+#'   Default is the current date.
+#' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
+#'
+#' @description
+#' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
+#' observation data from stations in the US and many other countries globally.
+#'
+#' The AirNow API provides access to daily metadata files for the available stations at that time.
+#'
+#' [get_airnow_stations()] provides an easy way to retrieve this metadata (typically to determine station id's to pass to `get_airnow_data()`)
+#'
+#' @seealso [get_airnow_data()]
+#' @return
+#' A tibble of metadata for the air quality monitoring stations on AirNow.
+#'
+#' @family Data Collection
+#' @family USA Air Quality
+#'
+#' @export
+#' @examples
+#' \donttest{
+#' # Normal usage
+#' get_airnow_stations()
+#' # if spatial object required
+#' get_airnow_stations(use_sf = TRUE)
+#' # if data for past/specific years required
+#' get_airnow_stations(dates = lubridate::ymd("2022-01-01"))
+#' }
+get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
+  # Make path to each supplied hours meta file
+  dates <- sort(dates, decreasing = TRUE) # Newest first
+  dates <- dates - lubridate::days(1) # in case current days file not made yet
+  airnow_paths <- make_airnow_metapaths(dates)
 
-# See https://docs.airnowapi.org/docs/HourlyDataFactSheet.pdf
+  # For each date
+  stations <- lapply(
+    names(airnow_paths), \(d){
+      p <- airnow_paths[names(airnow_paths) == as.character(d)]
+      # Download meta file, returning NULL if failed
+      on_error(
+        return = NULL,
+        read_data(file = p) |>
+          # Flag file date for later
+          dplyr::mutate(file_date = d)
+      )
+    }
+  ) |>
+    # Combine rowise into a single dataframe
+    dplyr::bind_rows() |>
+    # Set header names
+    stats::setNames(
+      c(
+        "siteID", "param", "site_location_code", "site", "status", "operator_code",
+        "operator", "usa_region", "lat", "lon", "elev", "tz_offset", "country",
+        "UNKNOWN", "UNKNOWN", "location_code", "location", "UNKNOWN", "region",
+        "UNKNOWN", "city", "UNKNOWN", "UNKNOWN", "file_date"
+      )
+    ) |>
+    # Choose and reorder colummns, standardizing names
+    dplyr::select(
+      site_id = "siteID", site_name = "site", city = "city",
+      lat = "lat", lng = "lon", elev = "elev",
+      status = "status", operator = "operator",
+      tz_offset = "tz_offset", as_of = "file_date"
+    ) |>
+    # Replace placeholders with proper NA values
+    dplyr::mutate(dplyr::across(
+      dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x)
+    )) |>
+    # Drop duplicated entries
+    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
+    # Lookup local timezones
+    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+
+  # Convert to spatial if desired
+  if (use_sf) stations <- sf::st_as_sf(stations, coords = c("lng", "lat"))
+
+  return(stations)
+}
+
 #' Download air quality station observations from the US EPA "AirNow" platform
 #'
 #' @param stations (Optional) Either "all" or a character vector specifying AQS IDs for stations to filter data to.
@@ -182,59 +262,6 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose =
     standardize_colnames(airnow_col_names)
 
   return(airnow_data)
-}
-
-# TODO: document
-get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
-  # Make path to each supplied hours meta file
-  dates <- sort(dates, decreasing = TRUE) # Newest first
-  dates <- dates - lubridate::days(1) # in case current days file not made yet
-  airnow_paths <- make_airnow_metapaths(dates)
-
-  # For each date
-  stations <- lapply(
-    names(airnow_paths), \(d){
-      p <- airnow_paths[names(airnow_paths) == as.character(d)]
-      # Download meta file, returning NULL if failed
-      on_error(
-        return = NULL,
-        read_data(file = p) |>
-          # Flag file date for later
-          dplyr::mutate(file_date = d)
-      )
-    }
-  ) |>
-    # Combine rowise into a single dataframe
-    dplyr::bind_rows() |>
-    # Set header names
-    stats::setNames(
-      c(
-        "siteID", "param", "site_location_code", "site", "status", "operator_code",
-        "operator", "usa_region", "lat", "lon", "elev", "tz_offset", "country",
-        "UNKNOWN", "UNKNOWN", "location_code", "location", "UNKNOWN", "region",
-        "UNKNOWN", "city", "UNKNOWN", "UNKNOWN", "file_date"
-      )
-    ) |>
-    # Choose and reorder colummns, standardizing names
-    dplyr::select(
-      site_id = "siteID", site_name = "site", city = "city",
-      lat = "lat", lng = "lon", elev = "elev",
-      status = "status", operator = "operator",
-      tz_offset = "tz_offset", as_of = "file_date"
-    ) |>
-    # Replace placeholders with proper NA values
-    dplyr::mutate(dplyr::across(
-      dplyr::where(is.character), \(x) ifelse(x %in% c("N/A", "na", "n/a"), NA, x)
-    )) |>
-    # Drop duplicated entries
-    dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
-    # Lookup local timezones
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
-
-  # Convert to spatial if desired
-  if (use_sf) stations <- sf::st_as_sf(stations, coords = c("lng", "lat"))
-
-  return(stations)
 }
 
 ## AirNow Helpers ----------------------------------------------------------

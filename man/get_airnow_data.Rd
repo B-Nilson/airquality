@@ -61,12 +61,14 @@ get_airnow_data("all", date_range, raw = TRUE)
 Other Data Collection: 
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
+\code{\link{get_airnow_stations}()},
 \code{\link{get_bcgov_data}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 
 Other USA Air Quality: 
-\code{\link{AQI}()}
+\code{\link{AQI}()},
+\code{\link{get_airnow_stations}()}
 }
 \concept{Data Collection}
 \concept{USA Air Quality}

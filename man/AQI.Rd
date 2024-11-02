@@ -78,7 +78,8 @@ Other Air Quality Standards:
 \code{\link{CAAQS}()}
 
 Other USA Air Quality: 
-\code{\link{get_airnow_data}()}
+\code{\link{get_airnow_data}()},
+\code{\link{get_airnow_stations}()}
 }
 \concept{Air Quality Standards}
 \concept{USA Air Quality}
