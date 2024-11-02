@@ -29,7 +29,6 @@
 #' # if data for past/specific years required
 #' get_bcgov_stations(years = 1998:2000)
 #' }
-# stations = get_bcgov_stations(years = 1998:2024)
 get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FALSE) {
   # Get station metadata for all requested years
   qaqc_years <- get_bcgov_qaqc_years()
