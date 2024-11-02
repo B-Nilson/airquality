@@ -72,7 +72,7 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
   data_funs <- get_data_collection_funs(networks, sources)
   date_range <- date_range |> handle_date_range()
   search_area <- locations |>
-    determine_search_area(buffer_dist = buffer_dist)
+    determine_search_area(buffer_dist = buffer_dist, verbose = verbose)
 
   # Get data for our stations/date_range
   stations <- data_funs |>
@@ -83,7 +83,7 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
 }
 
 # Get polygons of locations to search for stations within
-determine_search_area <- function(locations, buffer_dist = 10) {
+determine_search_area <- function(locations, buffer_dist = 10, verbose) {
   # TODO: allow for station ids/names
   if (is.character(locations)) {
     search_area <- locations |> lapply_and_bind(get_location_polygons)
