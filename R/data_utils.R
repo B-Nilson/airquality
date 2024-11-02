@@ -102,12 +102,9 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
   lapply_and_bind(names(data_funs[[net]]), \(src)
   on_error(
     return = NULL, msg = TRUE,
-    data_funs[[net]][[src]]$meta(dates) |>
+    data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
       dplyr::mutate(source = src, network = net)
-  ))) |>
-    # TODO: handle in each meta function instead
-    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
-    sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
+  )))
   sf::st_agr(stations) <- "constant"
   stations <- stations |>
     sf::st_intersection(search_area) |>

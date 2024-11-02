@@ -48,6 +48,7 @@ get_abgov_stations <- function(use_sf = FALSE) {
   stations <- stations |>
     standardize_colnames(header) |>
     remove_na_placeholders(na_placeholders = na_placeholders) |>
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
     dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
