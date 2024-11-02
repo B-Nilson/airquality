@@ -27,54 +27,19 @@
     Code
       AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25, verbose = FALSE)
     Output
-         pm25_1hr_ugm3 AQHI AQHI_plus risk        high_risk_pop_message
-      1              1    1         1  Low Enjoy your usual activities.
-      2              2    1         1  Low Enjoy your usual activities.
-      3              3    1         1  Low Enjoy your usual activities.
-      4              4    1         1  Low Enjoy your usual activities.
-      5              5    1         1  Low Enjoy your usual activities.
-      6              6    1         1  Low Enjoy your usual activities.
-      7              7    1         1  Low Enjoy your usual activities.
-      8              8    1         1  Low Enjoy your usual activities.
-      9              9    1         1  Low Enjoy your usual activities.
-      10            10    1         1  Low Enjoy your usual activities.
-      11            11    2         2  Low Enjoy your usual activities.
-      12            12    2         2  Low Enjoy your usual activities.
-      13            13    2         2  Low Enjoy your usual activities.
-      14            14    2         2  Low Enjoy your usual activities.
-      15            15    2         2  Low Enjoy your usual activities.
-      16            16    2         2  Low Enjoy your usual activities.
-      17            17    2         2  Low Enjoy your usual activities.
-      18            18    2         2  Low Enjoy your usual activities.
-      19            19    2         2  Low Enjoy your usual activities.
-      20            20    2         2  Low Enjoy your usual activities.
-      21            21    3         3  Low Enjoy your usual activities.
-      22            22    3         3  Low Enjoy your usual activities.
-      23            23    3         3  Low Enjoy your usual activities.
-      24            24    3         3  Low Enjoy your usual activities.
-                               general_pop_message AQHI_plus_exceeds_AQHI
-      1  Ideal air quality for outdoor activities.                     NA
-      2  Ideal air quality for outdoor activities.                     NA
-      3  Ideal air quality for outdoor activities.                     NA
-      4  Ideal air quality for outdoor activities.                     NA
-      5  Ideal air quality for outdoor activities.                     NA
-      6  Ideal air quality for outdoor activities.                     NA
-      7  Ideal air quality for outdoor activities.                     NA
-      8  Ideal air quality for outdoor activities.                     NA
-      9  Ideal air quality for outdoor activities.                     NA
-      10 Ideal air quality for outdoor activities.                     NA
-      11 Ideal air quality for outdoor activities.                     NA
-      12 Ideal air quality for outdoor activities.                     NA
-      13 Ideal air quality for outdoor activities.                     NA
-      14 Ideal air quality for outdoor activities.                     NA
-      15 Ideal air quality for outdoor activities.                     NA
-      16 Ideal air quality for outdoor activities.                     NA
-      17 Ideal air quality for outdoor activities.                     NA
-      18 Ideal air quality for outdoor activities.                     NA
-      19 Ideal air quality for outdoor activities.                     NA
-      20 Ideal air quality for outdoor activities.                     NA
-      21 Ideal air quality for outdoor activities.                     NA
-      22 Ideal air quality for outdoor activities.                     NA
-      23 Ideal air quality for outdoor activities.                     NA
-      24 Ideal air quality for outdoor activities.                     NA
+      # A tibble: 24 x 7
+         pm25_1hr_ugm3 AQHI  AQHI_plus risk  high_risk_pop_message general_pop_message
+                 <int> <fct> <fct>     <fct> <chr>                 <chr>              
+       1             1 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       2             2 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       3             3 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       4             4 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       5             5 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       6             6 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       7             7 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       8             8 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+       9             9 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+      10            10 1     1         Low   Enjoy your usual act~ Ideal air quality ~
+      # i 14 more rows
+      # i 1 more variable: AQHI_plus_exceeds_AQHI <lgl>
 
