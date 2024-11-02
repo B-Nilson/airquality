@@ -210,6 +210,7 @@ handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowe
 }
 
 # Handle if any/all requested stations for a specific data source don't exist in its meta data
+# Returns stations with any unknown stations filtered out
 check_stations_exist <- function(stations, known_stations, source) {
   unknown_stations <- stations[!stations %in% known_stations]
   if (length(unknown_stations) == length(stations)) {
@@ -223,7 +224,7 @@ check_stations_exist <- function(stations, known_stations, source) {
       paste0(unknown_stations, collapse = ", ")
     ))
   }
-  return(invisible(TRUE))
+  stations[stations %in% known_stations] 
 }
 
 # TODO: generalize
