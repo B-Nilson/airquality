@@ -172,7 +172,8 @@ taylor_diagram <- function(
   }
 
   # Cleanup input data
-  dat <- dplyr::ungroup(dat) |>
+  dat <- dat |>
+    dplyr::ungroup() |>
     dplyr::rename(dplyr::all_of(data_cols)) |>
     dplyr::mutate(
       dplyr::across(dplyr::all_of(unname(group_by)), as.factor)
@@ -191,39 +192,40 @@ taylor_diagram <- function(
     ) |>
     dplyr::summarise(
       .groups = "drop",
-      sd = stats::sd(.data$mod, na.rm = TRUE),
-      cor = stats::cor(.data$obs, .data$mod, use = "pairwise.complete.obs"),
-      x = get_x(.data$sd, .data$cor),
-      y = get_y(.data$sd, .data$cor)
+      sd = .data$mod |> stats::sd(na.rm = TRUE),
+      cor = .data$obs |> stats::cor(.data$mod, use = "pairwise.complete.obs"),
+      x = .data$sd |> get_x(.data$cor),
+      y = .data$sd |> get_y(.data$cor)
     )
   # Get observed standard deviation (by facet_by if provided)
   observed <- dat |> dplyr::summarise(
-    sd = stats::sd(.data$obs, na.rm = TRUE)
+    sd = .data$obs |> stats::sd(na.rm = TRUE)
   )
 
   # Make Taylor Diagram
-  taylor <- make_taylor_diagram_template(
-    observed, modelled,
-    facet_by = facet_by,
-    cor_minimum = cor_minimum,
-    cor_step = cor_step,
-    cor_colour = cor_colour,
-    cor_linetype = cor_linetype,
-    cor_label = cor_label,
-    rmse_minimum = rmse_minimum,
-    rmse_step = rmse_step,
-    rmse_colour = rmse_colour,
-    rmse_linetype = rmse_linetype,
-    rmse_label = rmse_label,
-    rmse_label_pos = rmse_label_pos,
-    sd_maximum = sd_maximum,
-    sd_step = sd_step,
-    sd_colour = sd_colour,
-    sd_linetypes = sd_linetypes,
-    sd_label = sd_label,
-    padding_limits = plot_padding,
-    nudge_labels = labels_padding
-  ) |>
+  taylor <- observed |>
+    make_taylor_diagram_template(
+      modelled,
+      facet_by = facet_by,
+      cor_minimum = cor_minimum,
+      cor_step = cor_step,
+      cor_colour = cor_colour,
+      cor_linetype = cor_linetype,
+      cor_label = cor_label,
+      rmse_minimum = rmse_minimum,
+      rmse_step = rmse_step,
+      rmse_colour = rmse_colour,
+      rmse_linetype = rmse_linetype,
+      rmse_label = rmse_label,
+      rmse_label_pos = rmse_label_pos,
+      sd_maximum = sd_maximum,
+      sd_step = sd_step,
+      sd_colour = sd_colour,
+      sd_linetypes = sd_linetypes,
+      sd_label = sd_label,
+      padding_limits = plot_padding,
+      nudge_labels = labels_padding
+    ) |>
     add_taylor_observed_point(
       observed,
       colour = obs_colour,
@@ -293,7 +295,11 @@ make_taylor_diagram_template <- function(
     sd_max
   )
 
-  x_title_hjust <- ifelse(min_cor >= 0 | min_cor == -1 | !is.null(facet_by), 0.5, 1 - (xlims[2] / 2 / (xlims[2] - xlims[1])))
+  x_title_hjust <- ifelse(
+    min_cor >= 0 | min_cor == -1 | !is.null(facet_by),
+    0.5,
+    1 - (xlims[2] / 2 / (xlims[2] - xlims[1]))
+  )
 
   if (rmse_label_pos == "default") {
     rmse_label_pos <- (min_cor + 1) / 2 * 0.9
@@ -353,16 +359,15 @@ make_taylor_diagram_template <- function(
       legend.box.spacing = ggplot2::unit("2", "pt")
     ) +
     ggplot2::labs(
-      x = paste0(
-        sd_label, "<br>",
-        "<span style='color: ", rmse_colour, "; font-size: 8pt;'>",
+      x = sd_label |> paste0(
+        "<br><span style='color: ", rmse_colour, "; font-size: 8pt;'>",
         rmse_label, "</span>"
       )
     )
   return(taylor)
 }
 
-# Add raial correlation lines (and labels) to Taylor Diagrams
+# Add radial correlation lines (and labels) to Taylor Diagrams
 add_taylor_cor_lines <- function(
     taylor, observed,
     min_cor = 0, sd_max,
@@ -376,16 +381,17 @@ add_taylor_cor_lines <- function(
 
   # Make locations for the correlation line end points and labels
   label_dist <- sd_max + nudge_labels * 0.6
-  cor_lines <- lapply_and_bind(draw_at, \(at)
-  observed |> dplyr::mutate(
-    xend = get_x(sd_max, at),
-    yend = get_y(sd_max, at),
-    x_label = get_x(label_dist, at),
-    y_label = get_y(label_dist, at),
-    label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
-      paste(at * 100, "%"), at
+  cor_lines <- draw_at |> lapply_and_bind(\(at){
+    observed |> dplyr::mutate(
+      xend = get_x(sd_max, at),
+      yend = get_y(sd_max, at),
+      x_label = get_x(label_dist, at),
+      y_label = get_y(label_dist, at),
+      label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
+        paste(at * 100, "%"), at
+      )
     )
-  ))
+  })
   # Make location for the label for the axis title
   dist_from_origin <- label_dist + nudge_labels * 0.75
   mean_cor <- mean(c(min_cor, 1))
@@ -397,8 +403,10 @@ add_taylor_cor_lines <- function(
   taylor +
     # Correlation lines
     ggplot2::geom_segment(
-      data = cor_lines, linewidth = 0.25,
-      linetype = linetype, colour = colour,
+      data = cor_lines,
+      linewidth = 0.25,
+      linetype = linetype,
+      colour = colour,
       ggplot2::aes(
         x = 0, y = 0,
         xend = .data$xend, yend = .data$yend
@@ -406,7 +414,8 @@ add_taylor_cor_lines <- function(
     ) +
     # Labels for each correlation line
     ggplot2::geom_text(
-      data = cor_lines, size = 3,
+      data = cor_lines,
+      size = 3,
       ggplot2::aes(
         .data$x_label, .data$y_label,
         label = .data$label
@@ -415,7 +424,8 @@ add_taylor_cor_lines <- function(
     ) +
     # Correlation axis label
     ggplot2::geom_text(
-      data = axis_title, size = 4,
+      data = axis_title,
+      size = 4,
       colour = "black",
       ggplot2::aes(.data$x, .data$y),
       label = axis_label,
@@ -439,7 +449,7 @@ add_taylor_sd_lines <- function(
   }
   lines_at <- unique(c(lines_at, sd_max))
 
-  arc_data <- lapply_and_bind(1:nrow(observed), \(i) {
+  arc_data <- 1:nrow(observed) |> lapply_and_bind(\(i) {
     at <- unique(c(lines_at, observed$sd[i]))
     data.frame(
       observed[i, ],
@@ -481,12 +491,13 @@ add_taylor_sd_lines <- function(
 # Add SD axes lines to Taylor Diagrams
 # TODO: add customizability
 add_taylor_axes_lines <- function(taylor, observed, min_cor, sd_max) {
-  axes_lines <- lapply_and_bind(c(min_cor, 1), \(correlation)
-  observed |>
-    dplyr::mutate(
-      xend = get_x(sd_max, correlation),
-      yend = get_y(sd_max, correlation)
-    ))
+  axes_lines <- c(min_cor, 1) |> lapply_and_bind(\(correlation){
+    observed |>
+      dplyr::mutate(
+        xend = get_x(sd_max, correlation),
+        yend = get_y(sd_max, correlation)
+      )
+  })
   taylor +
     ggplot2::geom_segment(
       data = axes_lines,
