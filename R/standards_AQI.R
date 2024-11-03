@@ -62,7 +62,7 @@ AQI <- function(
   # TODO: Reference https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
 
   # Determine which pollutants provided as input
-  AQI_pols <- formalArgs(AQI)[-1]
+  AQI_pols <- methods::formalArgs(AQI)[-1]
   all_missing <- lapply_and_name(
     AQI_pols,
     \(pol) all(is.na(get(pol)))
