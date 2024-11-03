@@ -5,6 +5,6 @@ test_that("Plot created without error", {
     sources = "BCgov",
     verbose = FALSE
   )$data
-  obs |> 
-    tile_plot(x = "hour", y = "day", z = "pm25_1hr_ugm3", FUN = mean, date_col = "date_utc")
+  expect_no_error(obs |> 
+    tile_plot(x = "hour", y = "day", z = "pm25_1hr_ugm3", FUN = mean, date_col = "date_utc"))
 })
