@@ -47,15 +47,15 @@ for non-QA/QC'ed years depending on the current time since the last QA/QC'ed yea
 \examples{
 \donttest{
 # For a single station
-station = "0450307" # EMS IDs - see get_bcgov_stations()
+station <- "0450307" # EMS IDs - see get_bcgov_stations()
 # For the years 2019 and 2020
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
+date_range <- lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
 get_bcgov_data(station, date_range)
 
 # For multiple stations
-stations = c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
+stations <- c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 # For first week of January 2019
-date_range = lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
+date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bcgov_data(stations, date_range)
 }
 }
@@ -66,6 +66,8 @@ Other Data Collection:
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
 \code{\link{get_airnow_data}()},
+\code{\link{get_airnow_stations}()},
+\code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 
 Other Canadian Air Quality: 
@@ -74,6 +76,7 @@ Other Canadian Air Quality:
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
+\code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 }
 \concept{Canadian Air Quality}

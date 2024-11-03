@@ -46,7 +46,9 @@ get_abgov_data("Calgary Southeast", c("2024-01-05 00", "2024-01-05 23"))
 Other Data Collection: 
 \code{\link{get_abgov_stations}()},
 \code{\link{get_airnow_data}()},
+\code{\link{get_airnow_stations}()},
 \code{\link{get_bcgov_data}()},
+\code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 
 Other Canadian Air Quality: 
@@ -55,6 +57,7 @@ Other Canadian Air Quality:
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_data}()},
+\code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 }
 \concept{Canadian Air Quality}

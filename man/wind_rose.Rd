@@ -29,7 +29,7 @@ Default assumes columns "obs" and "mod" exist.}
 If names are present they will be used as the corresponding facet titles.
 Default (NULL) does not facet the plot.}
 
-\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided. 
+\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
 Default is a single row.}
 
 \item{wd_nbins}{(Optional) a single value indicating the number of wind direction bars to plot.
@@ -66,16 +66,17 @@ TODO: Add description
 \examples{
 \dontrun{
 # Make test data
-date_range = lubridate::ymd_h(c("2019-02-01 00", "2019-02-28 23"), tz = "America/Vancouver")
-obs = get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
+date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-02-28 23"), tz = "America/Vancouver")
+obs <- get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
   dplyr::select("date_local", "site_id", "ws_1hr_ms", "wd_1hr_degrees") |>
   dplyr::distinct()
 # Basic usage
-gg = wind_rose(obs, facet_by = c(Site = "site_id"))
+gg <- wind_rose(obs, facet_by = c(Site = "site_id"))
 # Change titles
 gg + ggplot2::labs(
-  fill = "Legend Title", title = "Plot Title", 
-  subtitle = "Plot Subtitle", caption = "Plot Caption")
+  fill = "Legend Title", title = "Plot Title",
+  subtitle = "Plot Subtitle", caption = "Plot Caption"
+)
 
 # Save plot
 # save_figure(gg, "./test.png")

@@ -40,12 +40,17 @@ and has been adopted by all Canadian provinces/territories
 (except Quebec where they use the AQI instead of the AQHI/AQHI+).
 }
 \examples{
-obs = data.frame(
-  date = seq(lubridate::ymd_h("2024-01-01 00"),
-             lubridate::ymd_h("2024-01-01 23"), "1 hours"),
-  pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24))
-AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
-     o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2)
+obs <- data.frame(
+  date = seq(
+    lubridate::ymd_h("2024-01-01 00"),
+    lubridate::ymd_h("2024-01-01 23"), "1 hours"
+  ),
+  pm25 = sample(1:150, 24), o3 = sample(1:150, 24), no2 = sample(1:150, 24)
+)
+AQHI(
+  dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
+  o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2
+)
 
 AQHI(dates = obs$date, pm25_1hr_ugm3 = obs$pm25) # Returns AQHI+
 }
@@ -59,6 +64,7 @@ Other Canadian Air Quality:
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_data}()},
+\code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 
 Other Air Quality Standards: 

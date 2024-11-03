@@ -1,7 +1,7 @@
 #' Download air quality station metadata from the Alberta (Canada) Government
 #'
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
-#' 
+#'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
@@ -12,7 +12,7 @@
 #'
 #' @seealso [get_abgov_data()]
 #' @return
-#' A tibble of station metadata for Alberta FEMs.
+#' A tibble of metadata for Alberta air quality monitoring stations.
 #'
 #' @family Data Collection
 #' @family Canadian Air Quality
@@ -25,16 +25,8 @@
 #' # if spatial object required
 #' get_abgov_stations(use_sf = TRUE)
 #' }
-get_abgov_stations = function(use_sf = FALSE){
-  # Define endpoint
-  api_endpoint = "Stations?"
-
-  # Make request
-  stations = paste0(ab_api_site, api_endpoint) |>
-    parse_abgov_api_request()
-
-  # Standardize column names
-  stations = dplyr::select(stations,
+get_abgov_stations <- function(use_sf = FALSE) {
+  header <- c(
     site_id = "Abbreviation",
     site_name = "Name",
     type = "Type",
@@ -43,18 +35,28 @@ get_abgov_stations = function(use_sf = FALSE){
     airshed = "AirshedName",
     lat = "Latitude",
     lng = "Longitude",
-    elev = "Elevation")
+    elev = "Elevation"
+  )
+  # Get station metadata from the AB gov API
+  api_endpoint <- "Stations"
+  stations <- ab_api_site |>
+    paste0(api_endpoint, "?") |>
+    parse_abgov_api_request()
 
-  # Fix data types
-  stations = stations |>
-    dplyr::mutate(dplyr::across(dplyr::everything(), \(col)
-      ifelse(col %in% c("Not Available", "Unknown"), NA, col))) |>
+  # Standardize formatting
+  na_placeholders <- c("Not Available", "Unknown")
+  stations <- stations |>
+    standardize_colnames(header) |>
+    remove_na_placeholders(na_placeholders = na_placeholders) |>
+    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
-    # Lookup local timezones
-    dplyr::mutate(tz_local = get_station_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
 
   # Convert to spatial if desired
-  if(use_sf) stations = sf::st_as_sf(stations, coords = c("lng", "lat"))
+  if (use_sf) {
+    stations <- stations |>
+      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
+  }
 
   return(stations)
 }
@@ -70,7 +72,7 @@ get_abgov_stations = function(use_sf = FALSE){
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed
-#' 
+#'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
@@ -94,130 +96,66 @@ get_abgov_stations = function(use_sf = FALSE){
 #' \donttest{
 #' get_abgov_data("Calgary Southeast", c("2024-01-05 00", "2024-01-05 23"))
 #' }
-get_abgov_data = function(stations, date_range, raw = FALSE, verbose = TRUE){
+get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
   # Output citation message to user
-  if(verbose) data_citation("ABgov")
-
-  date_range = lubridate::with_tz(date_range, abgov_tzone) # Correct? Or is it UTC time? DST?
+  if (verbose) data_citation("ABgov")
 
   # Handle date_range inputs
-  min_date = lubridate::ymd_h("1970-01-01 00", tz = abgov_tzone) # TODO: determine actual min date
-  max_date = lubridate::floor_date(lubridate::with_tz(Sys.time(), "UTC"), "hours")
-  date_range = handle_date_range(date_range, min_date, max_date)
+  min_date <- "1970-01-01 00" |> lubridate::ymd_h(tz = abgov_tzone) # TODO: determine actual min date
+  max_date <- Sys.time() |> lubridate::floor_date("hours")
+  date_range <- date_range |>
+    handle_date_range(min_date, max_date) |>
+    lubridate::with_tz(abgov_tzone) # Correct? Or is it UTC time? DST?
 
-  # Get all stations during period
-  known_stations = get_abgov_stations()
+  # Only get data for stations that exist on the API
+  known_stations <- get_abgov_stations()
+  stations <- stations |>
+    check_stations_exist(known_stations$site_name, source = "the AB Gov. site")
 
-  # Handle if any/all don't exist in meta data
-  check_stations_exist(stations, known_stations$site_name, source = "the AB Gov. site")
-
-  # Define endpoint
-  api_endpoint = "StationMeasurements?"
-
-  # Columns to retrieve
-  data_cols = c("Value", "StationName",
-                "ParameterName", "ReadingDate")
-
-  # Build station filters (max 10 stations at a time)
-  station_filters = sapply(seq(1, length(stations), 10), \(s){
-    end = ifelse(s + 10 > length(stations), length(stations), s + 10)
-    paste0(
-    "(indexof('", stations[s:end] |>
-      paste0(collapse = "', StationName) ge 0 or indexof('"),
-    "', StationName) ge 0)")
-  })
-
-  # Build date filter
-  starts = seq(date_range[1] -lubridate::hours(1), date_range[2], "3 days")
-  ends = starts + lubridate::days(3)
-  ends[ends > date_range[2]] = date_range[2]
-  date_filters = sapply(1:length(starts), \(i) paste0(
-    "(ReadingDate ge datetime'", format(starts[i], "%FT%T"),
-    "' and ReadingDate le datetime'", format(ends[i], "%FT%T"),
-    "')"
-  ))
-
-  # Combine arguments
-  args = sapply(station_filters, \(station_filter) {
-    sapply(date_filters, \(date_filter) {
-      c(
-        paste0("select=", paste0(data_cols, collapse = ",")),
-        paste0("$filter=", paste(station_filter, date_filter, sep = " and ")) |>
-          paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-      ) |> paste0(collapse = "&") |> utils::URLencode()
-    })
-  }) |> as.character() |> unname()
-
-  # Make request
-  stations_data = paste0(ab_api_site, api_endpoint, args) |>
-    lapply(parse_abgov_api_request) |> dplyr::bind_rows()
-
-  # Error if no data retrieved
-  if(nrow(stations_data) == 0){
+  # Make request(s) as needed to load all desired data
+  api_endpoint <- "StationMeasurements"
+  args <- stations |>
+    build_abgov_data_args(date_range, stations_per_call = 10, days_per_call = 3)
+  stations_data <- ab_api_site |>
+    paste0(api_endpoint, "?", args) |>
+    lapply(parse_abgov_api_request) |>
+    dplyr::bind_rows()
+  if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
-
-  stations_data = stations_data |>
-    # Convert dates, add quality assured column (unknown at the moment)
-    # TODO: determine if/what QA/QC'ed
-    dplyr::mutate(date_utc = lubridate::ymd_hms(.data$ReadingDate, tz = abgov_tzone) |>
-                    lubridate::with_tz("UTC"),
-                  quality_assured = NA) |>
-    # Drop erroneous columns
+  # Standardise data formatting
+  stations_data |>
+    # Convert dates, add QA/QC placeholder, and filter to desired range
+    dplyr::mutate(
+      date_utc = .data$ReadingDate |>
+        lubridate::ymd_hms(tz = abgov_tzone) |>
+        lubridate::with_tz("UTC"),
+      quality_assured = NA # TODO: determine if/what QA/QC'ed
+    ) |>
+    dplyr::filter(.data$date_utc |>
+      dplyr::between(date_range[1], date_range[2])) |>
+    # Long -> wide, fix column names, order, and typing
     dplyr::select(-"DeterminantParameterName", -"ReadingDate", -"Id") |>
-    # Filter data to desired date range
-    dplyr::filter(.data$date_utc |> dplyr::between(date_range[1], date_range[2])) |>
-    # Long to wide, sort
     tidyr::pivot_wider(names_from = "ParameterName", values_from = "Value") |>
-    dplyr::arrange("StationName", "date_utc") |>
-    # Drop duplicated dates for a particular station
-    dplyr::filter(!duplicated(.data$date_utc), .by = "StationName") |>
-    # Convert to numeric
+    standardize_colnames(abgov_col_names, raw = raw) |> # TODO: does raw work as expected?
     dplyr::mutate(dplyr::across(-(1:3), as.numeric)) |>
-    # Rename and select desired columns
-    standardize_colnames(abgov_col_names, raw = raw) |>
-    # Convert date_local to local time
-    dplyr::left_join(known_stations |> dplyr::select("site_name", "tz_local"),
-                     by = "site_name") |>
-    dplyr::rowwise() |>
-    dplyr::mutate(date_local = lubridate::with_tz(.data$date_utc, .data$tz_local) |>
-                    format("%F %H:%M %z")) |>
-    dplyr::ungroup() |>
-    dplyr::relocate("date_local", .after = "date_utc") |>
-    dplyr::select(-"tz_local") |>
+    dplyr::arrange(.data$site_name, .data$date_utc) |>
+    # Remove duplicated dates and insert local time
+    dplyr::filter(!duplicated(.data$date_utc), .by = "site_name") |>
+    insert_date_local(stations_meta = known_stations) |>
     tibble::as_tibble()
-
-  return(stations_data)
-}
-
-parse_abgov_api_request = function(api_request){
-  api_request = api_request |>
-    xml2::read_xml() |>
-    xml2::as_list()
-  api_request$feed[-(1:4)] |>
-    lapply(\(entry){
-      e = unlist(entry$content$properties)
-      # TODO: handle no data causing error here `get_abgov_data("Calgary Southeast", c("2021-01-05 00", "2021-01-05 23"))`
-      data.frame(t(e))
-    }) |>
-    dplyr::bind_rows()
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
 
-ab_api_site = "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
+ab_api_site <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
 
-## Endpoints we care about
-# Data: StationMeasurements?
-# Stations: Stations?
+abgov_tzone <- "America/Edmonton" # TODO: confirm this
 
-abgov_tzone = "America/Edmonton"
-
-abgov_col_names = c(
+# TODO: check if there are more values available
+abgov_col_names <- c(
   # Meta
   date_utc = "date_utc", # Added by get_abgov_data()
-  # date_local = "DATE_PST",
-  site_id = "EMS_ID",
   site_name = "StationName",
   quality_assured = "quality_assured", # Added by get_abgov_data()
   # Particulate Matter
@@ -246,9 +184,56 @@ abgov_col_names = c(
   t_1hr_celcius = "Outdoor Temperature",
   wd_1hr_degrees = "Wind Direction",
   ws_1hr_ms = "Wind Speed",
-  # precip_1hr_mm = "PRECIP",
-  # snowDepth_1hr_cm = "SNOW",
-  # pressure_1hr_kpa = "PRESSURE", # TODO: Ensure pressure proper units ....
-  # vapourPressure_1hr_kpa = "VAPOUR",
   solar_1hr_wm2 = "Solar Radiation"
 )
+
+build_abgov_data_args <- function(stations, date_range, stations_per_call = 10, days_per_call = 3) {
+  # Build station filter(s)
+  station_filters <- seq(1, length(stations), stations_per_call) |> sapply(\(s){
+    end <- (s + stations_per_call > length(stations)) |>
+      ifelse(length(stations), s + stations_per_call)
+    s_query <- stations[s:end] |>
+      paste0(collapse = "', StationName) ge 0 or indexof('")
+    paste0("(indexof('", s_query, "', StationName) ge 0)")
+  })
+  # Build date filter(s)
+  starts <- (date_range[1] - lubridate::hours(1)) |>
+    seq(date_range[2], paste(days_per_call, "days"))
+  ends <- starts + lubridate::days(days_per_call)
+  ends[ends > date_range[2]] <- date_range[2]
+  date_filters <- 1:length(starts) |> sapply(\(i){
+    s <- format(starts[i], "%FT%T")
+    e <- format(ends[i], "%FT%T")
+    paste0(
+      "(ReadingDate ge datetime'", s, "' and ReadingDate le datetime'", e, "')"
+    )
+  })
+  # Combine arguments
+  station_filters |>
+    sapply(\(station_filter) date_filters |> sapply(\(date_filter) {
+      col_names <- c("Value", "StationName", "ParameterName", "ReadingDate") |>
+        paste0(collapse = ",")
+      filter <- paste(station_filter, date_filter, sep = " and ") |>
+        # Parameter filter is required, so do a dummy one that allows for any param
+        paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
+      "select=" |>
+        paste0(col_names) |>
+        paste0("&", "$filter=" |> paste0(filter))
+    })) |>
+    as.character() |>
+    utils::URLencode() |>
+    unname()
+}
+
+parse_abgov_api_request <- function(api_request) {
+  print(api_request)
+  api_request <- api_request |>
+    xml2::read_xml() |>
+    xml2::as_list()
+  api_request$feed[-(1:4)] |>
+    lapply(\(entry){
+      e <- unlist(entry$content$properties)
+      if (!is.null(e)) data.frame(t(e)) else e
+    }) |>
+    dplyr::bind_rows()
+}
