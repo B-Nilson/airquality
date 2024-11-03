@@ -6,8 +6,8 @@
 #' Create wind rose diagrams to assess patterns in wind speed and direction
 #'
 #' @param obs Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.
-#' @param data_cols (Optional) a character vector with 2 values indication column names in `obs` to get observed and modelled values.
-#'   Default assumes columns "obs" and "mod" exist.
+#' @param data_cols (Optional) a character vector with 2 values indicating column names in `obs` to get wind speed (ws) and wind direction (wd) values.
+#'   Default assumes columns "ws_1hr_ms" and "wd_1hr_degrees" exist.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 #'   If names are present they will be used as the corresponding facet titles.
 #'   Default (NULL) does not facet the plot.
