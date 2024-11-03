@@ -1,18 +1,29 @@
-
+# TODO: add option to display n obs inside each cell
+# TODO: handle named periods instead of integers for (month, quarter, wday)
+# TODO: handle timezones?
 tile_plot <- function(obs, x, y, z, FUN = mean, date_col = "date_utc", ...) {
-  special_cases <- c("year", "quarter", "month", "day", "hour", "minute")
+  # Handle date-based grouping options
+  special_cases <- c(
+    "year", "quarter", "month", "day", "wday",
+    "hour", "minute", "second"
+  )
   if (x %in% special_cases & !x %in% names(obs)) {
-    obs[[x]] <- getExportedValue("lubridate", x)(obs[[date_col]])
+    lubridate_fun <- getExportedValue("lubridate", x)
+    obs[[x]] <- lubridate_fun(obs[[date_col]])
   }
   if (y %in% special_cases & !y %in% names(obs)) {
-    obs[[y]] <- getExportedValue("lubridate", y)(obs[[date_col]])
+    lubridate_fun <- getExportedValue("lubridate", y)
+    obs[[y]] <- lubridate_fun(obs[[date_col]])
   }
+
+  # Summarise using FUN(...) across each x/y pair, filling gaps with NAs
   pd <- obs |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(x = x, y = y)))) |>
     dplyr::summarise(z = get(z) |> FUN(...), .groups = "drop") |>
     dplyr::mutate(dplyr::across(c(x, y), factor)) |>
     tidyr::complete(x, y)
-
+  
+  # Make gg tile plot with good defaults
   pd |>
     ggplot2::ggplot() +
     ggplot2::geom_tile(
