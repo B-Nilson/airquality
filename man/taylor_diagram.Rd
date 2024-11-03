@@ -168,6 +168,7 @@ taylor_diagram(data,
 \seealso{
 Other Data Visualisation: 
 \code{\link{save_figure}()},
+\code{\link{tile_plot}()},
 \code{\link{wind_rose}()}
 }
 \concept{Data Visualisation}

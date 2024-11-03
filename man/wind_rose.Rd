@@ -22,8 +22,8 @@ wind_rose(
 \arguments{
 \item{obs}{Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.}
 
-\item{data_cols}{(Optional) a character vector with 2 values indication column names in `obs` to get observed and modelled values.
-Default assumes columns "obs" and "mod" exist.}
+\item{data_cols}{(Optional) a character vector with 2 values indicating column names in `obs` to get wind speed (ws) and wind direction (wd) values.
+Default assumes columns "ws_1hr_ms" and "wd_1hr_degrees" exist.}
 
 \item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 If names are present they will be used as the corresponding facet titles.
@@ -85,6 +85,7 @@ gg + ggplot2::labs(
 \seealso{
 Other Data Visualisation: 
 \code{\link{save_figure}()},
-\code{\link{taylor_diagram}()}
+\code{\link{taylor_diagram}()},
+\code{\link{tile_plot}()}
 }
 \concept{Data Visualisation}
