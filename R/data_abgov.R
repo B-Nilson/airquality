@@ -26,7 +26,7 @@
 #' # if spatial object required
 #' get_abgov_stations(use_sf = TRUE)
 #' }
-get_abgov_stations <- function(use_sf = FALSE, ...) {
+get_abgov_stations <- function(..., use_sf = FALSE) {
   header <- c(
     site_id = "Abbreviation",
     site_name = "Name",
