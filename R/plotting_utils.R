@@ -59,7 +59,7 @@ add_default_theme <- function(gg) {
     )
 }
 
-facet_plot <- function(gg, by = NULL, rows = 1) {
+facet_plot <- function(gg, by = NULL, rows = 1, ...) {
   if (is.null(by)) {
     return(gg)
   }
@@ -68,6 +68,6 @@ facet_plot <- function(gg, by = NULL, rows = 1) {
       by,
       nrow = rows,
       axes = "all",
-      labeller = "label_both"
+      labeller = "label_both", ...
     )
 }
