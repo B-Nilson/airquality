@@ -1,7 +1,8 @@
 #' Download air quality station metadata from the Alberta (Canada) Government
 #'
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
-#'
+#' @param ... [Not Used]
+#' 
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
