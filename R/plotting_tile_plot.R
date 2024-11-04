@@ -49,27 +49,11 @@
 #' # save_figure(gg, "./test.png")
 #' }
 tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, facet_rows = 1, FUN = mean, ...) {
-  # Handle date-based grouping options
-  special_cases <- c(
-    "year", "quarter", "month", "day", "wday",
-    "hour", "minute", "second"
-  )
-  if (x %in% special_cases & !x %in% names(obs)) {
-    lubridate_fun <- getExportedValue("lubridate", x)
-    obs[[x]] <- lubridate_fun(obs[[date_col]])
-  }
-  if (y %in% special_cases & !y %in% names(obs)) {
-    lubridate_fun <- getExportedValue("lubridate", y)
-    obs[[y]] <- lubridate_fun(obs[[date_col]])
-  }
   if (is.null(names(facet_by))) names(facet_by) <- facet_by
-  facets_to_make <- facet_by %in% special_cases & !facet_by %in% names(obs)
-  if (any(facets_to_make)) {
-    lubridate_funs <- facet_by[facets_to_make] |>
-      lapply(getExportedValue, ns = "lubridate")
-    obs[facet_by[facets_to_make]] <- lubridate_funs |>
-      lapply(\(fun) fun(obs[[date_col]]))
-  }
+
+  # Handle date-based grouping options
+  obs = obs |>
+    add_lubridate_cols(c(x, y, facet_by), date_col)
 
   # Summarise using FUN(...) across each x/y pair, filling gaps with NAs
   pd <- obs |>
@@ -97,4 +81,17 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
       x = x, y = y,
       fill = z
     )
+}
+
+add_lubridate_cols <- function(obs, FUN_names, date_col = "date_utc") {
+  special_cases <- c(
+    "year", "quarter", "month", "day", "wday",
+    "hour", "minute", "second"
+  )
+  cols_to_make <- FUN_names %in% special_cases & !FUN_names %in% names(obs)
+  for (col in FUN_names[cols_to_make]) {
+    lubridate_fun <- getExportedValue("lubridate", col)
+    obs[[col]] <- lubridate_fun(obs[[date_col]])
+  }
+  return(obs)
 }
