@@ -23,6 +23,7 @@ Imports:
     httr,
     lubridate,
     lutz,
+    methods,
     osmdata,
     rlang,
     sf,
