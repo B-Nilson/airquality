@@ -42,7 +42,8 @@
 #' # Change titles
 #' gg + ggplot2::labs(
 #'   fill = "Legend Title", title = "Plot Title",
-#'   subtitle = "Plot Subtitle", caption = "Plot Caption")
+#'   subtitle = "Plot Subtitle", caption = "Plot Caption"
+#' )
 #'
 #' # Save plot
 #' # save_figure(gg, "./test.png")
@@ -70,7 +71,6 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
       lapply(\(fun) fun(obs[[date_col]]))
   }
 
-
   # Summarise using FUN(...) across each x/y pair, filling gaps with NAs
   pd <- obs |>
     dplyr::group_by(dplyr::across(dplyr::all_of(c(x = x, y = y, facet_by)))) |>
@@ -80,7 +80,6 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
       c(x, y, dplyr::all_of(names(facet_by))),
       factor
     ))
-
 
   # Make gg tile plot with good defaults
   pd |>
