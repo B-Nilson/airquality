@@ -62,7 +62,8 @@ gg <- obs |> tile_plot(
 # Change titles
 gg + ggplot2::labs(
   fill = "Legend Title", title = "Plot Title",
-  subtitle = "Plot Subtitle", caption = "Plot Caption")
+  subtitle = "Plot Subtitle", caption = "Plot Caption"
+)
 
 # Save plot
 # save_figure(gg, "./test.png")

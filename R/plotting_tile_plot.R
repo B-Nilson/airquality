@@ -1,6 +1,4 @@
 # TODO: add option to display n obs inside each cell
-# TODO: handle named periods instead of integers for (month, quarter, wday)
-# TODO: handle timezones?
 #' Create tiled summary diagrams to assess relationships in a variable based on two grouping variables
 #'
 #' @param obs Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.
@@ -52,7 +50,8 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
   if (is.null(names(facet_by))) names(facet_by) <- facet_by
 
   # Handle date-based grouping options
-  obs = obs |>
+  #   (i.e. add "year" column if year provided but not present in obs)
+  obs <- obs |>
     add_lubridate_cols(c(x, y, facet_by), date_col)
 
   # Summarise using FUN(...) across each x/y pair, filling gaps with NAs
@@ -64,6 +63,10 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
       c(x, y, dplyr::all_of(names(facet_by))),
       factor
     ))
+
+  hour_label <- paste0("hour (", lubridate::tz(obs[[date_col]]), ")")
+  xlab <- ifelse(x == "hour", hour_label, x)
+  ylab <- ifelse(y == "hour", hour_label, y)
 
   # Make gg tile plot with good defaults
   pd |>
@@ -78,7 +81,7 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
     ggplot2::scale_y_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_fill_viridis_c(na.value = NA, limits = c(0, NA)) +
     ggplot2::labs(
-      x = x, y = y,
+      x = xlab, y = ylab,
       fill = z
     )
 }
@@ -88,10 +91,17 @@ add_lubridate_cols <- function(obs, FUN_names, date_col = "date_utc") {
     "year", "quarter", "month", "day", "wday",
     "hour", "minute", "second"
   )
-  cols_to_make <- FUN_names %in% special_cases & !FUN_names %in% names(obs)
+  cols_to_make <- FUN_names %in% special_cases &
+    !FUN_names %in% names(obs)
   for (col in FUN_names[cols_to_make]) {
     lubridate_fun <- getExportedValue("lubridate", col)
-    obs[[col]] <- lubridate_fun(obs[[date_col]])
+    if (col %in% c("month", "wday")) { # Use abreviated text labels where available
+      obs[[col]] <- obs[[date_col]] |> lubridate_fun(label = TRUE, abbr = TRUE)
+      col_levels <- levels(obs[[col]])[levels(obs[[col]]) %in% obs[[col]]]
+      obs[[col]] <- obs[[col]] |> factor(col_levels)
+    } else {
+      obs[[col]] <- obs[[date_col]] |> lubridate_fun()
+    }
   }
   return(obs)
 }
