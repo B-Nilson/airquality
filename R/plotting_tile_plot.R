@@ -85,6 +85,7 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
   # Make gg tile plot with good defaults
   pd |>
     ggplot2::ggplot() |>
+    add_default_theme() |>
     facet_plot(by = names(facet_by), rows = facet_rows) +
     ggplot2::geom_tile(
       ggplot2::aes(x, y, fill = z),
@@ -93,7 +94,6 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
     ggplot2::scale_x_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_y_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_fill_viridis_c(na.value = NA, limits = c(0, NA)) +
-    ggpubr::theme_pubr(border = TRUE) +
     ggplot2::labs(
       x = x, y = y,
       fill = z

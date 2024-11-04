@@ -18,7 +18,6 @@ Imports:
     forcats,
     ggforce,
     ggplot2,
-    ggpubr,
     ggtext,
     httr,
     lubridate,
