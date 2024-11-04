@@ -28,19 +28,21 @@
 #' @examples
 #' \dontrun{
 #' # Make test data
-#' date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-03-28 23"), tz = "America/Vancouver")
+#' date_range <- c("2019-02-01 00", "2019-03-28 23")
 #' obs <- get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
 #'   dplyr::select("date_utc", "site_id", "pm25_1hr_ugm3") |>
 #'   dplyr::distinct()
 #' # Basic usage
-#' gg <- tile_plot(obs, x = "day", y = "hour", z = "pm25_1hr_ugm3")
-#' }
-
+#' gg <- obs |> tile_plot(
+#'   x = "day",
+#'   y = "hour",
+#'   z = "pm25_1hr_ugm3",
+#'   facet_by = c("Year" = "year", "Month" = "month")
+#' )
 #' # Change titles
 #' gg + ggplot2::labs(
 #'   fill = "Legend Title", title = "Plot Title",
-#'   subtitle = "Plot Subtitle", caption = "Plot Caption"
-#' )
+#'   subtitle = "Plot Subtitle", caption = "Plot Caption")
 #'
 #' # Save plot
 #' # save_figure(gg, "./test.png")

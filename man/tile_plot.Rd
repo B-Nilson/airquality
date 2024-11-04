@@ -19,8 +19,8 @@ tile_plot(
 \arguments{
 \item{obs}{Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.}
 
-\item{x, y, z}{charactor values indicating column names in `obs` to summarise (`x` and `y`) values (`z`) by using `FUN`. 
-If `x` or `y` are one of 
+\item{x, y, z}{charactor values indicating column names in `obs` to summarise (`x` and `y`) values (`z`) by using `FUN`.
+If `x` or `y` are one of
 `"year", "quarter", "month", "day", "wday", "hour", "minute", "second"`,
 and those columns are not present in `obs` then they will be calulcated based on `date_col`}
 
@@ -48,17 +48,21 @@ TODO: Add description
 \examples{
 \dontrun{
 # Make test data
-date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-03-28 23"), tz = "America/Vancouver")
+date_range <- c("2019-02-01 00", "2019-03-28 23")
 obs <- get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
   dplyr::select("date_utc", "site_id", "pm25_1hr_ugm3") |>
   dplyr::distinct()
 # Basic usage
-gg <- tile_plot(obs, x = "day", y = "hour", z = "p,25_1hr_ugm3")
+gg <- obs |> tile_plot(
+  x = "day",
+  y = "hour",
+  z = "pm25_1hr_ugm3",
+  facet_by = c("Year" = "year", "Month" = "month")
+)
 # Change titles
 gg + ggplot2::labs(
   fill = "Legend Title", title = "Plot Title",
-  subtitle = "Plot Subtitle", caption = "Plot Caption"
-)
+  subtitle = "Plot Subtitle", caption = "Plot Caption")
 
 # Save plot
 # save_figure(gg, "./test.png")
