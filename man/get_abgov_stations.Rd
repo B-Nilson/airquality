@@ -4,10 +4,12 @@
 \alias{get_abgov_stations}
 \title{Download air quality station metadata from the Alberta (Canada) Government}
 \usage{
-get_abgov_stations(use_sf = FALSE)
+get_abgov_stations(use_sf = FALSE, ...)
 }
 \arguments{
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
+
+\item{...}{[Not Used]}
 }
 \value{
 A tibble of metadata for Alberta air quality monitoring stations.
