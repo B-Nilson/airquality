@@ -1,12 +1,11 @@
 # TODO: add option to display n obs inside each cell
 # TODO: handle named periods instead of integers for (month, quarter, wday)
 # TODO: handle timezones?
-# TODO: handle facets
 #' Create tiled summary diagrams to assess relationships in a variable based on two grouping variables
 #'
 #' @param obs Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.
-#' @param x,y,z charactor values indicating column names in `obs` to summarise (`x` and `y`) values (`z`) by using `FUN`. 
-#'   If `x` or `y` are one of 
+#' @param x,y,z charactor values indicating column names in `obs` to summarise (`x` and `y`) values (`z`) by using `FUN`.
+#'   If `x` or `y` are one of
 #'   `"year", "quarter", "month", "day", "wday", "hour", "minute", "second"`,
 #'   and those columns are not present in `obs` then they will be calulcated based on `date_col`
 #' @param date_col (Optional) a single charactor value indicating the column name in `obs` containing observation dates.
@@ -34,7 +33,9 @@
 #'   dplyr::select("date_utc", "site_id", "pm25_1hr_ugm3") |>
 #'   dplyr::distinct()
 #' # Basic usage
-#' gg <- tile_plot(obs, x = "day", y = "hour", z = "p,25_1hr_ugm3")
+#' gg <- tile_plot(obs, x = "day", y = "hour", z = "pm25_1hr_ugm3")
+#' }
+
 #' # Change titles
 #' gg + ggplot2::labs(
 #'   fill = "Legend Title", title = "Plot Title",
@@ -58,17 +59,31 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
     lubridate_fun <- getExportedValue("lubridate", y)
     obs[[y]] <- lubridate_fun(obs[[date_col]])
   }
+  if (is.null(names(facet_by))) names(facet_by) <- facet_by
+  facets_to_make <- facet_by %in% special_cases & !facet_by %in% names(obs)
+  if (any(facets_to_make)) {
+    lubridate_funs <- facet_by[facets_to_make] |>
+      lapply(getExportedValue, ns = "lubridate")
+    obs[facet_by[facets_to_make]] <- lubridate_funs |>
+      lapply(\(fun) fun(obs[[date_col]]))
+  }
+
 
   # Summarise using FUN(...) across each x/y pair, filling gaps with NAs
   pd <- obs |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(c(x = x, y = y)))) |>
-    dplyr::summarise(z = get(z) |> FUN(...), .groups = "drop") |>
-    dplyr::mutate(dplyr::across(c(x, y), factor)) |>
-    tidyr::complete(x, y)
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(x = x, y = y, facet_by)))) |>
+    dplyr::summarise(z = get(z) |> FUN(), .groups = "drop") |>
+    tidyr::complete(x, y, !!!(rlang::syms(names(facet_by)))) |>
+    dplyr::mutate(dplyr::across(
+      c(x, y, dplyr::all_of(names(facet_by))),
+      factor
+    ))
+
 
   # Make gg tile plot with good defaults
   pd |>
-    ggplot2::ggplot() +
+    ggplot2::ggplot() |>
+    facet_plot(by = names(facet_by), rows = facet_rows) +
     ggplot2::geom_tile(
       ggplot2::aes(x, y, fill = z),
       colour = "black"
