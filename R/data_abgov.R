@@ -121,7 +121,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     paste0(api_endpoint, "?", args) |>
     lapply(parse_abgov_api_request) |>
     dplyr::bind_rows()
-  if (nrow(stations_data) == 0) {
+  if (nrow(stations_data) == 0 | !"Value" %in% names(stations_data)) {
     stop("No data available for provided stations and date_range")
   }
   # Standardise data formatting
@@ -136,7 +136,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     dplyr::filter(.data$date_utc |>
       dplyr::between(date_range[1], date_range[2])) |>
     # Long -> wide, fix column names, order, and typing
-    dplyr::select(-"DeterminantParameterName", -"ReadingDate", -"Id") |>
+    dplyr::select(-dplyr::any_of(c("DeterminantParameterName", "ReadingDate", "Id"))) |>
     tidyr::pivot_wider(names_from = "ParameterName", values_from = "Value") |>
     standardize_colnames(abgov_col_names, raw = raw) |> # TODO: does raw work as expected?
     dplyr::mutate(dplyr::across(-(1:3), as.numeric)) |>
@@ -219,10 +219,13 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 10, 
         paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
       "select=" |>
         paste0(col_names) |>
-        paste0("&", "$filter=" |> paste0(filter))
+        paste0("&", "$filter=" |> paste0(filter)) |>
+        paste0("&Connection Timeout=3600")
     })) |>
     as.character() |>
-    utils::URLencode() |>
+    utils::URLencode(reserved = TRUE) |>
+    stringr::str_replace_all("%3D", "=") |>
+    stringr::str_replace_all("%2C", ",") |>
     unname()
 }
 
