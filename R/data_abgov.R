@@ -116,7 +116,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
   # Make request(s) as needed to load all desired data
   api_endpoint <- "StationMeasurements"
   args <- stations |>
-    build_abgov_data_args(date_range, stations_per_call = 10, days_per_call = 3)
+    build_abgov_data_args(date_range, stations_per_call = 3, days_per_call = 3)
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
     lapply(parse_abgov_api_request) |>
@@ -226,11 +226,11 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 10, 
     utils::URLencode(reserved = TRUE) |>
     stringr::str_replace_all("%3D", "=") |>
     stringr::str_replace_all("%2C", ",") |>
+    stringr::str_replace_all("%26", "&") |>
     unname()
 }
 
 parse_abgov_api_request <- function(api_request) {
-  print(api_request)
   api_request <- api_request |>
     xml2::read_xml() |>
     xml2::as_list()
