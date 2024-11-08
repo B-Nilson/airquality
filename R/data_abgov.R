@@ -45,10 +45,10 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
     parse_abgov_api_request()
 
   # Standardize formatting
-  na_placeholders <- c("Not Available", "Unknown")
+  placeholders <- c("Not Available", "Unknown")
   stations <- stations |>
     standardize_colnames(header) |>
-    remove_na_placeholders(na_placeholders = na_placeholders) |>
+    remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
     dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
@@ -111,20 +111,27 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
   # Only get data for stations that exist on the API
   known_stations <- get_abgov_stations()
   stations <- stations |>
-    check_stations_exist(known_stations$site_name, source = "the AB Gov. site")
+    check_stations_exist(
+      known_stations$site_name, 
+      source = "the AB Gov. site")
 
   # Make request(s) as needed to load all desired data
   api_endpoint <- "StationMeasurements"
   args <- stations |>
-    build_abgov_data_args(date_range, stations_per_call = 3, days_per_call = 3)
+    build_abgov_data_args(
+      date_range, 
+      stations_per_call = 1, 
+      days_per_call = 3
+    )
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
-    lapply(parse_abgov_api_request) |>
-    dplyr::bind_rows()
+    lapply_and_bind(parse_abgov_api_request)
   if (nrow(stations_data) == 0 | !"Value" %in% names(stations_data)) {
     stop("No data available for provided stations and date_range")
   }
+
   # Standardise data formatting
+  drop_cols <- c("DeterminantParameterName", "ReadingDate", "Id")
   stations_data |>
     # Convert dates, add QA/QC placeholder, and filter to desired range
     dplyr::mutate(
@@ -136,13 +143,23 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     dplyr::filter(.data$date_utc |>
       dplyr::between(date_range[1], date_range[2])) |>
     # Long -> wide, fix column names, order, and typing
-    dplyr::select(-dplyr::any_of(c("DeterminantParameterName", "ReadingDate", "Id"))) |>
-    tidyr::pivot_wider(names_from = "ParameterName", values_from = "Value") |>
+    dplyr::select(-dplyr::any_of(drop_cols)) |>
+    tidyr::pivot_wider(
+      names_from = "ParameterName", 
+      values_from = "Value"
+    ) |>
     standardize_colnames(abgov_col_names, raw = raw) |> # TODO: does raw work as expected?
-    dplyr::mutate(dplyr::across(-(1:3), as.numeric)) |>
+    dplyr::mutate(
+      dplyr::across(
+        -c(date_utc, site_name, quality_assured), 
+        as.numeric
+      )) |>
     dplyr::arrange(.data$site_name, .data$date_utc) |>
     # Remove duplicated dates and insert local time
-    dplyr::filter(!duplicated(.data$date_utc), .by = "site_name") |>
+    dplyr::filter(
+      !duplicated(.data$date_utc), 
+      .by = "site_name"
+    ) |>
     insert_date_local(stations_meta = known_stations) |>
     tibble::as_tibble()
 }
@@ -188,41 +205,49 @@ abgov_col_names <- c(
   solar_1hr_wm2 = "Solar Radiation"
 )
 
-build_abgov_data_args <- function(stations, date_range, stations_per_call = 10, days_per_call = 3) {
+build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, days_per_call = 3) {
   # Build station filter(s)
-  station_filters <- seq(1, length(stations), stations_per_call) |> sapply(\(s){
-    end <- (s + stations_per_call > length(stations)) |>
-      ifelse(length(stations), s + stations_per_call)
-    s_query <- stations[s:end] |>
-      paste0(collapse = "', StationName) ge 0 or indexof('")
-    paste0("(indexof('", s_query, "', StationName) ge 0)")
+  station_steps <- seq(1, length(stations), stations_per_call)
+  station_filters <- station_steps |> sapply(\(s){
+    is_past_n <- (s + stations_per_call) > length(stations)
+    end <- !is_past_n |> ifelse( 
+      s + stations_per_call, 
+      length(stations))
+    prefix <- "(indexof('"
+    seperator <- "', StationName) ge 0 or indexof('"
+    suffix <- "', StationName) ge 0)"
+    s_query <- stations[s:end] |> paste0(collapse = seperator)
+    paste0(prefix, s_query, suffix)
   })
   # Build date filter(s)
+  steps <- paste(days_per_call, "days")
   starts <- (date_range[1] - lubridate::hours(1)) |>
-    seq(date_range[2], paste(days_per_call, "days"))
+    seq(date_range[2], steps)
   ends <- starts + lubridate::days(days_per_call)
   ends[ends > date_range[2]] <- date_range[2]
   date_filters <- 1:length(starts) |> sapply(\(i){
-    s <- format(starts[i], "%FT%T")
-    e <- format(ends[i], "%FT%T")
-    paste0(
-      "(ReadingDate ge datetime'", s, "' and ReadingDate le datetime'", e, "')"
-    )
+    s <- starts[i] |> format("%FT%T")
+    e <- ends[i] |> format("%FT%T")
+    prefix <- "(ReadingDate ge datetime'"
+    seperator <- "' and ReadingDate le datetime'"
+    suffix <- "')"
+    paste0(prefix, s, seperator, e, suffix)
   })
   # Combine arguments
   station_filters |>
     sapply(\(station_filter) date_filters |> sapply(\(date_filter) {
-      col_names <- c("Value", "StationName", "ParameterName", "ReadingDate") |>
-        paste0(collapse = ",")
-      filter <- paste(station_filter, date_filter, sep = " and ") |>
-        # Parameter filter is required, so do a dummy one that allows for any param
-        paste(" and indexof('Fine Particulate Matter', ParameterName) ge -1")
-      "select=" |>
-        paste0(col_names) |>
-        paste0("&", "$filter=" |> paste0(filter)) |>
+      column_filter <- "select=" |> paste0(
+        c("Value", "StationName", "ParameterName", "ReadingDate") |>
+          paste0(collapse = ","))
+      # Parameter filter is required, so do a dummy one that allows for any param
+      param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
+      filter_query <- station_filter |>
+        paste(date_filter, param_filter, sep = " and ")
+      column_filter |>
+        paste0("&", "$filter=" |> paste0(filter_query)) |>
         paste0("&Connection Timeout=3600")
     })) |>
-    as.character() |>
+    unlist() |>
     utils::URLencode(reserved = TRUE) |>
     stringr::str_replace_all("%3D", "=") |>
     stringr::str_replace_all("%2C", ",") |>
@@ -231,6 +256,7 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 10, 
 }
 
 parse_abgov_api_request <- function(api_request) {
+  print(api_request)
   api_request <- api_request |>
     xml2::read_xml() |>
     xml2::as_list()
