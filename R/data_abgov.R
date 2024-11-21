@@ -2,7 +2,7 @@
 #'
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
 #' @param ... [Not Used]
-#' 
+#'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
 #' primarily as a part of the federal National Air Pollution Surveillance (NAPS) program.
@@ -112,15 +112,16 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
   known_stations <- get_abgov_stations()
   stations <- stations |>
     check_stations_exist(
-      known_stations$site_name, 
-      source = "the AB Gov. site")
+      known_stations$site_name,
+      source = "the AB Gov. site"
+    )
 
   # Make request(s) as needed to load all desired data
   api_endpoint <- "StationMeasurements"
   args <- stations |>
     build_abgov_data_args(
-      date_range, 
-      stations_per_call = 1, 
+      date_range,
+      stations_per_call = 1,
       days_per_call = 3
     )
   stations_data <- ab_api_site |>
@@ -145,19 +146,20 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     # Long -> wide, fix column names, order, and typing
     dplyr::select(-dplyr::any_of(drop_cols)) |>
     tidyr::pivot_wider(
-      names_from = "ParameterName", 
+      names_from = "ParameterName",
       values_from = "Value"
     ) |>
     standardize_colnames(abgov_col_names, raw = raw) |> # TODO: does raw work as expected?
     dplyr::mutate(
       dplyr::across(
-        -c(date_utc, site_name, quality_assured), 
+        -c(date_utc, site_name, quality_assured),
         as.numeric
-      )) |>
+      )
+    ) |>
     dplyr::arrange(.data$site_name, .data$date_utc) |>
     # Remove duplicated dates and insert local time
     dplyr::filter(
-      !duplicated(.data$date_utc), 
+      !duplicated(.data$date_utc),
       .by = "site_name"
     ) |>
     insert_date_local(stations_meta = known_stations) |>
@@ -210,9 +212,10 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, d
   station_steps <- seq(1, length(stations), stations_per_call)
   station_filters <- station_steps |> sapply(\(s){
     is_past_n <- (s + stations_per_call) > length(stations)
-    end <- !is_past_n |> ifelse( 
-      s + stations_per_call, 
-      length(stations))
+    end <- !is_past_n |> ifelse(
+      s + stations_per_call,
+      length(stations)
+    )
     prefix <- "(indexof('"
     seperator <- "', StationName) ge 0 or indexof('"
     suffix <- "', StationName) ge 0)"
@@ -238,7 +241,8 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, d
     sapply(\(station_filter) date_filters |> sapply(\(date_filter) {
       column_filter <- "select=" |> paste0(
         c("Value", "StationName", "ParameterName", "ReadingDate") |>
-          paste0(collapse = ","))
+          paste0(collapse = ",")
+      )
       # Parameter filter is required, so do a dummy one that allows for any param
       param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
       filter_query <- station_filter |>
@@ -257,9 +261,12 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, d
 
 parse_abgov_api_request <- function(api_request) {
   print(api_request)
-  api_request <- api_request |>
-    xml2::read_xml() |>
-    xml2::as_list()
+  api_request <- on_error(
+    return = NULL, # server sends 400 error when no data in query
+    api_request |>
+      xml2::read_xml() |>
+      xml2::as_list()
+  )
   api_request$feed[-(1:4)] |>
     lapply(\(entry){
       e <- unlist(entry$content$properties)
