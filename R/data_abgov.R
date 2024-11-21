@@ -122,7 +122,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     build_abgov_data_args(
       date_range,
       stations_per_call = 1,
-      days_per_call = 3
+      days_per_call = 30
     )
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
