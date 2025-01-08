@@ -13,6 +13,8 @@
 #'   Default (NULL) does not facet the plot.
 #' @param facet_rows (Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
 #'   Default is a single row.
+#' @param facet_scales (Optional) a single character value indicating wheter the facet x/y scales should be "fixed", "free", "free_y", or "free_x".
+#'   Default is "fixed" (each panel with have matching x/y scales).
 #' @param FUN (Optional) a function to use to summarise `z` values - must take a vector of values as it's first argument and return a single value.
 #'   Default is to calculate the `mean` value.
 #' @param ... Any other named arguments will be passed on to `FUN()` when summarizing `z` values.
@@ -46,7 +48,7 @@
 #' # Save plot
 #' # save_figure(gg, "./test.png")
 #' }
-tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, facet_rows = 1, FUN = mean, ...) {
+tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, facet_rows = 1, facet_scales = "fixed", FUN = mean, ...) {
   if (is.null(names(facet_by))) names(facet_by) <- facet_by
 
   # Handle date-based grouping options
@@ -72,7 +74,7 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
   pd |>
     ggplot2::ggplot() |>
     add_default_theme() |>
-    facet_plot(by = names(facet_by), rows = facet_rows) +
+    facet_plot(by = names(facet_by), rows = facet_rows, scales = facet_scales) +
     ggplot2::geom_tile(
       ggplot2::aes(x, y, fill = z),
       colour = "black"
