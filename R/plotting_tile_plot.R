@@ -66,6 +66,20 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
       factor
     ))
 
+  # Drop infilled rows to allow for free facet scales if desired
+  if(facet_scales %in% c("free_y", "free")){
+    pd = pd |>
+      dplyr::group_by(y, !!!(rlang::syms(names(facet_by)))) |>
+      dplyr::filter(!all(is.na(z))) |>
+      dplyr::ungroup()
+  }
+  if(facet_scales %in% c("free_x", "free")){
+    pd = pd |>
+      dplyr::group_by(x, !!!(rlang::syms(names(facet_by)))) |>
+      dplyr::filter(!all(is.na(z))) |>
+      dplyr::ungroup()
+  }
+
   hour_label <- paste0("hour (", lubridate::tz(obs[[date_col]]), ")")
   xlab <- ifelse(x == "hour", hour_label, x)
   ylab <- ifelse(y == "hour", hour_label, y)
