@@ -388,7 +388,7 @@ add_taylor_cor_lines <- function(
       x_label = get_x(label_dist, at),
       y_label = get_y(label_dist, at),
       label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
-        paste(at * 100, "%"), at
+        paste(round(at * 100), "%"), round(at, 2)
       )
     )
   })
