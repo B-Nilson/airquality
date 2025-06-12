@@ -26,11 +26,6 @@ read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = F
   }
 }
 
-# Truncate to desired digits
-trunc_n <- function(x, n = 0) {
-  trunc(x * 10^n) / 10^n
-}
-
 is_leap_year <- function(year) {
   year %% 4 == 0
 }

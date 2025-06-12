@@ -140,15 +140,15 @@ AQI <- function(
     dplyr::mutate(
       dplyr::across(
         dplyr::starts_with("o3"),
-        \(x) trunc_n(x, 3)
+        \(x) handyr::truncate(x, digits = 3)
       ),
       dplyr::across(
         dplyr::starts_with("pm25|co"),
-        \(x) trunc_n(x, 1)
+        \(x) handyr::truncate(x, digits = 1)
       ),
       dplyr::across(
         dplyr::starts_with("so2|no2|pm10"),
-        \(x) trunc_n(x, 0)
+        \(x) handyr::truncate(x, digits = 0)
       )
     )
 
