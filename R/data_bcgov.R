@@ -160,9 +160,10 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     check_stations_exist(known_stations$site_id, source = "the BC FTP site")
 
   # Get data for each year for all desired stations
-  stations_data <- years_to_get |>
-    lapply(\(year) get_annual_bcgov_data(stations, year, qaqc_years)) |>
-    dplyr::bind_rows()
+  stations_data <- years_to_get |> handyr::for_each(
+    .as_list = TRUE, .bind = TRUE,
+    \(year) get_annual_bcgov_data(stations, year, qaqc_years)
+  )
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
