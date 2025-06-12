@@ -55,8 +55,6 @@ CAAQS(
 }
 \seealso{
 Other Canadian Air Quality: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_data}()},
@@ -64,8 +62,6 @@ Other Canadian Air Quality:
 \code{\link{purpleair_api}()}
 
 Other Air Quality Standards: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{AQI}()}
 }
 \concept{Air Quality Standards}

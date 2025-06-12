@@ -73,8 +73,6 @@ AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 }
 \seealso{
 Other Air Quality Standards: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()}
 
 Other USA Air Quality: 

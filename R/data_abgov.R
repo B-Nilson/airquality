@@ -17,6 +17,8 @@
 #'
 #' @family Data Collection
 #' @family Canadian Air Quality
+#' 
+#' @importFrom rlang .data
 #'
 #' @export
 #' @examples
