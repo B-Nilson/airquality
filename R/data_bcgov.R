@@ -277,13 +277,12 @@ get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Get each stations data for this year
   stations_data <- data_url |>
     stringr::str_replace("\\{station\\}", stations) |>
-    lapply_and_bind(\(p) suppressWarnings(on_error(
-      return = NULL,
+    lapply_and_bind(\(p) suppressWarnings(
       read_data(file = p, colClasses = c(
         DATE_PST = "character",
         EMS_ID = "character", STATION_NAME = "character"
-      ))
-    )))
+      )) |> handyr::on_error(.return = NULL)
+    ))
 
   if (nrow(stations_data) == 0) {
     stop(paste("No data available for provided stations for", year))
@@ -317,13 +316,10 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
   } else {
     data_url <- raw_url
   }
-  on_error(
-    return = NULL,
-    read_data(
-      file = paste0(data_url, stations_file), data.table = FALSE,
-      colClasses = c("OPENED" = "character", "CLOSED" = "character")
-    )
-  )
+  read_data(
+    file = paste0(data_url, stations_file), data.table = FALSE,
+    colClasses = c("OPENED" = "character", "CLOSED" = "character")
+  ) |> handyr::on_error(.return = NULL)
 }
 
 # Drop all QAQC years except the first

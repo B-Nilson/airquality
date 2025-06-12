@@ -50,10 +50,9 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
   stations <- names(airnow_paths) |>
     lapply_and_bind(\(d){
       p <- airnow_paths[names(airnow_paths) == as.character(d)]
-      on_error(
-        return = NULL,
-        read_data(file = p) |> dplyr::mutate(file_date = d)
-      )
+      read_data(file = p) |> 
+        handyr::on_error(.return = NULL) |>
+        dplyr::mutate(file_date = d)
     }) |>
     stats::setNames(file_header) |>
     standardize_colnames(col_names = desired_columns) |>
@@ -174,7 +173,10 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose =
   )
   airnow_data <- dates |>
     make_airnow_filepaths() |>
-    lapply_and_bind(\(pth) on_error(return = NULL, read_data(file = pth))) |>
+    lapply_and_bind(
+      \(pth) read_data(file = pth) |>
+        handyr::on_error(.return = NULL)
+    ) |>
     stats::setNames(file_header)
 
   # If no data (should not happen unless AirNow is offline and requesting current data)

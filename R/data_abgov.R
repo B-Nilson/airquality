@@ -261,12 +261,12 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, d
 
 parse_abgov_api_request <- function(api_request) {
   print(api_request)
-  api_request <- on_error(
-    return = NULL, # server sends 400 error when no data in query
-    api_request |>
-      xml2::read_xml() |>
-      xml2::as_list()
-  )
+  api_request <- api_request |>
+    xml2::read_xml() |>
+    xml2::as_list() |>
+    # server sends 400 error when no data in query
+    handyr::on_error(.return = NULL)
+
   api_request$feed[-(1:4)] |>
     lapply(\(entry){
       e <- unlist(entry$content$properties)

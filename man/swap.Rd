@@ -27,7 +27,6 @@ swap(c(-20:20), what = Inf, with = NA)
 \seealso{
 Other Utilities: 
 \code{\link{convert_units}()},
-\code{\link{get_timezone}()},
-\code{\link{on_error}()}
+\code{\link{get_timezone}()}
 }
 \concept{Utilities}

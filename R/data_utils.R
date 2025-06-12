@@ -111,23 +111,20 @@ determine_search_area <- function(locations, buffer_dist = 10, verbose) {
 
 # TODO: Document
 get_location_polygons <- function(location_name, verbose = TRUE) {
-  on_error(
-    return = NULL, msg = verbose,
-    osmdata::getbb(location_name, format_out = "sf_polygon")
-  )
+  location_name |>
+    osmdata::getbb(format_out = "sf_polygon") |>
+    handyr::on_error(.return = NULL, .message = verbose)
 }
 
 # Get station metadata during period in our search area
 get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   dates <- seq(date_range[1], date_range[2], "30 days")
   stations <- lapply_and_bind(names(data_funs), \(net){
-    lapply_and_bind(names(data_funs[[net]]), \(src) {
-      on_error(
-        return = NULL, msg = TRUE,
-        data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
-          dplyr::mutate(source = src, network = net)
-      )
-    })
+    lapply_and_bind(names(data_funs[[net]]), \(src) 
+      data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
+        dplyr::mutate(source = src, network = net) |>
+        handyr::on_error(.return = NULL, .message = TRUE)
+    )
   })
   sf::st_agr(stations) <- "constant"
   stations <- stations |>
@@ -158,11 +155,9 @@ get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
         ))
       }
       data_fun <- data_funs[[net]][[src]]$data
-      on_error(
-        return = NULL, msg = TRUE,
-        data_fun(stations = site_ids, date_range, verbose = verbose) |>
-          dplyr::mutate(source = src, network = net)
-      )
+      data_fun(stations = site_ids, date_range, verbose = verbose) |>
+        dplyr::mutate(source = src, network = net) |>
+        handyr::on_error(.return = NULL, .message = TRUE)
     })
   })
 }
