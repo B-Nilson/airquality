@@ -26,10 +26,6 @@ read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = F
   }
 }
 
-lapply_and_name <- function(x, ...) {
-  lapply(x, ...) |> stats::setNames(x)
-}
-
 # Truncate to desired digits
 trunc_n <- function(x, n = 0) {
   trunc(x * 10^n) / 10^n

@@ -63,8 +63,8 @@ AQI <- function(
 
   # Determine which pollutants provided as input
   AQI_pols <- methods::formalArgs(AQI)[-1]
-  all_missing <- lapply_and_name(
-    AQI_pols,
+  all_missing <- AQI_pols |> handyr::for_each(
+    .as_list = TRUE, .name = TRUE,
     \(pol) all(is.na(get(pol)))
   )
   all_missing$so2_24hr_ppb <- TRUE
