@@ -170,8 +170,11 @@ AQI <- function(
   dat |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      AQI = max_no_na(dplyr::across(dplyr::all_of(AQI_cols))) |>
-        handyr::swap(Inf, with = NA),
+      AQI = handyr::max(
+        na.rm = TRUE,
+        dplyr::across(dplyr::all_of(AQI_cols))
+      ) |>
+        handyr::swap(Inf, with = NA), # TODO: will this ever be Inf?
       risk_category = AQI_risk_category(.data$AQI)
     ) |>
     get_AQI_principal_pol(AQI_cols) |>

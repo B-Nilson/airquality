@@ -32,8 +32,6 @@ is_leap_year <- function(year) {
 
 # remove NA by default
 mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
-min_no_na <- function(x, ...) suppressWarnings(min(x, na.rm = T, ...)) |> handyr::swap(Inf, with = NA)
-max_no_na <- function(x, ...) suppressWarnings(max(x, na.rm = T, ...)) |> handyr::swap(-Inf, with = NA)
 
 standardize_colnames <- function(df, col_names, raw = FALSE) {
   if (raw) {

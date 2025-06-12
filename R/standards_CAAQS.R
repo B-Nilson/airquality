@@ -159,7 +159,7 @@ CAAQS_o3 <- function(obs, thresholds) {
     dplyr::summarise(`8hr_mean_o3` = .data$o3 |> mean_no_na()) |>
     # 8 hourly mean -> daily max
     dplyr::group_by(date = .data$date |> lubridate::floor_date("days")) |>
-    dplyr::summarise(daily_max_8hr_mean_o3 = .data$`8hr_mean_o3` |> max_no_na()) |>
+    dplyr::summarise(daily_max_8hr_mean_o3 = .data$`8hr_mean_o3` |> handyr::max(na.rm = TRUE)) |>
     # daily max -> annual 4th highest
     dplyr::group_by(year = .data$date |> lubridate::year()) |>
     dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) |>
@@ -193,7 +193,7 @@ CAAQS_no2 <- function(obs, thresholds) {
     ) |>
     dplyr::summarise(
       .groups = "drop",
-      daily_max_hourly_no2 = .data$no2 |> max_no_na()
+      daily_max_hourly_no2 = .data$no2 |> handyr::max(na.rm = TRUE)
     ) |>
     # daily maxima -> annual 98th percentile
     dplyr::group_by(
@@ -243,7 +243,7 @@ CAAQS_so2 <- function(obs, thresholds) {
     ) |>
     dplyr::summarise(
       .groups = "drop",
-      daily_max_hourly_so2 = .data$so2 |> max_no_na()
+      daily_max_hourly_so2 = .data$so2 |> handyr::max(na.rm = TRUE)
     ) |>
     # daily maxima -> annual 98th percentile
     dplyr::group_by(
@@ -293,7 +293,7 @@ CAAQS_meets_standard <- function(year, metric, thresholds) {
     \(lvl) metric > lvl
   )
   attainment <- attainment |>
-    apply(1, \(x) min_no_na(which(x)))
+    apply(1, \(x) handyr::min(which(x), na.rm = TRUE))
   attainment[!is.na(attainment)] <- names(mgmt_levels)[
     attainment[!is.na(attainment)]
   ]
