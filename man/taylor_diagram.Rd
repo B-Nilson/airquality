@@ -159,15 +159,10 @@ taylor_diagram(data,
   group_by = c(Diet = "Diet", Chick = "Chick"),
   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
 )
-
-# Save plot
-# gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
-# save_figure(gg, "./test.png")
 }
 }
 \seealso{
 Other Data Visualisation: 
-\code{\link{save_figure}()},
 \code{\link{tile_plot}()},
 \code{\link{wind_rose}()}
 }

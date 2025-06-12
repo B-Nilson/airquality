@@ -107,10 +107,6 @@
 #'   group_by = c(Diet = "Diet", Chick = "Chick"),
 #'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
 #' )
-#'
-#' # Save plot
-#' # gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
-#' # save_figure(gg, "./test.png")
 #' }
 taylor_diagram <- function(
     dat,
