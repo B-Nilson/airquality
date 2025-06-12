@@ -255,7 +255,7 @@ get_bcgov_qaqc_years <- function() {
   years <- qaqc_dirs |> 
     stringr::str_remove("STATION_DATA_") |>
     as.numeric() |>
-    handyr::silence() # suppress 'NAs introduced due to coercion' warning
+    handyr::silence(output = FALSE) # suppress 'NAs introduced due to coercion' warning
   years[!is.na(years)]
 }
 
@@ -281,7 +281,7 @@ get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
     stringr::str_replace("\\{station\\}", stations) |>
     handyr::for_each(
       .as_list = TRUE, .bind = TRUE, 
-      \(p) handyr::silence(warnings = FALSE,
+      \(p) handyr::silence(warnings = FALSE, output = FALSE,
         read_data(file = p, colClasses = c(
           DATE_PST = "character",
           EMS_ID = "character", STATION_NAME = "character"
