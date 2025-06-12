@@ -26,10 +26,6 @@ read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = F
   }
 }
 
-lapply_and_bind <- function(...) {
-  lapply(...) |> dplyr::bind_rows()
-}
-
 lapply_and_name <- function(x, ...) {
   lapply(x, ...) |> stats::setNames(x)
 }

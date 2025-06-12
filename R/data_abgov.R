@@ -126,7 +126,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     )
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
-    lapply_and_bind(parse_abgov_api_request)
+    handyr::for_each(parse_abgov_api_request, .as_list = TRUE, .bind = TRUE)
   if (nrow(stations_data) == 0 | !"Value" %in% names(stations_data)) {
     stop("No data available for provided stations and date_range")
   }

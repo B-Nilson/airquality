@@ -277,11 +277,13 @@ get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Get each stations data for this year
   stations_data <- data_url |>
     stringr::str_replace("\\{station\\}", stations) |>
-    lapply_and_bind(\(p) suppressWarnings(
-      read_data(file = p, colClasses = c(
-        DATE_PST = "character",
-        EMS_ID = "character", STATION_NAME = "character"
-      )) |> handyr::on_error(.return = NULL)
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE, 
+      \(p) suppressWarnings(
+        read_data(file = p, colClasses = c(
+          DATE_PST = "character",
+          EMS_ID = "character", STATION_NAME = "character"
+        )) |> handyr::on_error(.return = NULL)
     ))
 
   if (nrow(stations_data) == 0) {

@@ -86,7 +86,11 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
 determine_search_area <- function(locations, buffer_dist = 10, verbose) {
   # TODO: allow for station ids/names
   if (is.character(locations)) {
-    search_area <- locations |> lapply_and_bind(get_location_polygons)
+    search_area <- locations |> 
+      handyr::for_each(
+        .as_list = TRUE, .bind = TRUE,
+        get_location_polygons
+      )
     if (is.null(search_area)) {
       stop(paste0("Unable to find a polygonal boundary for specified location."))
     }
@@ -119,13 +123,17 @@ get_location_polygons <- function(location_name, verbose = TRUE) {
 # Get station metadata during period in our search area
 get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   dates <- seq(date_range[1], date_range[2], "30 days")
-  stations <- lapply_and_bind(names(data_funs), \(net){
-    lapply_and_bind(names(data_funs[[net]]), \(src) 
-      data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
-        dplyr::mutate(source = src, network = net) |>
-        handyr::on_error(.return = NULL, .message = TRUE)
-    )
-  })
+  stations <- names(data_funs) |>
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(net) names(data_funs[[net]]) |> 
+        handyr::for_each(
+          .as_list = TRUE, .bind = TRUE, 
+          \(src) data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
+            dplyr::mutate(source = src, network = net) |>
+            handyr::on_error(.return = NULL, .message = TRUE)
+      )
+  )
   sf::st_agr(stations) <- "constant"
   stations <- stations |>
     sf::st_intersection(search_area) |>
@@ -138,27 +146,31 @@ get_stations_in_search_area <- function(data_funs, search_area, date_range) {
 
 get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
   networks <- unique(stations$network)
-  networks |> lapply_and_bind(\(net){
-    sources <- names(data_funs[[net]])
-    sources |> lapply_and_bind(\(src){
-      site_ids <- stations |>
-        dplyr::filter(.data$source == src & .data$network == net) |>
-        dplyr::pull(.data$site_id) |>
-        unique()
-      if (length(site_ids) == 0) {
-        return(NULL)
-      }
-      if (verbose) {
-        message(paste(
-          net, "-", src, ":", length(site_ids),
-          "station(s) to check for data"
-        ))
-      }
-      data_fun <- data_funs[[net]][[src]]$data
-      data_fun(stations = site_ids, date_range, verbose = verbose) |>
-        dplyr::mutate(source = src, network = net) |>
-        handyr::on_error(.return = NULL, .message = TRUE)
-    })
+  networks |> handyr::for_each(
+    .as_list = TRUE, .bind = TRUE,
+    \(net){
+      sources <- names(data_funs[[net]])
+      sources |> handyr::for_each(
+        .as_list = TRUE, .bind = TRUE,
+        \(src){
+          site_ids <- stations |>
+            dplyr::filter(.data$source == src & .data$network == net) |>
+            dplyr::pull(.data$site_id) |>
+            unique()
+          if (length(site_ids) == 0) {
+            return(NULL)
+          }
+          if (verbose) {
+            message(paste(
+              net, "-", src, ":", length(site_ids),
+              "station(s) to check for data"
+            ))
+          }
+          data_fun <- data_funs[[net]][[src]]$data
+          data_fun(stations = site_ids, date_range, verbose = verbose) |>
+            dplyr::mutate(source = src, network = net) |>
+            handyr::on_error(.return = NULL, .message = TRUE)
+      })
   })
 }
 

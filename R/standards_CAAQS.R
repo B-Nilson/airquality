@@ -288,8 +288,10 @@ CAAQS_meets_standard <- function(year, metric, thresholds) {
     return(NA)
   }
   # Calculate CAAQS attainment
-  attainment <- mgmt_levels |>
-    lapply_and_bind(\(lvl) metric > lvl)
+  attainment <- mgmt_levels |> handyr::for_each(
+    .as_list = TRUE, .bind = TRUE,
+    \(lvl) metric > lvl
+  )
   attainment <- attainment |>
     apply(1, \(x) min_no_na(which(x)))
   attainment[!is.na(attainment)] <- names(mgmt_levels)[

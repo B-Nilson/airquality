@@ -216,12 +216,14 @@ AQHI_health_messaging <- function(risk_categories) {
     )
   )
   # TODO: is this necessary?
-  aqhi_messaging[risk_categories] |> lapply_and_bind(
-    \(x) if (is.null(x)) {
-      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
-    } else {
-      x
-    }
+  aqhi_messaging[risk_categories] |> 
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(x) if (is.null(x)) {
+        data.frame(high_risk_pop_message = NA, general_pop_message = NA)
+      } else {
+        x
+      }
   )
 }
 
