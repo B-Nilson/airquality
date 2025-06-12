@@ -171,7 +171,7 @@ AQI <- function(
     dplyr::rowwise() |>
     dplyr::mutate(
       AQI = max_no_na(dplyr::across(dplyr::all_of(AQI_cols))) |>
-        swap_inf(NA),
+        handyr::swap(Inf, with = NA),
       risk_category = AQI_risk_category(.data$AQI)
     ) |>
     get_AQI_principal_pol(AQI_cols) |>
@@ -234,7 +234,8 @@ AQI_from_con <- function(dat, pol) {
     dplyr::mutate(dplyr::across(
       dplyr::all_of(cols[1]),
       \(x) AQI_bp_cat(
-        obs = swap_na(dat[[pol]], 0),
+        obs = dat[[pol]] |>
+          handyr::swap(NA, with = 0),
         bps = AQI_breakpoints[[pol]]
       )
     )) |>
@@ -339,7 +340,7 @@ get_AQI_principal_pol <- function(dat, AQI_cols) {
       principal_pol_index = which.max(
         dplyr::across(
           dplyr::all_of(unname(AQI_cols)),
-          \(x) swap_na(x, 0)
+          \(x) x |> handyr::swap(NA, with = 0)
         )
       ),
       principal_pol = names(AQI_cols)[.data$principal_pol_index],

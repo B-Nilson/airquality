@@ -226,10 +226,8 @@ AQHI_health_messaging <- function(risk_categories) {
 # TODO: make sure AQHI is a column in obs
 AQHI_replace_w_AQHI_plus <- function(obs, aqhi_plus) {
   dplyr::mutate(obs,
-    AQHI_plus_exceeds_AQHI = swap_na(
-      with = TRUE,
-      as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)
-    ),
+    AQHI_plus_exceeds_AQHI = (as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)) |>
+      handyr::swap(NA, with = TRUE),
     AQHI = ifelse(.data$AQHI_plus_exceeds_AQHI,
       aqhi_plus$AQHI_plus, .data$AQHI
     ),

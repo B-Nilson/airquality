@@ -27,7 +27,6 @@ convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
 }
 \seealso{
 Other Utilities: 
-\code{\link{get_timezone}()},
-\code{\link{swap}()}
+\code{\link{get_timezone}()}
 }
 \concept{Utilities}

@@ -57,7 +57,7 @@ CAAQS <- function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
     dplyr::mutate(dplyr::across(-"year", \(x) {
       total_hours <- ifelse(is_leap_year(.data$year), 8784, 8760)
       (x / total_hours > min_completeness) |>
-        swap_na(FALSE)
+        handyr::swap(NA, with = FALSE)
     })) |>
     tidyr::complete(year = min(.data$year):max(.data$year))
 

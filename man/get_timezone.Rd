@@ -26,7 +26,6 @@ get_timezone(-105.053144, 69.116178)
 }
 \seealso{
 Other Utilities: 
-\code{\link{convert_units}()},
-\code{\link{swap}()}
+\code{\link{convert_units}()}
 }
 \concept{Utilities}

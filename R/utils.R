@@ -1,38 +1,4 @@
 
-
-# TODO: add tests
-#' Swap out values in a vector
-#'
-#' @param x Vector of values to be have certain values swapped out.
-#' @param what One or more values to be replaced with `with` throughout `x`.
-#' @param with A single value to replace `what` for throughout `x`.
-#'
-#' @description
-#' `swap` provides a simple way to switch out certain values in a vector. It is useful for replacing NA's, Infinites, and erroneous values.
-#'
-#' @family Utilities
-#'
-#' @return a vector of `x` where all instances of `what` are replaced with `with`
-#' @export
-#'
-#' @examples
-#' swap(c(-20:20, NA), what = NA, with = -1)
-#' swap(c(-20:20, Inf), what = Inf, with = NA)
-#' swap(c(-20:20), what = Inf, with = NA)
-swap <- function(x, what, with) {
-  if (any(is.na(what))) {
-    x[is.na(x)] <- with
-  }
-  if (any(is.infinite(what))) {
-    x[is.infinite(x)] <- with
-  }
-  x[x %in% what] <- with
-  return(x)
-}
-# Wrappers for swap()
-swap_na <- function(x, with = -99) swap(x, NA, with)
-swap_inf <- function(x, with = NA) swap(x, Inf, with)
-
 # TODO: add tests
 #' Wrapper for looking up timezone of locations from lat/lng coords
 #'
@@ -126,8 +92,8 @@ is_leap_year <- function(year) {
 
 # remove NA by default
 mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
-min_no_na <- function(x, ...) suppressWarnings(min(x, na.rm = T, ...)) |> swap_inf(NA)
-max_no_na <- function(x, ...) suppressWarnings(max(x, na.rm = T, ...)) |> swap_inf(NA)
+min_no_na <- function(x, ...) suppressWarnings(min(x, na.rm = T, ...)) |> handyr::swap(Inf, with = NA)
+max_no_na <- function(x, ...) suppressWarnings(max(x, na.rm = T, ...)) |> handyr::swap(-Inf, with = NA)
 
 standardize_colnames <- function(df, col_names, raw = FALSE) {
   if (raw) {
@@ -227,6 +193,6 @@ remove_na_placeholders <- function(obs, na_placeholders) {
   obs |>
     dplyr::mutate(dplyr::across(
       dplyr::everything(),
-      \(x) swap(x, what = na_placeholders, with = NA)
+      \(x) x |> handyr::swap(na_placeholders, with = NA)
     ))
 }
