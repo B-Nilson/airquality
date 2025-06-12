@@ -1,6 +1,7 @@
 
 # make backward looking rolling means (NAs not ignored)
 # TODO: ignore NAs, make forward looking equivelant
+# TODO: move this to handyr
 get_lag_n_mean <- function(x, n = 3) {
   out <- x
   if (n <= 1) stop("`n` must be greater than one")
@@ -12,6 +13,7 @@ get_lag_n_mean <- function(x, n = 3) {
 
 # General function for loading in data quickly and quietly
 # TODO: document
+# TODO: move this to handyr
 read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = FALSE) {
   if (verbose) {
     data.table::fread(...,
