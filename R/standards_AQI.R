@@ -63,8 +63,8 @@ AQI <- function(
 
   # Determine which pollutants provided as input
   AQI_pols <- methods::formalArgs(AQI)[-1]
-  all_missing <- lapply_and_name(
-    AQI_pols,
+  all_missing <- AQI_pols |> handyr::for_each(
+    .as_list = TRUE, .name = TRUE,
     \(pol) all(is.na(get(pol)))
   )
   all_missing$so2_24hr_ppb <- TRUE
@@ -94,34 +94,34 @@ AQI <- function(
     !all_missing$o3_1hr_ppm
   if (needs_o3_8hr) {
     dat$o3_8hr_ppm <- dat$o3_1hr_ppm |>
-      roll_mean(8, min_n = 5)
+      handyr::rolling(mean, .width = 8, .min_non_na = 5)
     all_missing$o3_8hr_ppm <- FALSE
   }
   needs_pm25_24hr <- all_missing$pm25_24hr_ugm3 &
     !all_missing$pm25_1hr_ugm3
   if (needs_pm25_24hr) {
     dat$pm25_24hr_ugm3 <- dat$pm25_1hr_ugm3 |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$pm25_24hr_ugm3 <- FALSE
   }
   needs_pm10_24hr <- all_missing$pm10_24hr_ugm3 &
     !all_missing$pm10_1hr_ugm3
   if (needs_pm10_24hr) {
     dat$pm10_24hr_ugm3 <- dat$pm10_1hr_ugm3 |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$pm10_24hr_ugm3 <- FALSE
   }
   needs_co_8hr <- all_missing$co_8hr_ppm &
     !all_missing$co_1hr_ppm
   if (needs_co_8hr) {
     dat$co_8hr_ppm <- dat$co_1hr_ppm |>
-      roll_mean(8, min_n = 5)
+      handyr::rolling(mean, .width = 8, .min_non_na = 5)
     all_missing$co_8hr_ppm <- FALSE
   }
   needs_so2_24hr <- !all_missing$so2_1hr_ppb
   if (needs_so2_24hr) {
     dat$so2_24hr_ppb <- dat$so2_1hr_ppb |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$so2_24hr_ppb <- FALSE
   }
 
@@ -140,15 +140,15 @@ AQI <- function(
     dplyr::mutate(
       dplyr::across(
         dplyr::starts_with("o3"),
-        \(x) trunc_n(x, 3)
+        \(x) handyr::truncate(x, digits = 3)
       ),
       dplyr::across(
         dplyr::starts_with("pm25|co"),
-        \(x) trunc_n(x, 1)
+        \(x) handyr::truncate(x, digits = 1)
       ),
       dplyr::across(
         dplyr::starts_with("so2|no2|pm10"),
-        \(x) trunc_n(x, 0)
+        \(x) handyr::truncate(x, digits = 0)
       )
     )
 
@@ -170,8 +170,11 @@ AQI <- function(
   dat |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      AQI = max_no_na(dplyr::across(dplyr::all_of(AQI_cols))) |>
-        swap_inf(NA),
+      AQI = handyr::max(
+        na.rm = TRUE,
+        dplyr::across(dplyr::all_of(AQI_cols))
+      ) |>
+        handyr::swap(Inf, with = NA), # TODO: will this ever be Inf?
       risk_category = AQI_risk_category(.data$AQI)
     ) |>
     get_AQI_principal_pol(AQI_cols) |>
@@ -205,7 +208,8 @@ AQI_risk_category <- function(AQI) {
 
 # Get risk category for breakpoint determination for AQI formulation
 AQI_bp_cat <- function(obs, bps) {
-  suppressMessages(
+  handyr::silence(
+    output = FALSE,
     bps$risk_category |> lapply(\(cat) {
       bp <- bps[bps$risk_category == cat, ]
       ifelse(obs >= bp$bp_low & obs <= bp$bp_high, cat, NA)
@@ -234,7 +238,8 @@ AQI_from_con <- function(dat, pol) {
     dplyr::mutate(dplyr::across(
       dplyr::all_of(cols[1]),
       \(x) AQI_bp_cat(
-        obs = swap_na(dat[[pol]], 0),
+        obs = dat[[pol]] |>
+          handyr::swap(NA, with = 0),
         bps = AQI_breakpoints[[pol]]
       )
     )) |>
@@ -339,7 +344,7 @@ get_AQI_principal_pol <- function(dat, AQI_cols) {
       principal_pol_index = which.max(
         dplyr::across(
           dplyr::all_of(unname(AQI_cols)),
-          \(x) swap_na(x, 0)
+          \(x) x |> handyr::swap(NA, with = 0)
         )
       ),
       principal_pol = names(AQI_cols)[.data$principal_pol_index],

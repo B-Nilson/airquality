@@ -71,7 +71,9 @@ AQHI <- function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbos
     obs <- obs |> dplyr::mutate(
       dplyr::across(
         dplyr::all_of(rolling_cols),
-        \(x) roll_mean(x, 3, min_n = 2, digits = 1)
+        \(x) x |> 
+          handyr::rolling(mean, .width = 3, .min_non_na = 2) |>
+          round(digits = 1)
       ),
       AQHI = AQHI_formula(
         pm25_rolling_3hr = .data$pm25_rolling_3hr,
@@ -214,22 +216,22 @@ AQHI_health_messaging <- function(risk_categories) {
     )
   )
   # TODO: is this necessary?
-  aqhi_messaging[risk_categories] |> lapply_and_bind(
-    \(x) if (is.null(x)) {
-      data.frame(high_risk_pop_message = NA, general_pop_message = NA)
-    } else {
-      x
-    }
+  aqhi_messaging[risk_categories] |> 
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(x) if (is.null(x)) {
+        data.frame(high_risk_pop_message = NA, general_pop_message = NA)
+      } else {
+        x
+      }
   )
 }
 
 # TODO: make sure AQHI is a column in obs
 AQHI_replace_w_AQHI_plus <- function(obs, aqhi_plus) {
   dplyr::mutate(obs,
-    AQHI_plus_exceeds_AQHI = swap_na(
-      with = TRUE,
-      as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)
-    ),
+    AQHI_plus_exceeds_AQHI = (as.numeric(aqhi_plus$AQHI_plus) > as.numeric(.data$AQHI)) |>
+      handyr::swap(NA, with = TRUE),
     AQHI = ifelse(.data$AQHI_plus_exceeds_AQHI,
       aqhi_plus$AQHI_plus, .data$AQHI
     ),

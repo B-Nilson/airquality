@@ -12,6 +12,7 @@ tile_plot(
   date_col = "date_utc",
   facet_by = NULL,
   facet_rows = 1,
+  facet_scales = "fixed",
   FUN = mean,
   ...
 )
@@ -33,6 +34,9 @@ Default (NULL) does not facet the plot.}
 
 \item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
 Default is a single row.}
+
+\item{facet_scales}{(Optional) a single character value indicating wheter the facet x/y scales should be "fixed", "free", "free_y", or "free_x".
+Default is "fixed" (each panel with have matching x/y scales).}
 
 \item{FUN}{(Optional) a function to use to summarise `z` values - must take a vector of values as it's first argument and return a single value.
 Default is to calculate the `mean` value.}
@@ -64,14 +68,10 @@ gg + ggplot2::labs(
   fill = "Legend Title", title = "Plot Title",
   subtitle = "Plot Subtitle", caption = "Plot Caption"
 )
-
-# Save plot
-# save_figure(gg, "./test.png")
 }
 }
 \seealso{
 Other Data Visualisation: 
-\code{\link{save_figure}()},
 \code{\link{taylor_diagram}()},
 \code{\link{wind_rose}()}
 }

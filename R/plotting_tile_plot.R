@@ -44,9 +44,6 @@
 #'   fill = "Legend Title", title = "Plot Title",
 #'   subtitle = "Plot Subtitle", caption = "Plot Caption"
 #' )
-#'
-#' # Save plot
-#' # save_figure(gg, "./test.png")
 #' }
 tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, facet_rows = 1, facet_scales = "fixed", FUN = mean, ...) {
   if (is.null(names(facet_by))) names(facet_by) <- facet_by

@@ -62,7 +62,7 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
       c("date_created", "date_removed"),
       \(x) lubridate::ymd(stringr::str_sub(x, end = 10))
     )) |>
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
 
   # Convert to spatial if desired
   if (use_sf) {
@@ -160,9 +160,10 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     check_stations_exist(known_stations$site_id, source = "the BC FTP site")
 
   # Get data for each year for all desired stations
-  stations_data <- years_to_get |>
-    lapply(\(year) get_annual_bcgov_data(stations, year, qaqc_years)) |>
-    dplyr::bind_rows()
+  stations_data <- years_to_get |> handyr::for_each(
+    .as_list = TRUE, .bind = TRUE,
+    \(year) get_annual_bcgov_data(stations, year, qaqc_years)
+  )
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
@@ -251,9 +252,10 @@ get_bcgov_qaqc_years <- function() {
     stringr::str_split("\\s", simplify = T)
   qaqc_dirs <- qaqc_dirs[, ncol(qaqc_dirs)]
   # Extract years from file/dir names
-  years <- suppressWarnings(qaqc_dirs |> # suppress 'NAs introduced due to coercion' warning
+  years <- qaqc_dirs |> 
     stringr::str_remove("STATION_DATA_") |>
-    as.numeric())
+    as.numeric() |>
+    handyr::silence(output = FALSE) # suppress 'NAs introduced due to coercion' warning
   years[!is.na(years)]
 }
 
@@ -277,13 +279,14 @@ get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Get each stations data for this year
   stations_data <- data_url |>
     stringr::str_replace("\\{station\\}", stations) |>
-    lapply_and_bind(\(p) suppressWarnings(on_error(
-      return = NULL,
-      read_data(file = p, colClasses = c(
-        DATE_PST = "character",
-        EMS_ID = "character", STATION_NAME = "character"
-      ))
-    )))
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE, 
+      \(p) handyr::silence(warnings = FALSE, output = FALSE,
+        read_data(file = p, colClasses = c(
+          DATE_PST = "character",
+          EMS_ID = "character", STATION_NAME = "character"
+        )) |> handyr::on_error(.return = NULL)
+    ))
 
   if (nrow(stations_data) == 0) {
     stop(paste("No data available for provided stations for", year))
@@ -317,13 +320,10 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
   } else {
     data_url <- raw_url
   }
-  on_error(
-    return = NULL,
-    read_data(
-      file = paste0(data_url, stations_file), data.table = FALSE,
-      colClasses = c("OPENED" = "character", "CLOSED" = "character")
-    )
-  )
+  read_data(
+    file = paste0(data_url, stations_file), data.table = FALSE,
+    colClasses = c("OPENED" = "character", "CLOSED" = "character")
+  ) |> handyr::on_error(.return = NULL)
 }
 
 # Drop all QAQC years except the first

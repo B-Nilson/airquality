@@ -1,116 +1,7 @@
-# TODO: add tests
-#' Easy error handler
-#'
-#' @param ... A code block (typically wrapped in `{}`) to run and capture errors (if any).
-#' @param return (Optional) What is to be returned if an error occurs (instead of throwing an error).
-#'   Default is `NULL`
-#' @param msg (Optional) A single logical (TRUE/FALSE) value indicating if the error message should be displayed as a message instead.
-#'   Default is `FALSE`
-#' @param warn (Optional) A single logical (TRUE/FALSE) value indicating if the error message should be displayed as a warning instead.
-#'   Default is `FALSE`
-#'
-#' @description
-#' `on_error` provides a simple way to handle errors by specifying a value to be returned on error and/or if a message/warning should be displayed instead.
-#'  This is especially useful when attempting to load in multiple data files where it is possible for files not to exist.
-#'
-#' @family Utilities
-#'
-#' @return the output of `...` unless an error occurs, then `return` instead.
-#' @export
-#'
-#' @examples
-#' on_error(stop("test"), return = NULL, msg = TRUE)
-#' on_error(read.csv("not_A_fil3.123"), return = NULL)
-on_error <- function(..., return = NULL, msg = FALSE, warn = FALSE) {
-  tryCatch(..., error = \(e){
-    if (msg) message(as.character(e))
-    if (warn) warning(as.character(e))
-    return(return)
-  })
-}
-
-# TODO: add tests
-#' Swap out values in a vector
-#'
-#' @param x Vector of values to be have certain values swapped out.
-#' @param what One or more values to be replaced with `with` throughout `x`.
-#' @param with A single value to replace `what` for throughout `x`.
-#'
-#' @description
-#' `swap` provides a simple way to switch out certain values in a vector. It is useful for replacing NA's, Infinites, and erroneous values.
-#'
-#' @family Utilities
-#'
-#' @return a vector of `x` where all instances of `what` are replaced with `with`
-#' @export
-#'
-#' @examples
-#' swap(c(-20:20, NA), what = NA, with = -1)
-#' swap(c(-20:20, Inf), what = Inf, with = NA)
-#' swap(c(-20:20), what = Inf, with = NA)
-swap <- function(x, what, with) {
-  if (any(is.na(what))) {
-    x[is.na(x)] <- with
-  }
-  if (any(is.infinite(what))) {
-    x[is.infinite(x)] <- with
-  }
-  x[x %in% what] <- with
-  return(x)
-}
-# Wrappers for swap()
-swap_na <- function(x, with = -99) swap(x, NA, with)
-swap_inf <- function(x, with = NA) swap(x, Inf, with)
-
-# TODO: add tests
-#' Wrapper for looking up timezone of locations from lat/lng coords
-#'
-#' @param lng Vector of numeric values indicating location longitudes (decimal degrees) to lookup.
-#' @param lat Vector of numeric values indicating location latitudes (decimal degrees) to lookup.
-#' @param method A single character value indicating the lookup method to use (see `?lutz::tz_lookup_coords`)
-#' @param ... (Optional) Additional paramaters to pass to `lutz::tz_lookup_coords`
-#'
-#' @description
-#' `get_timezone` is a wrapper for the `lutz::tz_lookup_coords` function. See `?lutz::tz_lookup_coords` for more details.
-#'
-#' @family Utilities
-#'
-#' @return a character vector with the same length as `lat` and `lng` indicating the locations likely timezone.
-#' @export
-#'
-#' @examples
-#' get_timezone(-105.053144, 69.116178)
-get_timezone <- function(lng, lat, method = "accurate", ...) {
-  lutz::tz_lookup_coords(
-    lat = lat,
-    lon = lng,
-    method = method, ...
-  )
-}
-
-# Calculates the mean if enough values are provided
-# TODO: document, test, and export
-mean_if_enough <- function(x, min_n = 0, ...) {
-  ifelse(sum(!is.na(x)) >= min_n, mean(x, na.rm = T, ...), NA)
-}
-
-# Calculates rolling mean if enough non-na provided
-# TODO: code without zoo (use dplyr::lag/lead)
-# TODO: document, test, and export
-roll_mean <- function(x, width, direction = "backward", fill = NA, min_n = 0, digits = 0) {
-  align <- ifelse(direction == "backward", "right",
-    ifelse(direction == "forward", "left", "center")
-  )
-  x |>
-    zoo::rollapply(
-      width = width, align = align, fill = fill,
-      FUN = mean_if_enough, min_n = min_n
-    ) |>
-    round(digits = digits)
-}
 
 # make backward looking rolling means (NAs not ignored)
-# TODO: ignore NAs, make forward looking equivelant, incorp with roll_mean
+# TODO: ignore NAs, make forward looking equivelant
+# TODO: move this to handyr
 get_lag_n_mean <- function(x, n = 3) {
   out <- x
   if (n <= 1) stop("`n` must be greater than one")
@@ -122,6 +13,7 @@ get_lag_n_mean <- function(x, n = 3) {
 
 # General function for loading in data quickly and quietly
 # TODO: document
+# TODO: move this to handyr
 read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = FALSE) {
   if (verbose) {
     data.table::fread(...,
@@ -136,27 +28,12 @@ read_data <- function(..., showProgress = FALSE, verbose = FALSE, data.table = F
   }
 }
 
-lapply_and_bind <- function(...) {
-  lapply(...) |> dplyr::bind_rows()
-}
-
-lapply_and_name <- function(x, ...) {
-  lapply(x, ...) |> stats::setNames(x)
-}
-
-# Truncate to desired digits
-trunc_n <- function(x, n = 0) {
-  trunc(x * 10^n) / 10^n
-}
-
 is_leap_year <- function(year) {
   year %% 4 == 0
 }
 
 # remove NA by default
 mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
-min_no_na <- function(x, ...) suppressWarnings(min(x, na.rm = T, ...)) |> swap_inf(NA)
-max_no_na <- function(x, ...) suppressWarnings(max(x, na.rm = T, ...)) |> swap_inf(NA)
 
 standardize_colnames <- function(df, col_names, raw = FALSE) {
   if (raw) {
@@ -173,7 +50,9 @@ handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowe
   }
   # Handle character inputs
   if (is.character(date_range)) {
-    date_range <- suppressWarnings(date_range |> lubridate::ymd_h(tz = "UTC"))
+    date_range <- date_range |> 
+      lubridate::ymd_h(tz = "UTC") |>
+      handyr::silence(output = FALSE)
     if (any(is.na(date_range))) {
       stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
     }
@@ -256,6 +135,6 @@ remove_na_placeholders <- function(obs, na_placeholders) {
   obs |>
     dplyr::mutate(dplyr::across(
       dplyr::everything(),
-      \(x) swap(x, what = na_placeholders, with = NA)
+      \(x) x |> handyr::swap(na_placeholders, with = NA)
     ))
 }

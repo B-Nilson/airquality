@@ -107,10 +107,6 @@
 #'   group_by = c(Diet = "Diet", Chick = "Chick"),
 #'   plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
 #' )
-#'
-#' # Save plot
-#' # gg = taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
-#' # save_figure(gg, "./test.png")
 #' }
 taylor_diagram <- function(
     dat,
@@ -381,17 +377,19 @@ add_taylor_cor_lines <- function(
 
   # Make locations for the correlation line end points and labels
   label_dist <- sd_max + nudge_labels * 0.6
-  cor_lines <- draw_at |> lapply_and_bind(\(at){
-    observed |> dplyr::mutate(
-      xend = get_x(sd_max, at),
-      yend = get_y(sd_max, at),
-      x_label = get_x(label_dist, at),
-      y_label = get_y(label_dist, at),
-      label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
-        paste(round(at * 100), "%"), round(at, 2)
+  cor_lines <- draw_at |> 
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(at) observed |> dplyr::mutate(
+        xend = get_x(sd_max, at),
+        yend = get_y(sd_max, at),
+        x_label = get_x(label_dist, at),
+        y_label = get_y(label_dist, at),
+        label = ifelse(label_type == "percent", # TODO: implement in taylor_diagram()
+          paste(round(at * 100), "%"), round(at, 2)
+        )
       )
-    )
-  })
+  )
   # Make location for the label for the axis title
   dist_from_origin <- label_dist + nudge_labels * 0.75
   mean_cor <- mean(c(min_cor, 1))
@@ -449,17 +447,19 @@ add_taylor_sd_lines <- function(
   }
   lines_at <- unique(c(lines_at, sd_max))
 
-  arc_data <- 1:nrow(observed) |> lapply_and_bind(\(i) {
-    at <- unique(c(lines_at, observed$sd[i]))
-    data.frame(
-      observed[i, ],
-      start = -0.5 * pi * -min_cor,
-      end = .5 * pi,
-      r = at,
-      linetype = ifelse(at == max(at),
-        "max", ifelse(at == observed$sd[i], "obs", "other")
+  arc_data <- 1:nrow(observed) |> handyr::for_each(
+    .as_list = TRUE, .bind = TRUE,
+    \(i) {
+      at <- unique(c(lines_at, observed$sd[i]))
+      data.frame(
+        observed[i, ],
+        start = -0.5 * pi * -min_cor,
+        end = .5 * pi,
+        r = at,
+        linetype = ifelse(at == max(at),
+          "max", ifelse(at == observed$sd[i], "obs", "other")
+        )
       )
-    )
   })
   linewidths <- c(0.5, 0.25, 0.5) |>
     stats::setNames(names(linetypes))
@@ -491,12 +491,15 @@ add_taylor_sd_lines <- function(
 # Add SD axes lines to Taylor Diagrams
 # TODO: add customizability
 add_taylor_axes_lines <- function(taylor, observed, min_cor, sd_max) {
-  axes_lines <- c(min_cor, 1) |> lapply_and_bind(\(correlation){
-    observed |>
-      dplyr::mutate(
-        xend = get_x(sd_max, correlation),
-        yend = get_y(sd_max, correlation)
-      )
+  axes_lines <- c(min_cor, 1) |> 
+    handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(correlation){
+        observed |>
+          dplyr::mutate(
+            xend = get_x(sd_max, correlation),
+            yend = get_y(sd_max, correlation)
+          )
   })
   taylor +
     ggplot2::geom_segment(
@@ -594,8 +597,20 @@ make_taylor_rmse_lines <- function(
     })
   })
   list(
-    lines  = lines |> lapply_and_bind(\(x) x |> lapply_and_bind(\(y) y$lines)),
-    labels = lines |> lapply_and_bind(\(x) x |> lapply_and_bind(\(y) y$labels))
+    lines  = lines |> handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(x) x |> handyr::for_each(
+        .as_list = TRUE, .bind = TRUE,
+        \(y) y$lines
+      )
+    ),
+    labels = lines |> handyr::for_each(
+      .as_list = TRUE, .bind = TRUE,
+      \(x) x |> handyr::for_each(
+        .as_list = TRUE, .bind = TRUE,
+        \(y) y$labels
+      )
+    )
   )
 }
 

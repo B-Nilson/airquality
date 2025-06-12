@@ -77,14 +77,10 @@ gg + ggplot2::labs(
   fill = "Legend Title", title = "Plot Title",
   subtitle = "Plot Subtitle", caption = "Plot Caption"
 )
-
-# Save plot
-# save_figure(gg, "./test.png")
 }
 }
 \seealso{
 Other Data Visualisation: 
-\code{\link{save_figure}()},
 \code{\link{taylor_diagram}()},
 \code{\link{tile_plot}()}
 }

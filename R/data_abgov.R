@@ -51,7 +51,7 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
     remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
 
   # Convert to spatial if desired
   if (use_sf) {
@@ -126,7 +126,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     )
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
-    lapply_and_bind(parse_abgov_api_request)
+    handyr::for_each(parse_abgov_api_request, .as_list = TRUE, .bind = TRUE)
   if (nrow(stations_data) == 0 | !"Value" %in% names(stations_data)) {
     stop("No data available for provided stations and date_range")
   }
@@ -261,12 +261,12 @@ build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, d
 
 parse_abgov_api_request <- function(api_request) {
   print(api_request)
-  api_request <- on_error(
-    return = NULL, # server sends 400 error when no data in query
-    api_request |>
-      xml2::read_xml() |>
-      xml2::as_list()
-  )
+  api_request <- api_request |>
+    xml2::read_xml() |>
+    xml2::as_list() |>
+    # server sends 400 error when no data in query
+    handyr::on_error(.return = NULL)
+
   api_request$feed[-(1:4)] |>
     lapply(\(entry){
       e <- unlist(entry$content$properties)

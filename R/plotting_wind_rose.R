@@ -51,9 +51,6 @@
 #'   fill = "Legend Title", title = "Plot Title",
 #'   subtitle = "Plot Subtitle", caption = "Plot Caption"
 #' )
-#'
-#' # Save plot
-#' # save_figure(gg, "./test.png")
 #' }
 wind_rose <- function(
     obs,

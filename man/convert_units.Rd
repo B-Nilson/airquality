@@ -25,10 +25,4 @@ a vector of `x` converted from `in_unit` to `out_unit`
 convert_units(c(-20:20), in_unit = "C", out_unit = "F")
 convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
 }
-\seealso{
-Other Utilities: 
-\code{\link{get_timezone}()},
-\code{\link{on_error}()},
-\code{\link{swap}()}
-}
 \concept{Utilities}
