@@ -1,30 +1,4 @@
 
-# TODO: add tests
-#' Wrapper for looking up timezone of locations from lat/lng coords
-#'
-#' @param lng Vector of numeric values indicating location longitudes (decimal degrees) to lookup.
-#' @param lat Vector of numeric values indicating location latitudes (decimal degrees) to lookup.
-#' @param method A single character value indicating the lookup method to use (see `?lutz::tz_lookup_coords`)
-#' @param ... (Optional) Additional paramaters to pass to `lutz::tz_lookup_coords`
-#'
-#' @description
-#' `get_timezone` is a wrapper for the `lutz::tz_lookup_coords` function. See `?lutz::tz_lookup_coords` for more details.
-#'
-#' @family Utilities
-#'
-#' @return a character vector with the same length as `lat` and `lng` indicating the locations likely timezone.
-#' @export
-#'
-#' @examples
-#' get_timezone(-105.053144, 69.116178)
-get_timezone <- function(lng, lat, method = "accurate", ...) {
-  lutz::tz_lookup_coords(
-    lat = lat,
-    lon = lng,
-    method = method, ...
-  )
-}
-
 # Calculates the mean if enough values are provided
 # TODO: document, test, and export
 mean_if_enough <- function(x, min_n = 0, ...) {

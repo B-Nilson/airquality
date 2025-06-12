@@ -62,7 +62,7 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
       c("date_created", "date_removed"),
       \(x) lubridate::ymd(stringr::str_sub(x, end = 10))
     )) |>
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
 
   # Convert to spatial if desired
   if (use_sf) {

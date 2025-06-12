@@ -26,9 +26,6 @@ library(airquality)
 convert_units(c(-20, 0, 20), in_unit = "C", out_unit = "F")
 convert_units(c(0, 50, 100), c(5, 10, 25), "%", "DEW POINT")
 
-# lookup function for location time zones [under development]
-get_timezone(lat = 51.9357, lng = -170.3222)
-
 ```
 
 ## Data Collection

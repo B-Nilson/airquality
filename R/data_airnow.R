@@ -59,7 +59,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
     remove_na_placeholders(na_placeholders = na_placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
 
   # Convert to spatial if desired
   if (use_sf) {

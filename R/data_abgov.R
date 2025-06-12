@@ -51,7 +51,7 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
     remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
-    dplyr::mutate(tz_local = get_timezone(.data$lng, .data$lat))
+    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
 
   # Convert to spatial if desired
   if (use_sf) {
