@@ -94,34 +94,34 @@ AQI <- function(
     !all_missing$o3_1hr_ppm
   if (needs_o3_8hr) {
     dat$o3_8hr_ppm <- dat$o3_1hr_ppm |>
-      roll_mean(8, min_n = 5)
+      handyr::rolling(mean, .width = 8, .min_non_na = 5)
     all_missing$o3_8hr_ppm <- FALSE
   }
   needs_pm25_24hr <- all_missing$pm25_24hr_ugm3 &
     !all_missing$pm25_1hr_ugm3
   if (needs_pm25_24hr) {
     dat$pm25_24hr_ugm3 <- dat$pm25_1hr_ugm3 |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$pm25_24hr_ugm3 <- FALSE
   }
   needs_pm10_24hr <- all_missing$pm10_24hr_ugm3 &
     !all_missing$pm10_1hr_ugm3
   if (needs_pm10_24hr) {
     dat$pm10_24hr_ugm3 <- dat$pm10_1hr_ugm3 |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$pm10_24hr_ugm3 <- FALSE
   }
   needs_co_8hr <- all_missing$co_8hr_ppm &
     !all_missing$co_1hr_ppm
   if (needs_co_8hr) {
     dat$co_8hr_ppm <- dat$co_1hr_ppm |>
-      roll_mean(8, min_n = 5)
+      handyr::rolling(mean, .width = 8, .min_non_na = 5)
     all_missing$co_8hr_ppm <- FALSE
   }
   needs_so2_24hr <- !all_missing$so2_1hr_ppb
   if (needs_so2_24hr) {
     dat$so2_24hr_ppb <- dat$so2_1hr_ppb |>
-      roll_mean(24, min_n = 15)
+      handyr::rolling(mean, .width = 24, .min_non_na = 15)
     all_missing$so2_24hr_ppb <- FALSE
   }
 

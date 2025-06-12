@@ -71,7 +71,9 @@ AQHI <- function(dates, pm25_1hr_ugm3, no2_1hr_ppb = NA, o3_1hr_ppb = NA, verbos
     obs <- obs |> dplyr::mutate(
       dplyr::across(
         dplyr::all_of(rolling_cols),
-        \(x) roll_mean(x, 3, min_n = 2, digits = 1)
+        \(x) x |> 
+          handyr::rolling(mean, .width = 3, .min_non_na = 2) |>
+          round(digits = 1)
       ),
       AQHI = AQHI_formula(
         pm25_rolling_3hr = .data$pm25_rolling_3hr,
