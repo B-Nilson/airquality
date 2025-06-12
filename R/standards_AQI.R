@@ -208,7 +208,7 @@ AQI_risk_category <- function(AQI) {
 
 # Get risk category for breakpoint determination for AQI formulation
 AQI_bp_cat <- function(obs, bps) {
-  suppressMessages(
+  handyr::silence(
     bps$risk_category |> lapply(\(cat) {
       bp <- bps[bps$risk_category == cat, ]
       ifelse(obs >= bp$bp_low & obs <= bp$bp_high, cat, NA)

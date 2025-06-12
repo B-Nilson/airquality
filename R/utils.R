@@ -50,7 +50,7 @@ handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowe
   }
   # Handle character inputs
   if (is.character(date_range)) {
-    date_range <- suppressWarnings(date_range |> lubridate::ymd_h(tz = "UTC"))
+    date_range <- handyr::silence(date_range |> lubridate::ymd_h(tz = "UTC"))
     if (any(is.na(date_range))) {
       stop("Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH")
     }
