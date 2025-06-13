@@ -182,7 +182,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
   airnow_data <- dates |>
     make_airnow_filepaths() |>
     handyr::for_each(
-      .as_list = TRUE, .bind = TRUE,
+      .as_list = TRUE, .bind = TRUE, .parallel = fast,
       \(pth) read_data(file = pth) |>
         handyr::on_error(.return = NULL)
     ) |>
