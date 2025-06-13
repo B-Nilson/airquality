@@ -4,7 +4,13 @@
 \alias{get_airnow_data}
 \title{Download air quality station observations from the US EPA "AirNow" platform}
 \usage{
-get_airnow_data(stations = "all", date_range, raw = FALSE, verbose = TRUE)
+get_airnow_data(
+  stations = "all",
+  date_range,
+  raw = FALSE,
+  fast = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{stations}{(Optional) Either "all" or a character vector specifying AQS IDs for stations to filter data to.
@@ -18,6 +24,9 @@ Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019
 
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating if
 raw data files desired (i.e. without a standardized format). Default is FALSE.}
+
+\item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+Default is FALSE.}
 
 \item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
 non-critical messages/warnings should be printed}

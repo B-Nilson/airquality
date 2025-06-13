@@ -84,6 +84,8 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
 #' raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+#' Default is FALSE.
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed
 #'
@@ -125,7 +127,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' date_range <- lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 #' }
-get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose = TRUE) {
+get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FALSE, verbose = TRUE) {
   # Output citation message to user
   if (verbose) data_citation("AirNow")
 
@@ -158,7 +160,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose =
   }
 
   # Determine which stations should have data
-  if (!raw) {
+  if (!raw & !fast) {
     known_stations <- seq(date_range[1], date_range[2], "25 days") |>
       get_airnow_stations()
     if (!"all" %in% stations) {
@@ -220,7 +222,9 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose =
     ) |>
     tidyr::pivot_wider(names_from = c("param", "unit"), values_from = "value") |>
     dplyr::mutate(quality_assured = FALSE) |>
-    standardize_colnames(airnow_col_names) |>
+    standardize_colnames(airnow_col_names)
+  
+  if (!fast) airnow_data <- airnow_data |>
     insert_date_local(stations_meta = known_stations)
 
   # Standardize units if needed
