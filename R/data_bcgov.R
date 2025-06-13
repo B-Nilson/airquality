@@ -84,6 +84,8 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+#' Default is FALSE.
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed
 #'
@@ -129,7 +131,7 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
 #' date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bcgov_data(stations, date_range)
 #' }
-get_bcgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
+get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verbose = TRUE) {
   # TODO: handle multiple instruments for same pollutant
   # Output citation message to user
   if (verbose) data_citation("BCgov")
@@ -163,11 +165,15 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
 
   # Get data for each year for all desired stations
   stations_data <- years_to_get |> handyr::for_each(
-    .as_list = TRUE, .bind = TRUE,
+    .as_list = TRUE, .bind = TRUE, .parallel = fast,
     \(year) get_annual_bcgov_data(stations, year, qaqc_years)
   )
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
+  }
+
+  if (raw) {
+    return(stations_data)
   }
 
   # Standardize formatting
@@ -179,12 +185,14 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
     dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) |>
     # Output as tibble
     tibble::as_tibble()
+  
+  if (nrow(stations_data) == 0) {
+    stop("No data available for provided stations and date_range")
+  }
 
-  if (nrow(stations_data) & !raw) {
+  if (!fast) {
     stations_data <- stations_data |>
       insert_date_local(stations_meta = known_stations)
-  } else {
-    if (!raw) stop("No data available for provided stations and date_range")
   }
 
   return(stations_data)
