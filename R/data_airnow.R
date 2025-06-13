@@ -157,18 +157,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
         ))
       }
     }
-  }
-
-  # Determine which stations should have data
-  if (!raw & !fast) {
-    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
-      get_airnow_stations()
-    if (!"all" %in% stations) {
-      stations <- stations |>
-        check_stations_exist(known_stations$site_id, "AirNow")
-    }
-  }
-  
+  } 
 
   # Get hourly data files for desired date range
   # Make hourly file paths
@@ -224,8 +213,15 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
     dplyr::mutate(quality_assured = FALSE) |>
     standardize_colnames(airnow_col_names)
   
-  if (!fast) airnow_data <- airnow_data |>
-    insert_date_local(stations_meta = known_stations)
+  if (!fast) {
+    
+    # Get meta for stations within date_range
+    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
+      get_airnow_stations()
+    # Insert date_local based on local_tz column in metadata
+    airnow_data <- airnow_data |>
+      insert_date_local(stations_meta = known_stations)
+  }
 
   # Standardize units if needed
   if ("pressure_1hr_kpa" %in% names(airnow_data)) {
