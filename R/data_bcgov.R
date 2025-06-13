@@ -196,6 +196,7 @@ bcmoe_col_names <- c(
   # Meta
   date_utc = "date_utc", # Added by get_annual_bcgov_data()
   site_id = "EMS_ID",
+  naps_id = "NAPS_ID",
   site_name = "STATION_NAME",
   quality_assured = "quality_assured", # Added by get_annual_bcgov_data()
   # Particulate Matter
