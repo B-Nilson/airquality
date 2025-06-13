@@ -158,12 +158,15 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, verbose =
   }
 
   # Determine which stations should have data
-  known_stations <- seq(date_range[1], date_range[2], "25 days") |>
-    get_airnow_stations()
-  if (!"all" %in% stations) {
-    stations <- stations |>
-      check_stations_exist(known_stations$site_id, "AirNow")
+  if (!raw) {
+    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
+      get_airnow_stations()
+    if (!"all" %in% stations) {
+      stations <- stations |>
+        check_stations_exist(known_stations$site_id, "AirNow")
+    }
   }
+  
 
   # Get hourly data files for desired date range
   # Make hourly file paths
