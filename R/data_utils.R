@@ -84,6 +84,7 @@ get_station_data <- function(locations, date_range, buffer_dist = 10,
 
 # Get polygons of locations to search for stations within
 determine_search_area <- function(locations, buffer_dist = 10, verbose) {
+  rlang::check_installed("sf")
   # TODO: allow for station ids/names
   if (is.character(locations)) {
     search_area <- locations |> 
@@ -122,6 +123,7 @@ get_location_polygons <- function(location_name, verbose = TRUE) {
 
 # Get station metadata during period in our search area
 get_stations_in_search_area <- function(data_funs, search_area, date_range) {
+  rlang::check_installed("sf")
   dates <- seq(date_range[1], date_range[2], "30 days")
   stations <- names(data_funs) |>
     handyr::for_each(

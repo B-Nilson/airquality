@@ -66,6 +66,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 
   # Convert to spatial if desired
   if (use_sf) {
+    rlang::check_installed("sf")
     stations <- stations |>
       sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
   }
