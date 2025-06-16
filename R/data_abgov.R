@@ -1,7 +1,7 @@
 #' Download air quality station metadata from the Alberta (Canada) Government
 #'
+#' @param ... Not used. For compatibility with other metadata functions and future expansion.
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
-#' @param ... [Not Used]
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -32,12 +32,16 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
     site_name = "Name",
     type = "Type",
     description = "Description",
+    operated_by = "URL",
     address = "Address",
     airshed = "AirshedName",
     lat = "Latitude",
     lng = "Longitude",
     elev = "Elevation"
   )
+  placeholders <- c("Not Available", "Unknown")
+  numeric_cols <- c("lat", "lng", "elev")
+
   # Get station metadata from the AB gov API
   api_endpoint <- "Stations"
   stations <- ab_api_site |>
@@ -45,19 +49,22 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
     parse_abgov_api_request()
 
   # Standardize formatting
-  placeholders <- c("Not Available", "Unknown")
   stations <- stations |>
+    tibble::tibble() |>
     dplyr::select(dplyr::any_of(header)) |>
     remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
-    dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
-    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
+    dplyr::mutate(
+      dplyr::across(dplyr::any_of(numeric_cols), as.numeric),
+      tz_local = .data$lng |> handyr::get_timezone(lat = .data$lat)
+    )
 
   # Convert to spatial if desired
   if (use_sf) {
     rlang::check_installed("sf")
     stations <- stations |>
-      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
+      sf::st_as_sf(coords = c("lng", "lat"), crs = abgov_crs) |>
+      sf::st_transform(crs = "WGS84")
   }
 
   return(stations)
