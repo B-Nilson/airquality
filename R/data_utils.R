@@ -226,6 +226,7 @@ data_citation <- function(source) {
 }
 
 # Convert date_utc to local time and insert as "date_local" column (formatted as a character)
+# TODO: move to handyr
 insert_date_local <- function(obs, stations_meta) {
   obs |>
     dplyr::left_join(

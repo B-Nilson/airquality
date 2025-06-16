@@ -79,8 +79,16 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
+#' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+#' Default is FALSE.
 #' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be printed
+#' @param stations_per_call (Optional) A single numeric value indicating the maximum number of stations to request per API call.
+#' The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.
+#' Default is 1.
+#' @param days_per_call (Optional) A single numeric value indicating the maximum number of days (per station) to request per API call.
+#' This is a safety measure to prevent the API from timing out by requesting too many days at once.
+#' Default is 90.
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -103,45 +111,66 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
 #' @export
 #' @examples
 #' \donttest{
-#' get_abgov_data("Calgary Southeast", c("2024-01-05 00", "2024-01-05 23"))
+#' get_abgov_data(
+#'   stations = "Calgary Southeast",
+#'   date_range = c("2024-01-05 00", "2025-01-05 23")
+#' )
 #' }
-get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
+get_abgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verbose = TRUE, stations_per_call = 1, days_per_call = 90) {
   # Output citation message to user
   if (verbose) data_citation("ABgov")
 
   # Handle date_range inputs
-  min_date <- "1970-01-01 00" |> lubridate::ymd_h(tz = abgov_tzone) # TODO: determine actual min date
-  max_date <- Sys.time() |> lubridate::floor_date("hours")
+  min_date <- "1970-01-01 00" |> # TODO: determine actual min date
+    lubridate::ymd_h(tz = abgov_tzone)
+  max_date <- Sys.time() |>
+    lubridate::floor_date("hours")
   date_range <- date_range |>
     handle_date_range(min_date, max_date) |>
-    lubridate::with_tz(abgov_tzone) # Correct? Or is it UTC time? DST?
+    lubridate::with_tz(abgov_tzone)
 
   # Only get data for stations that exist on the API
-  known_stations <- get_abgov_stations()
-  stations <- stations |>
-    check_stations_exist(
-      known_stations$site_name,
-      source = "the AB Gov. site"
-    )
+  if (!fast) {
+    known_stations <- get_abgov_stations()
+    stations <- stations |>
+      check_stations_exist(
+        known_stations$site_name,
+        source = "the AB Gov. site"
+      )
+    if (length(stations) == 0) {
+      stop("No data available for provided station(s)")
+    }
+  }
 
   # Make request(s) as needed to load all desired data
   api_endpoint <- "StationMeasurements"
   args <- stations |>
     build_abgov_data_args(
       date_range,
-      stations_per_call = 1,
-      days_per_call = 90
+      stations_per_call = stations_per_call,
+      days_per_call = days_per_call
     )
   stations_data <- ab_api_site |>
     paste0(api_endpoint, "?", args) |>
-    handyr::for_each(parse_abgov_api_request, .as_list = TRUE, .bind = TRUE)
-  if (nrow(stations_data) == 0 | !"Value" %in% names(stations_data)) {
+    handyr::for_each(
+      parse_abgov_api_request,
+      .as_list = TRUE, .bind = TRUE
+    )
+
+  # Handle no data or raw return
+  no_values <- nrow(stations_data) == 0 |
+    !"Value" %in% names(stations_data)
+  if (no_values) {
     stop("No data available for provided stations and date_range")
+  } else if (raw) {
+    return(stations_data)
   }
 
   # Standardise data formatting
-  drop_cols <- c("DeterminantParameterName", "ReadingDate", "Id")
-  stations_data |>
+  id_cols <- c("site_name", "date_utc", "quality_assured")
+  pivot_cols <- c("ParameterName", "Value")
+  stations_data <- stations_data |>
+    tibble::as_tibble() |>
     # Convert dates, add QA/QC placeholder, and filter to desired range
     dplyr::mutate(
       date_utc = .data$ReadingDate |>
@@ -149,29 +178,32 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
         lubridate::with_tz("UTC"),
       quality_assured = NA # TODO: determine if/what QA/QC'ed
     ) |>
-    dplyr::filter(.data$date_utc |>
-      dplyr::between(date_range[1], date_range[2])) |>
-    # Long -> wide, fix column names, order, and typing
-    dplyr::select(-dplyr::any_of(drop_cols)) |>
+    dplyr::select(-dplyr::any_of(
+      c("DeterminantParameterName", "ReadingDate", "Id")
+    )) |>
+    dplyr::filter(
+      .data$date_utc |>
+        dplyr::between(date_range[1], date_range[2])
+    ) |>
+    # Long -> wide, fix column names
     tidyr::pivot_wider(
-      names_from = "ParameterName",
-      values_from = "Value"
+      names_from = pivot_cols[1], values_from = pivot_cols[2]
     ) |>
     dplyr::select(dplyr::any_of(abgov_col_names)) |>
+    # Convert non-id columns to numeric
     dplyr::mutate(
-      dplyr::across(
-        -c(date_utc, site_name, quality_assured),
-        as.numeric
-      )
+      dplyr::across(-dplyr::any_of(id_cols), as.numeric)
     ) |>
+    # Order by site and date
     dplyr::arrange(.data$site_name, .data$date_utc) |>
-    # Remove duplicated dates and insert local time
-    dplyr::filter(
-      !duplicated(.data$date_utc),
-      .by = "site_name"
-    ) |>
-    insert_date_local(stations_meta = known_stations) |>
-    tibble::as_tibble()
+    # Remove duplicated entries
+    dplyr::distinct()
+  # Insert local time (slow-ish for many stations)
+  if (!fast) {
+    stations_data <- stations_data |>
+      insert_date_local(stations_meta = known_stations)
+  }
+  return(stations_data)
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
@@ -179,6 +211,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
 ab_api_site <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
 
 abgov_tzone <- "America/Edmonton" # TODO: confirm this
+abgov_crs <- "WGS84" # TODO: confirm this
 
 # TODO: check if there are more values available
 abgov_col_names <- c(
@@ -217,19 +250,19 @@ abgov_col_names <- c(
 
 build_abgov_data_args <- function(stations, date_range, stations_per_call = 3, days_per_call = 3) {
   # Build station filter(s)
-  station_steps <- seq(1, length(stations), stations_per_call)
-  station_filters <- station_steps |> sapply(\(s){
-    is_past_n <- (s + stations_per_call) > length(stations)
-    end <- !is_past_n |> ifelse(
-      s + stations_per_call,
-      length(stations)
-    )
-    prefix <- "(indexof('"
-    seperator <- "', StationName) ge 0 or indexof('"
-    suffix <- "', StationName) ge 0)"
-    s_query <- stations[s:end] |> paste0(collapse = seperator)
-    paste0(prefix, s_query, suffix)
-  })
+  station_filters <- seq(1, length(stations), stations_per_call) |> 
+    sapply(\(s){
+      is_past_n <- (s + stations_per_call) > length(stations)
+      end <- !is_past_n |> ifelse(
+        s + stations_per_call,
+        length(stations)
+      )
+      prefix <- "(indexof('"
+      seperator <- "', StationName) ge 0 or indexof('"
+      suffix <- "', StationName) ge 0)"
+      s_query <- stations[s:end] |> paste0(collapse = seperator)
+      paste0(prefix, s_query, suffix)
+    })
   # Build date filter(s)
   steps <- paste(days_per_call, "days")
   starts <- (date_range[1] - lubridate::hours(1)) |>
@@ -274,6 +307,8 @@ parse_abgov_api_request <- function(api_request) {
     xml2::as_list() |>
     # server sends 400 error when no data in query
     handyr::on_error(.return = NULL)
+  
+  if (is.null(api_request)) return(NULL)
 
   api_request$feed[-(1:4)] |>
     lapply(\(entry){
@@ -281,4 +316,37 @@ parse_abgov_api_request <- function(api_request) {
       if (!is.null(e)) data.frame(t(e)) else e
     }) |>
     dplyr::bind_rows()
+}
+
+abgov_data_mgmt_api <- function(api_request) {
+  operator_keys <- c(6) |>
+    paste(collapse = "%3B")
+  station_keys <- c("19501") |>
+    paste(collapse = "%3B")
+  parameter_keys <- c(5, 10, 4, 13, 14, 12, 115, 17, 21, 83, 113, 24, 27, 15, 132, 139) |>
+    paste(collapse = "%3B")
+  date_range <- c("2021-01-01", "2024-12-31") |>
+    lubridate::as_date() |>
+    format("%F")
+  verification_token <- uuid::UUIDgenerate()
+  # Original: SelectedAreaOperatorKeys=6%3B&SelectedStationKeys=19501%3B&SelectedParameterKeys=5%3B10%3B4%3B13%3B14%3B12%3B115%3B17%3B21%3B83%3B113%3B24%3B27%3B15%3B132%3B139%3B&IsNoRecordFound=False&AreaOperatorKeys=6&StationKeys=19501&StartDate=2021-01-01&__Invariant=StartDate&EndDate=2024-12-31&__Invariant=EndDate&CollectionType=Continuous&ParameterKeys=5&ParameterKeys=10&ParameterKeys=4&ParameterKeys=13&ParameterKeys=14&ParameterKeys=12&ParameterKeys=115&ParameterKeys=17&ParameterKeys=21&ParameterKeys=83&ParameterKeys=113&ParameterKeys=24&ParameterKeys=27&ParameterKeys=15&ParameterKeys=132&ParameterKeys=139&IsGoodQuality=0&IncludeQaQcSamples=0&AdditionalMetadata=0&__RequestVerificationToken=CfDJ8FMRL2JQLblMkdnzpJfcax68WbDprSKN4N4wUTLI7WuO79AmwkRNONb8CLRK1wbf8pC_y4ZPXgPgEs6C-1fK-9XPQb0poo20JWfNV3zJN1SnbLixtcSZ4hOAbsLMtA5bDvu7NBHBjObUimFPzo4bOkk
+  # POST with requested data args
+  # GET regularly to check if request completed
+  # Once, "OK" returned, GET data
+  abgov_data_mgmt_api_url <- "https://datamanagementplatform.alberta.ca/Ambient/AreaOperatorAmbientMultipleParameters"
+  api_request <- paste0(
+    abgov_data_mgmt_api_url, "?",
+    "SelectedAreaOperatorKeys=", operator_keys,
+    "%3B&AreaOperatorKeys=", operator_keys, 
+    "&SelectedStationKeys=", station_keys, 
+    "&StationKeys=", station_keys,
+    "&SelectedParameterKeys=", parameter_keys,
+    "&ParameterKeys=", parameter_keys, 
+    "&IsNoRecordFound=False",
+    "&StartDate=", date_range[1], "&__Invariant=StartDate",
+    "&EndDate=", date_range[2], "&__Invariant=EndDate",
+    "&CollectionType=Continuous",
+    "&IsGoodQuality=0&IncludeQaQcSamples=0&AdditionalMetadata=0",
+    "&__RequestVerificationToken=", verification_token
+  )
 }
