@@ -53,7 +53,7 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
       LAT = .data$lat2
     ) |>
     # Choose and rename columns
-    standardize_colnames(col_names = col_names) |>
+    dplyr::select(dplyr::any_of(col_names)) |>
     dplyr::arrange(.data$site_name) |>
     # Drop duplicates and NA placeholders
     unique() |>
@@ -181,7 +181,7 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verb
     dplyr::filter(.data$date_utc |>
       dplyr::between(date_range[1], date_range[2])) |>
     dplyr::filter(!duplicated(.data$date_utc), .by = "EMS_ID") |>
-    standardize_colnames(bcmoe_col_names, raw = raw) |>
+    dplyr::select(dplyr::any_of(bcmoe_col_names)) |>
     dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) |>
     # Output as tibble
     tibble::as_tibble()

@@ -58,7 +58,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
       }
     ) |>
     stats::setNames(file_header) |>
-    standardize_colnames(col_names = desired_columns) |>
+    dplyr::select(dplyr::any_of(desired_columns)) |>
     remove_na_placeholders(na_placeholders = na_placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
@@ -211,7 +211,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
     ) |>
     tidyr::pivot_wider(names_from = c("param", "unit"), values_from = "value") |>
     dplyr::mutate(quality_assured = FALSE) |>
-    standardize_colnames(airnow_col_names)
+    dplyr::select(dplyr::any_of(airnow_col_names))
   
   if (!fast) {
     

@@ -47,7 +47,7 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
   # Standardize formatting
   placeholders <- c("Not Available", "Unknown")
   stations <- stations |>
-    standardize_colnames(header) |>
+    dplyr::select(dplyr::any_of(header)) |>
     remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::mutate(dplyr::across(c("lat", "lng", "elev"), as.numeric)) |>
@@ -149,7 +149,7 @@ get_abgov_data <- function(stations, date_range, raw = FALSE, verbose = TRUE) {
       names_from = "ParameterName",
       values_from = "Value"
     ) |>
-    standardize_colnames(abgov_col_names, raw = raw) |> # TODO: does raw work as expected?
+    dplyr::select(dplyr::any_of(abgov_col_names)) |>
     dplyr::mutate(
       dplyr::across(
         -c(date_utc, site_name, quality_assured),

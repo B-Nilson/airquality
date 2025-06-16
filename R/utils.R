@@ -35,13 +35,6 @@ is_leap_year <- function(year) {
 # remove NA by default
 mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
 
-standardize_colnames <- function(df, col_names, raw = FALSE) {
-  if (raw) {
-    return(df)
-  }
-  df |> dplyr::select(dplyr::any_of(col_names))
-}
-
 handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowed = NA) {
   # Handle date_range inputs with length != 2
   if (length(date_range) == 1) date_range <- c(date_range, date_range)
