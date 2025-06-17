@@ -29,34 +29,49 @@
 #' # if data for past/specific years required
 #' get_bcgov_stations(years = 1998:2000)
 #' }
-get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FALSE) {
+get_bcgov_stations <- function(
+  years = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
+  use_sf = FALSE
+) {
   # Get station metadata for all requested years
-  qaqc_years <- get_bcgov_qaqc_years()
+  qaqc_years <- bcgov_get_qaqc_years()
   stations <- years |>
     determine_years_to_get(qaqc_years) |>
-    lapply(\(year) get_annual_bcgov_stations(year, qaqc_years)) |>
-    dplyr::bind_rows()
+    handyr::for_each(
+      .bind = TRUE,
+      .as_list = TRUE,
+      get_annual_bcgov_stations,
+      qaqc_years = qaqc_years
+    )
 
   # Standardize formatting
   col_names <- c(
-    site_id = "EMS_ID", 
-    naps_id = "NAPS_ID", 
+    site_id = "EMS_ID",
+    naps_id = "NAPS_ID",
     site_name = "STATION_NAME",
-    city = "CITY", lat = "LAT", lng = "LONG", elev = "ELEVATION",
-    date_created = "OPENED", date_removed = "CLOSED"
+    city = "CITY",
+    lat = "LAT",
+    lng = "LONG",
+    elev = "ELEVATION",
+    date_created = "OPENED",
+    date_removed = "CLOSED"
   )
   stations <- stations |>
     # Fix reversed lat/lng entries
     dplyr::mutate(
-      lat2 = ifelse(.data$LAT |> dplyr::between(45, 60), .data$LAT, .data$LONG),
-      LONG = ifelse(.data$LAT |> dplyr::between(45, 60), .data$LONG, -.data$LAT),
+      lat2 = .data$LAT |>
+        dplyr::between(45, 60) |>
+        ifelse(.data$LAT, .data$LONG),
+      LONG = .data$LAT |>
+        dplyr::between(45, 60) |>
+        ifelse(.data$LONG, -.data$LAT),
       LAT = .data$lat2
     ) |>
     # Choose and rename columns
-    standardize_colnames(col_names = col_names) |>
-    dplyr::arrange(.data$site_name) |>
+    dplyr::select(dplyr::any_of(col_names)) |>
+    dplyr::arrange(.data$site_name, date_created) |>
     # Drop duplicates and NA placeholders
-    unique() |>
+    dplyr::distinct(site_id, naps_id, .keep_all = TRUE) |> # TODO: is this right? What if duplicates update the lat/lng?
     remove_na_placeholders(na_placeholders = "") |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     # Convert date_created and date_removed to date objects
@@ -64,11 +79,13 @@ get_bcgov_stations <- function(years = lubridate::year(Sys.time()), use_sf = FAL
       c("date_created", "date_removed"),
       \(x) lubridate::ymd(stringr::str_sub(x, end = 10))
     )) |>
-    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
+    dplyr::mutate(
+      tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat)
+    )
 
   # Convert to spatial if desired
   if (use_sf) {
-    stations <- stations |> 
+    stations <- stations |>
       sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
   }
 
