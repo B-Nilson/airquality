@@ -33,7 +33,7 @@ is_leap_year <- function(year) {
 }
 
 # remove NA by default
-mean_no_na <- function(x, ...) mean(x, na.rm = T, ...)
+mean_no_na <- function(x, ...) mean(x, na.rm = TRUE, ...)
 
 standardize_colnames <- function(df, col_names, raw = FALSE) {
   if (raw) {
