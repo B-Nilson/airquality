@@ -464,12 +464,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::select(-dplyr::any_of(erroneous_cols)) |>
     # Set units of value column
     dplyr::mutate(
-      UNIT = dplyr::case_when(
-        UNIT == "% RH" ~ "%",
-        UNIT == "\xb0C" ~ "degC",
-        UNIT == "Deg." ~ "degrees",
-        TRUE ~ UNIT
-      ),
+      UNIT = bcgov_fix_units(UNIT),
       dplyr::across(dplyr::all_of(value_col), \(x) {
         x |> units::set_units(.data$UNIT[1], mode = "standard")
       })
@@ -484,6 +479,15 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       .cols = "INSTRUMENT",
       \(col_name) paste0(parameter, "_", col_name)
     )
+}
+
+bcgov_fix_units <- function(units) {
+  dplyr::case_when(
+    units == "% RH" ~ "%",
+    units == "\xb0C" ~ "degC",
+    units == "Deg." ~ "degrees",
+    TRUE ~ units
+  )
 }
 }
 
