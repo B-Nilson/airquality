@@ -269,23 +269,18 @@ bcmoe_col_names <- c(
   vapourPressure_1hr_kpa_instrument = "VAPOUR_INSTRUMENT" # ,
 )
 
-# Checks the years in the QA/QC'ed data archive for BC MoE data
-# (usually 1-2 years out of date)
-get_bcgov_qaqc_years <- function() {
-  ftp_site_qaqc <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/Archieved/"
-  # Load file/dir details and extract names
-  qaqc_dirs <- ftp_site_qaqc |>
+bcgov_get_qaqc_years <- function() {
+  qaqc_directory <- bcgov_ftp_site |>
+    paste0("/AnnualSummary/")
+  # Get directories in QAQC directory
+  qaqc_dirs <- qaqc_directory |>
     readLines() |>
-    stringr::str_split("\\s", simplify = T)
-  qaqc_dirs <- qaqc_dirs[, ncol(qaqc_dirs)]
-  # Extract years from file/dir names
-  years <- qaqc_dirs |> 
-    stringr::str_remove("STATION_DATA_") |>
-    as.numeric() |>
-    handyr::silence(output = FALSE) # suppress 'NAs introduced due to coercion' warning
-  years[!is.na(years)]
+    stringr::str_subset("<DIR>")
+  # Extract years from dir names
+  qaqc_dirs |>
+    stringr::str_extract("\\d{4}$") |>
+    as.numeric()
 }
-
 get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Where BC MoE AQ/Met data are stored
   ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"

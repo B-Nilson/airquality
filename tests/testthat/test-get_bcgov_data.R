@@ -104,4 +104,14 @@ test_that("able to get raw stations", {
     expect_no_warning()
   expect_true(length(raw_stations) > 0)
   expect_true(is.character(raw_stations))
-  })
+})
+
+test_that("able to get qaqc years", {
+  qaqc_years <- bcgov_get_qaqc_years() |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_true(length(qaqc_years) > 0)
+  expect_true(is.numeric(qaqc_years))
+  expect_true(min(qaqc_years) == 1980)
+  expect_true(max(qaqc_years) >= 2023) # As of 2025-06-19
+})
