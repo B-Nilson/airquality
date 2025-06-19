@@ -185,10 +185,16 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verb
     check_stations_exist(known_stations$site_id, source = "the BC FTP site")
 
   # Get data for each year for all desired stations
-  stations_data <- years_to_get |> handyr::for_each(
-    .as_list = TRUE, .bind = TRUE, .parallel = fast,
-    \(year) get_annual_bcgov_data(stations, year, qaqc_years)
-  )
+  stations_data <- years_to_get |>
+    handyr::for_each(
+      .as_list = TRUE, # TODO: remove once handyr update merged (.bind =TRUE will set this by default)
+      .bind = TRUE,
+      .parallel = fast,
+      bcgov_get_annual_data,
+      stations = stations,
+      qaqc_years = qaqc_years,
+      quiet = quiet
+    )
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
@@ -338,40 +344,40 @@ bcgov_get_annual_stations <- function(
     handyr::on_error(.return = NULL)
 }
 
-get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
-  # Where BC MoE AQ/Met data are stored
-  ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  qaqc_url <- ftp_site |> # "Archieved" lol
-    paste0("Archieved/STATION_DATA_{year}/{station}.csv")
-  raw_url <- ftp_site |> # actually since qa/qc to date, not just this year
-    paste0("Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/{station}.csv")
-
+bcgov_get_annual_data <- function(
+  stations = "all",
+  year,
+  qaqc_years = NULL,
+  variables = "all",
+  quiet = FALSE
+) {
   # Determine file to get for this year
-  if (is.null(qaqc_years)) qaqc_years <- get_bcgov_qaqc_years()
-  if (year %in% qaqc_years) {
-    data_url <- qaqc_url |>
-      stringr::str_replace("\\{year\\}", as.character(year))
+  if (is.null(qaqc_years)) {
+    qaqc_years <- bcgov_get_qaqc_years()
+  }
+  is_qaqc_year <- year %in% qaqc_years
+
+  # Get data for desired stations for this year
+  if (is_qaqc_year) {
+    stations_data <- year |>
+      bcgov_get_qaqc_data(variables = variables, quiet = quiet)
+    if (stations != "all") {
+      stations_data <- stations_data |>
+        dplyr::filter(.data$EMS_ID %in% stations)
+    }
   } else {
-    data_url <- raw_url
+    stations_data <- stations |> bcgov_get_raw_data()
   }
 
-  # Get each stations data for this year
-  stations_data <- data_url |>
-    stringr::str_replace("\\{station\\}", stations) |>
-    handyr::for_each(
-      .as_list = TRUE, .bind = TRUE, 
-      \(p) handyr::silence(warnings = FALSE, output = FALSE,
-        read_data(file = p, colClasses = c(
-          DATE_PST = "character",
-          EMS_ID = "character", STATION_NAME = "character"
-        )) |> handyr::on_error(.return = NULL)
-    ))
-
+  # Handle no data returned
   if (nrow(stations_data) == 0) {
-    stop(paste("No data available for provided stations for", year))
+    stop(paste("No data available for provided station(s) for", year))
   }
-  # Standardize formatting
+
+  # Add quality assured flag
   stations_data |>
+    dplyr::mutate(quality_assured = is_qaqc_year)
+}
     dplyr::mutate(
       DATE_PST = tryCatch(
         .data$DATE_PST |> lubridate::ymd_hms(tz = bcmoe_tzone),
