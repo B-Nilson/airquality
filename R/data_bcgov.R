@@ -227,56 +227,56 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verb
 
 ## BC MoE Helpers ---------------------------------------------------------
 
-bcmoe_tzone <- "Etc/GMT+8"
-
-bcmoe_col_names <- c(
+bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
+bcgov_col_names <- c(
   # Meta
-  date_utc = "date_utc", # Added by get_annual_bcgov_data()
+  date_utc = "date_utc", # Added by bcgov_get_annual_data()
   site_id = "EMS_ID",
   site_name = "STATION_NAME",
-  quality_assured = "quality_assured", # Added by get_annual_bcgov_data()
+  quality_assured = "quality_assured", # Added by bcgov_get_annual_data()
   # Particulate Matter
-  pm25_1hr_ugm3 = "PM25",
-  pm25_1hr_ugm3_instrument = "PM25_INSTRUMENT",
-  pm10_1hr_ugm3 = "PM10",
-  pm10_1hr_ugm3_instrument = "PM10_INSTRUMENT",
+  pm25_1hr = "PM25",
+  pm25_1hr_instrument = "PM25_INSTRUMENT",
+  pm10_1hr = "PM10",
+  pm10_1hr_instrument = "PM10_INSTRUMENT",
   # Ozone
-  o3_1hr_ppb = "O3",
-  o3_1hr_ppb_instrument = "O3_INSTRUMENT",
+  o3_1hr = "O3",
+  o3_1hr_instrument = "O3_INSTRUMENT",
   # Nitrogen Pollutants
-  no_1hr_ppb = "NO",
-  no_1hr_ppb_instrument = "NO_INSTRUMENT",
-  no2_1hr_ppb = "NO2",
-  no2_1hr_ppb_instrument = "NO2_INSTRUMENT",
-  nox_1hr_ppb = "NOx",
-  nox_1hr_ppb_instrument = "NOx_INSTRUMENT",
+  no_1hr = "NO",
+  no_1hr_instrument = "NO_INSTRUMENT",
+  no2_1hr = "NO2",
+  no2_1hr_instrument = "NO2_INSTRUMENT",
+  nox_1hr = "NOx",
+  nox_1hr_instrument = "NOx_INSTRUMENT",
   # Sulfur Pollutants
-  so2_1hr_ppb = "SO2",
-  so2_1hr_ppb_instrument = "SO2_INSTRUMENT",
-  trs_1hr_ppb = "TRS",
-  trs_1hr_ppb_instrument = "TRS_INSTRUMENT",
-  h2s_1hr_ppb = "H2S",
-  h2s_1hr_ppb_instrument = "H2S_INSTRUMENT",
+  so2_1hr = "SO2",
+  so2_1hr_instrument = "SO2_INSTRUMENT",
+  trs_1hr = "TRS",
+  trs_1hr_instrument = "TRS_INSTRUMENT",
+  h2s_1hr = "H2S",
+  h2s_1hr_instrument = "H2S_INSTRUMENT",
   # Carbon Monoxide
-  co_1hr_ppb = "CO",
-  co_1hr_ppb_instrument = "CO_INSTRUMENT",
+  co_1hr = "CO",
+  co_1hr_instrument = "CO_INSTRUMENT",
   # Met data
-  rh_1hr_percent = "HUMIDITY",
-  rh_1hr_percent_instrument = "HUMIDITY_INSTRUMENT",
-  t_1hr_celcius = "TEMP_MEAN",
-  t_1hr_celcius_instrument = "TEMP_MEAN_INSTRUMENT",
-  wd_1hr_degrees = "WDIR_VECT",
-  wd_1hr_degrees_instrument = "WDIR_VECT_INSTRUMENT",
-  ws_1hr_ms = "WSPD_SCLR",
-  ws_1hr_ms_instrument = "WSPD_SCLR_INSTRUMENT",
-  precip_1hr_mm = "PRECIP",
-  precip_1hr_mm_instrument = "PRECIP_INSTRUMENT",
-  snowDepth_1hr_cm = "SNOW",
-  snowDepth_1hr_cm_instrument = "SNOW_INSTRUMENT",
-  pressure_1hr_kpa = "PRESSURE", # TODO: Ensure pressure proper units ....
-  pressure_1hr_kpa_instrument = "PRESSURE_INSTRUMENT",
-  vapourPressure_1hr_kpa = "VAPOUR",
-  vapourPressure_1hr_kpa_instrument = "VAPOUR_INSTRUMENT" # ,
+  rh_1hr = "HUMIDITY",
+  rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
+  t_1hr = "TEMP_MEAN",
+  t_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
+  wd_1hr = "WDIR_VECT",
+  wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
+  ws_1hr = "WSPD_SCLR",
+  ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
+  precip_1hr = "PRECIP",
+  precip_1hr_instrument = "PRECIP_INSTRUMENT",
+  snowDepth_1hr = "SNOW",
+  snowDepth_1hr_instrument = "SNOW_INSTRUMENT",
+  pressure_1hr = "PRESSURE", # TODO: Ensure pressure proper units ....
+  pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
+  vapourPressure_1hr = "VAPOUR",
+  vapourPressure_1hr_instrument = "VAPOUR_INSTRUMENT" # ,
 )
 
 bcgov_get_qaqc_years <- function() {
@@ -302,6 +302,25 @@ bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
   years_to_get <- years[is_qaqc_year] |> # keep all years that are qaqced
     c(years[!is_qaqc_year][1]) # only keep first non-qaqc year
   years_to_get[!is.na(years_to_get)]
+}
+
+# TODO: Combine with duplicate of this made for ABgov once push
+join_list <- function(df_list, by = NULL) {
+  df_list <- df_list[which(!sapply(df_list, is.null))]
+  if (length(df_list) < 2) {
+    return(df_list[[1]])
+  }
+
+  df_list |>
+    Reduce(f = \(...) {
+      dplyr::full_join(..., by = by)
+    }) |>
+    # Prevent the message when joining by matching columns
+    handyr::silence(
+      output = FALSE,
+      warnings = FALSE,
+      errors = FALSE
+    )
 }
 bcgov_get_annual_stations <- function(
   year = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
@@ -378,17 +397,94 @@ bcgov_get_annual_data <- function(
   stations_data |>
     dplyr::mutate(quality_assured = is_qaqc_year)
 }
-    dplyr::mutate(
-      DATE_PST = tryCatch(
-        .data$DATE_PST |> lubridate::ymd_hms(tz = bcmoe_tzone),
-        warning = \(...) .data$DATE_PST |> lubridate::ymd_hm(tz = bcmoe_tzone)
-      ),
-      date_utc = lubridate::with_tz(.data$DATE_PST, "UTC"),
-      DATE_PST = format(.data$DATE_PST, "%F %H:%M -8"),
-      quality_assured = data_url != raw_url
+
+bcgov_get_qaqc_data <- function(
+  years,
+  variables = "all",
+  use_rounded_value = TRUE,
+  quiet = FALSE
+) {
+  if (any(variables == "all")) {
+    is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
+    variables <- bcgov_col_names[is_instrument_col] |>
+      stringr::str_remove("_INSTRUMENT")
+  }
+
+  # Make paths to files to get
+  qaqc_directory <- bcgov_ftp_site |>
+    paste0("/AnnualSummary/")
+  qaqc_paths <- qaqc_directory |>
+    paste0(years) |>
+    paste0("/", variables, ".csv")
+  # Download, format, and join data
+  qaqc_paths |>
+    handyr::for_each(
+      .as_list = TRUE,
+      .enumerate = TRUE,
+      # .parallel = fast, # TODO: test if works
+      \(path, i) {
+        if (!quiet) {
+          "Downloading file" |>
+            handyr::log_step(i, "/", length(qaqc_paths))
+        }
+        withr::with_options(
+          list(timeout = 3600),
+          path |>
+            data.table::fread(showProgress = !quiet) |>
+            bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
+            handyr::on_error(.return = NULL)
+        )
+      }
     ) |>
-    dplyr::relocate("date_utc", .before = "DATE_PST") |>
-    dplyr::select(-"DATE", -"TIME")
+    join_list() # TODO: use .join when implemented in for_each
+}
+
+bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
+  if (nrow(qaqc_data) == 0) {
+    return(qaqc_data)
+  }
+
+  value_cols <- c("RAW_VALUE", "ROUNDED_VALUE")
+  value_col <- value_cols[use_rounded_value + 1]
+  erroneous_cols <- c(
+    "NAPS_ID",
+    "STATION_NAME",
+    "STATION_NAME_FULL",
+    "OWNER",
+    "REGION",
+    "DATE",
+    "TIME",
+    value_cols[(!use_rounded_value) + 1]
+  )
+
+  parameter <- qaqc_data$PARAMETER[1]
+  qaqc_data |>
+    # drop unnecessary rows/columns for memory-saving
+    dplyr::filter(!is.na(.data[[value_col]])) |>
+    dplyr::select(-dplyr::any_of(erroneous_cols)) |>
+    # Set units of value column
+    dplyr::mutate(
+      UNIT = dplyr::case_when(
+        UNIT == "% RH" ~ "%",
+        UNIT == "\xb0C" ~ "degC",
+        UNIT == "Deg." ~ "degrees",
+        TRUE ~ UNIT
+      ),
+      dplyr::across(dplyr::all_of(value_col), \(x) {
+        x |> units::set_units(.data$UNIT[1], mode = "standard")
+      })
+    ) |>
+    dplyr::select(-UNIT) |>
+    # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
+    tidyr::pivot_wider(
+      names_from = "PARAMETER",
+      values_from = value_col
+    ) |>
+    dplyr::rename_with(
+      .cols = "INSTRUMENT",
+      \(col_name) paste0(parameter, "_", col_name)
+    )
+}
 }
 
 get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
