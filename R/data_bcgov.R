@@ -39,7 +39,7 @@ get_bcgov_stations <- function(
   # Get station metadata for all requested years
   qaqc_years <- bcgov_get_qaqc_years()
   stations <- years |>
-    determine_years_to_get(qaqc_years) |>
+    bcgov_determine_years_to_get(qaqc_years) |>
     handyr::for_each(
       .bind = TRUE,
       .as_list = TRUE,
@@ -78,12 +78,14 @@ get_bcgov_stations <- function(
     dplyr::distinct(site_id, naps_id, .keep_all = TRUE) |> # TODO: is this right? What if duplicates update the lat/lng?
     remove_na_placeholders(na_placeholders = "") |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
-    # Convert date_created and date_removed to date objects
-    dplyr::mutate(dplyr::across(
-      c("date_created", "date_removed"),
-      \(x) lubridate::ymd(stringr::str_sub(x, end = 10))
-    )) |>
+    # Cleanup dates and add local_tz
     dplyr::mutate(
+      # Convert date_created and date_removed to date objects
+      dplyr::across(
+        c("date_created", "date_removed"),
+        \(x) lubridate::ymd(stringr::str_sub(x, end = 10))
+      ),
+      # get local_tz from lat/lng
       tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat)
     )
 
@@ -235,7 +237,7 @@ get_bcgov_data <- function(
   return(stations_data)
 }
 
-## BC MoE Helpers ---------------------------------------------------------
+# BCgov Constants ---------------------------------------------------------
 
 bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
 bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
@@ -289,6 +291,8 @@ bcgov_col_names <- c(
   vapourPressure_1hr_instrument = "VAPOUR_INSTRUMENT" # ,
 )
 
+# BCgov Helpers ---------------------------------------------------------
+
 bcgov_get_qaqc_years <- function() {
   qaqc_directory <- bcgov_ftp_site |>
     paste0("/AnnualSummary/")
@@ -332,6 +336,9 @@ join_list <- function(df_list, by = NULL) {
       errors = FALSE
     )
 }
+
+# BCgov Metadata ---------------------------------------------------------
+
 bcgov_get_annual_stations <- function(
   year = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
   qaqc_years = NULL,
@@ -372,6 +379,8 @@ bcgov_get_annual_stations <- function(
     dplyr::tibble() |>
     handyr::on_error(.return = NULL)
 }
+
+# BCgov Observations ------------------------------------------------------
 
 bcgov_get_annual_data <- function(
   stations = "all",
@@ -588,7 +597,9 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
   stations_file <- "bc_air_monitoring_stations.csv"
 
   # Determine file to get for this year
-  if (is.null(qaqc_years)) qaqc_years <- get_bcgov_qaqc_years()
+  if (is.null(qaqc_years)) {
+    qaqc_years <- get_bcgov_qaqc_years()
+  }
   if (year %in% qaqc_years) {
     data_url <- qaqc_url |>
       stringr::str_replace("\\{year\\}", as.character(year))
@@ -596,7 +607,9 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
     data_url <- raw_url
   }
   read_data(
-    file = paste0(data_url, stations_file), data.table = FALSE,
+    file = paste0(data_url, stations_file),
+    data.table = FALSE,
     colClasses = c("OPENED" = "character", "CLOSED" = "character")
-  ) |> handyr::on_error(.return = NULL)
+  ) |>
+    handyr::on_error(.return = NULL)
 }

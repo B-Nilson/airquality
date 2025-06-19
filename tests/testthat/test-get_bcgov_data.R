@@ -1,7 +1,11 @@
 test_that("an error/warning is not thrown in normal usaage", {
   date_range <- "2019-02-01 00"
   obs <- expect_no_warning(expect_no_error(
-    get_bcgov_data(stations = "0450307", date_range = date_range, verbose = FALSE)
+    get_bcgov_data(
+      stations = "0450307",
+      date_range = date_range,
+      verbose = FALSE
+    )
   ))
 })
 
@@ -34,14 +38,22 @@ test_that("invalid date_range causes error", {
   # Case: invalid input value
   expect_error(get_bcgov_data(station, "bananas", verbose = FALSE))
   # Case: too many dates
-  expect_error(get_bcgov_data(station, c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"), verbose = FALSE))
+  expect_error(get_bcgov_data(
+    station,
+    c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"),
+    verbose = FALSE
+  ))
 })
 
 test_that("too early date_range causes warning/error", {
   station <- "M110514"
   earliest_time <- lubridate::ymd_h("1990-01-01 01", tz = bcmoe_tzone)
   # Case: All in the past
-  expect_error(get_bcgov_data(station, earliest_time - hours(1), verbose = FALSE))
+  expect_error(get_bcgov_data(
+    station,
+    earliest_time - hours(1),
+    verbose = FALSE
+  ))
   # Case: Partly in the past
   date_range <- c(earliest_time - lubridate::hours(1), earliest_time)
   expect_warning(get_bcgov_data(station, date_range, verbose = FALSE))
@@ -75,7 +87,10 @@ test_that("all dates non-na and within requested period", {
 })
 
 test_that("date_local converts to date_utc correctly", {
-  date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"), tz = "America/Vancouver")
+  date_range <- lubridate::ymd_h(
+    c("2019-02-01 00", "2019-02-02 00"),
+    tz = "America/Vancouver"
+  )
   obs <- get_bcgov_data("0450307", date_range, verbose = FALSE)
   obs <- obs |> convert_date_utc_to_local()
   # Case: date_utc the same as converting date_local to UTC
