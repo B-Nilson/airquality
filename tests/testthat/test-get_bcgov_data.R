@@ -115,3 +115,17 @@ test_that("able to get qaqc years", {
   expect_true(min(qaqc_years) == 1980)
   expect_true(max(qaqc_years) >= 2023) # As of 2025-06-19
 })
+
+test_that("able to differentiate qaqc/raw years", {
+  years <- 1980:(Sys.Date() |> lubridate::year())
+  qaqc_years <- bcgov_get_qaqc_years()
+  years_to_get <- years |>
+    bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_true(length(years_to_get) %in% (length(qaqc_years) + c(0, 1)))
+  expect_true(is.numeric(years_to_get))
+  expect_true(min(years_to_get) == 1980)
+  expect_true(max(years_to_get) %in% years)
+  expect_true(max(years_to_get) >= max(qaqc_years))
+})

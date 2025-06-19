@@ -281,6 +281,18 @@ bcgov_get_qaqc_years <- function() {
     stringr::str_extract("\\d{4}$") |>
     as.numeric()
 }
+
+# Drop all raw years except the first
+bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
+  if (is.null(qaqc_years)) {
+    qaqc_years <- bcgov_get_qaqc_years()
+  }
+  years <- sort(unique(years))
+  is_qaqc_year <- years %in% qaqc_years
+  years_to_get <- years[is_qaqc_year] |> # keep all years that are qaqced
+    c(years[!is_qaqc_year][1]) # only keep first non-qaqc year
+  years_to_get[!is.na(years_to_get)]
+}
 get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Where BC MoE AQ/Met data are stored
   ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
@@ -346,24 +358,4 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
     file = paste0(data_url, stations_file), data.table = FALSE,
     colClasses = c("OPENED" = "character", "CLOSED" = "character")
   ) |> handyr::on_error(.return = NULL)
-}
-
-# Drop all QAQC years except the first
-determine_years_to_get <- function(years, qaqc_years) {
-  years <- sort(unique(years))
-  is_qaqc_year <- years %in% qaqc_years # find years that are qa/qc'ed years
-  years_to_get <- c(years[is_qaqc_year], years[!is_qaqc_year][1])
-  # drop NA from case when no non qa/qced years provided
-  years_to_get[!is.na(years_to_get)]
-}
-bcgov_get_raw_stations <- function() {
-  raw_directory <- bcgov_ftp_site |>
-    paste0(
-      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
-    )
-  # Pull stations from directory listing
-  raw_directory |>
-    readLines() |>
-    stringr::str_extract("[\\w\\-]+\\.(csv|CSV)$") |>
-    stringr::str_remove("\\.csv")
 }
