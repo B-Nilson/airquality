@@ -1,5 +1,5 @@
 test_that("an error/warning is not thrown in normal usage", {
-  date_range <- "2019-02-01 00"
+  date_range <- format(Sys.time(), "%Y-%m-%d %H")
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
       stations = "0450307",
