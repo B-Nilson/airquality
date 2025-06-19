@@ -3,6 +3,8 @@
 #' @param years (Optional) one or more integer values indicating the year(s) to get metadata for.
 #'   Default is the current year.
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
+#' @param quiet (Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
+#' Default is FALSE
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -31,7 +33,8 @@
 #' }
 get_bcgov_stations <- function(
   years = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
-  use_sf = FALSE
+  use_sf = FALSE,
+  quiet = FALSE
 ) {
   # Get station metadata for all requested years
   qaqc_years <- bcgov_get_qaqc_years()
@@ -40,8 +43,9 @@ get_bcgov_stations <- function(
     handyr::for_each(
       .bind = TRUE,
       .as_list = TRUE,
-      get_annual_bcgov_stations,
-      qaqc_years = qaqc_years
+      bcgov_get_annual_stations,
+      qaqc_years = qaqc_years,
+      quiet = quiet
     )
 
   # Standardize formatting
@@ -293,6 +297,47 @@ bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
     c(years[!is_qaqc_year][1]) # only keep first non-qaqc year
   years_to_get[!is.na(years_to_get)]
 }
+bcgov_get_annual_stations <- function(
+  year = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
+  qaqc_years = NULL,
+  quiet = FALSE
+) {
+  if (year < 1980) {
+    stop("The BC FTP site does not store data prior to 1980.")
+  } else if (year < 1998) {
+    if (!quiet) {
+      warning(
+        "Metadata for years prior to 1998 is not available, using 1998 instead."
+      )
+    }
+    year <- 1998
+  }
+
+  # File details
+  qaqc_directory <- paste0("/AnnualSummary/", year, "/")
+  raw_directory <- "/Hourly_Raw_Air_Data/Year_to_Date/"
+  stations_file <- "bc_air_monitoring_stations.csv"
+  force_col_classes <- c(OPENED = "character", CLOSED = "character")
+
+  # Determine if should use qaqc or raw dir
+  if (is.null(qaqc_years)) {
+    qaqc_years <- bcgov_get_qaqc_years()
+  }
+  is_qaqc_year <- year %in% qaqc_years
+
+  # Make path to this years station metadata file
+  data_directory <- is_qaqc_year |>
+    ifelse(qaqc_directory, raw_directory)
+  metadata_path <- bcgov_ftp_site |>
+    paste0(data_directory, stations_file)
+
+  # Download the file
+  metadata_path |>
+    data.table::fread(colClasses = force_col_classes, showProgress = !quiet) |>
+    dplyr::tibble() |>
+    handyr::on_error(.return = NULL)
+}
+
 get_annual_bcgov_data <- function(stations, year, qaqc_years = NULL) {
   # Where BC MoE AQ/Met data are stored
   ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"

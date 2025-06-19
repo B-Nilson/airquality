@@ -129,3 +129,17 @@ test_that("able to differentiate qaqc/raw years", {
   expect_true(max(years_to_get) %in% years)
   expect_true(max(years_to_get) >= max(qaqc_years))
 })
+
+test_that("able to get annual metadata", {
+  bcgov_get_annual_stations(quiet = TRUE) |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_error(bcgov_get_annual_stations(1979))
+  bcgov_get_annual_stations(1980) |>
+    expect_warning() |>
+    expect_no_error()
+  bcgov_get_annual_stations(2000)
+  stations <- bcgov_get_annual_stations(2000)
+  expect_true(nrow(stations) > 0 & ncol(stations) > 0)
+  expect_true(tibble::is_tibble(stations))
+})
