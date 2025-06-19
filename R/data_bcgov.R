@@ -107,8 +107,8 @@ get_bcgov_stations <- function(
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 #' Default is FALSE.
-#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be printed
+#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be silenced
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -152,37 +152,41 @@ get_bcgov_stations <- function(
 #' date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 #' get_bcgov_data(stations, date_range)
 #' }
-get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verbose = TRUE) {
-  # TODO: handle multiple instruments for same pollutant
+get_bcgov_data <- function(
+  stations,
+  date_range,
+  raw = FALSE,
+  fast = FALSE,
+  quiet = FALSE
+) {
   # Output citation message to user
-  if (verbose) data_citation("BCgov")
+  if (!quiet) {
+    data_citation("BCgov")
+  }
 
   # Handle date_range inputs
-  qaqc_years <- get_bcgov_qaqc_years()
+  qaqc_years <- bcgov_get_qaqc_years()
   min_date <- min(qaqc_years) |>
     paste("01-01 01") |>
-    lubridate::ymd_h(tz = bcmoe_tzone)
+    lubridate::ymd_h(tz = bcgov_tzone)
   max_date <- Sys.time() |> lubridate::floor_date("hours")
   date_range <- date_range |> handle_date_range(min_date, max_date)
 
   # Get all years in desired date range and drop all but the first in qaqc_years
   years_to_get <- date_range[1] |>
     seq(date_range[2], by = "1 days") |>
-    lubridate::with_tz(bcmoe_tzone) |>
+    lubridate::with_tz(bcgov_tzone) |>
     lubridate::year() |>
-    determine_years_to_get(qaqc_years)
+    bcgov_determine_years_to_get(qaqc_years)
 
-  # Get all stations during period
-  known_stations <- years_to_get |>
-    lapply(get_bcgov_stations) |>
-    dplyr::bind_rows() |>
-    # TODO: Handle this in get_bcgov_stations?
-    dplyr::arrange(dplyr::desc(.data$date_created)) |>
-    dplyr::filter(!duplicated(.data$site_id))
+  # Filter to existing stations only
+  if (!fast) {
+    known_stations <- years_to_get |>
+      get_bcgov_stations(use_sf = FALSE, quiet = quiet)
 
-  # Handle if any/all don't exist in meta data
-  stations <- stations |>
-    check_stations_exist(known_stations$site_id, source = "the BC FTP site")
+    stations <- stations |>
+      check_stations_exist(known_stations$site_id, source = "the BC FTP site")
+  }
 
   # Get data for each year for all desired stations
   stations_data <- years_to_get |>
