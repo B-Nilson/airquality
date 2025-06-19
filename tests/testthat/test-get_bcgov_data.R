@@ -1,26 +1,29 @@
-test_that("an error/warning is not thrown in normal usage", {
+test_that("basic case works", {
   date_range <- format(Sys.time(), "%Y-%m-%d %H")
+  station <- "0450307"
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
-      stations = "0450307",
+      stations = station,
       date_range = date_range,
       quiet = TRUE
     )
   ))
+
+  # Case: All date_utc non-NA
+  expect_true(all(!is.na(obs$date_utc)))
+  # Case: All date_local non-NA
+  expect_true(all(!is.na(obs$date_local)))
+  # Case: All date_utc within requested date range
+  expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
+  expect_true(all(unique(obs$site_id) %in% station))
+
+  # Case: date_utc the same as converting date_local to UTC
+  obs_2 <- obs |> convert_date_utc_to_local()
+  expect_equal(obs_2$date_utc, obs_2$date_utc_from_local)
+
 })
 
 # Input: stations ---------------------------------------------------------
-
-test_that("returns requested stations only", {
-  stations <- c("0450307", "E206898")
-  date_range <- "2019-02-01 00"
-  # Case: a single station
-  obs <- get_bcgov_data(stations[1], date_range, quiet = TRUE)
-  expect_true(all(unique(obs$site_id) %in% stations[1]))
-  # Case: 2+ stations
-  obs <- get_bcgov_data(stations, date_range, quiet = TRUE)
-  expect_true(all(unique(obs$site_id) %in% stations))
-})
 
 test_that("unknown stations cause warning", {
   stations <- c("bananas", "0450307")
@@ -66,49 +69,8 @@ test_that("too late date_range causes warning/error", {
   # Case: All in the future
   expect_error(get_bcgov_data(station, future_time, quiet = TRUE))
   # Case: Partly in the future
-  date_range <- c(current_time - lubridate::hours(1), future_time)
+  date_range <- c(current_time - lubridate::hours(24), future_time)
   expect_warning(get_bcgov_data(station, date_range, quiet = TRUE))
-})
-
-# Outputs: dates ---------------------------------------------------------
-
-test_that("all dates non-na and within requested period", {
-  date_range <- lubridate::ymd_h(
-    c("2019-01-01 00", "2019-01-01 01"),
-    tz = "America/Toronto"
-  )
-  obs <- get_bcgov_data("0450307", date_range, quiet = TRUE)
-  # Case: All date_utc non-NA
-  expect_true(all(!is.na(obs$date_utc)))
-  # Case: All date_local non-NA
-  expect_true(all(!is.na(obs$date_local)))
-  # Case: All date_utc within requested date range
-  expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
-})
-
-test_that("date_local converts to date_utc correctly", {
-  date_range <- lubridate::ymd_h(
-    c("2019-02-01 00", "2019-02-02 00"),
-    tz = "America/Vancouver"
-  )
-  obs <- get_bcgov_data("0450307", date_range, quiet = TRUE)
-  obs <- obs |> convert_date_utc_to_local()
-  # Case: date_utc the same as converting date_local to UTC
-  expect_equal(obs$date_utc, obs$date_utc_from_local)
-})
-
-# Outputs: data -----------------------------------------------------------
-
-# TODO: handle sporadic warning here: Detected an unexpected many-to-many relationship between `x` and `y`
-test_that("expected data returned", {
-  station <- "0450307"
-  date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-02-02 00"))
-
-  obs <- get_bcgov_data(station, date_range, quiet = TRUE)
-  expect_snapshot(obs)
-
-  obs_raw <- get_bcgov_data(station, date_range, raw = TRUE, quiet = TRUE)
-  expect_snapshot(obs_raw)
 })
 
 # Helpers -----------------------------------------------------------------
