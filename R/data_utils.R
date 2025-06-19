@@ -224,11 +224,11 @@ data_citation <- function(source) {
 }
 
 # Convert date_utc to local time and insert as "date_local" column (formatted as a character)
-insert_date_local <- function(obs, stations_meta) {
+insert_date_local <- function(obs, stations_meta, by = "site_name") {
   obs |>
     dplyr::left_join(
-      stations_meta |> dplyr::select("site_name", "tz_local"),
-      by = "site_name"
+      stations_meta |> dplyr::select(by, "tz_local"),
+      by = by
     ) |>
     dplyr::rowwise() |>
     dplyr::mutate(date_local = .data$date_utc |>

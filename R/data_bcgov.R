@@ -205,21 +205,27 @@ get_bcgov_data <- function(stations, date_range, raw = FALSE, fast = FALSE, verb
 
   # Standardize formatting
   stations_data <- stations_data |>
-    dplyr::filter(.data$date_utc |>
-      dplyr::between(date_range[1], date_range[2])) |>
-    dplyr::filter(!duplicated(.data$date_utc), .by = "EMS_ID") |>
-    standardize_colnames(bcmoe_col_names, raw = raw) |>
-    dplyr::mutate(dplyr::across(-(1:2), \(x) ifelse(x == "", NA, x))) |>
-    # Output as tibble
-    tibble::as_tibble()
-  
+    dplyr::mutate(
+      date_utc = .data$DATE_PST |>
+        lubridate::ymd_hm(tz = bcgov_tzone) |>
+        lubridate::with_tz("UTC")
+    ) |>
+    dplyr::select(dplyr::any_of(bcgov_col_names)) |>
+    dplyr::filter(
+      .data$date_utc |> dplyr::between(date_range[1], date_range[2])
+    ) |>
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
+    remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
+    dplyr::select_if(~ !all(is.na(.))) |>
+    dplyr::distinct()
+
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
 
   if (!fast) {
     stations_data <- stations_data |>
-      insert_date_local(stations_meta = known_stations)
+      insert_date_local(stations_meta = known_stations, by = "site_id")
   }
 
   return(stations_data)
@@ -489,6 +495,86 @@ bcgov_fix_units <- function(units) {
     TRUE ~ units
   )
 }
+
+bcgov_get_raw_data <- function(stations, quiet = FALSE) {
+  raw_directory <- bcgov_ftp_site |>
+    paste0(
+      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
+    )
+
+  force_col_class <- c(
+    DATE_PST = "character",
+    EMS_ID = "character",
+    STATION_NAME = "character"
+  )
+
+  if (stations == "all") {
+    stations <- bcgov_get_raw_stations()
+  }
+
+  # Download each stations file and bind together
+  station_paths <- raw_directory |>
+    paste0(stations, ".csv")
+  station_paths |>
+    handyr::for_each(
+      .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
+      .bind = TRUE,
+      \(path) {
+        data.table::fread(
+          file = path,
+          colClasses = force_col_class,
+          showProgress = !quiet
+        ) |>
+          bcgov_format_raw_data() |>
+          handyr::on_error(.return = NULL)
+      }
+    )
+}
+
+bcgov_format_raw_data <- function(raw_data) {
+  if (nrow(raw_data) == 0) {
+    return(raw_data)
+  }
+  meta_cols <- c("EMS_ID", "DATE_PST")
+  instrument_cols <- stringr::str_subset(names(raw_data), "_INSTRUMENT$")
+  unit_cols <- stringr::str_subset(names(raw_data), "_UNITS$")
+  value_cols <- unit_cols |>
+    stringr::str_remove("_UNITS$")
+
+  # Assign units to value columns
+  for (i in 1:length(unit_cols)) {
+    value_col <- value_cols[i]
+    unit_col <- unit_cols[i]
+    raw_data <- raw_data |>
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::all_of(value_col),
+          \(x) {
+            x |>
+              units::set_units(
+                bcgov_fix_units(.data[[unit_col]][1]),
+                mode = "standard"
+              )
+          }
+        )
+      )
+  }
+  # Drop unnecessary columns for memory-saving
+  # TODO: see if they will do in source? files are quite bloated...
+  raw_data |>
+    dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols)))
+}
+
+bcgov_get_raw_stations <- function() {
+  raw_directory <- bcgov_ftp_site |>
+    paste0(
+      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
+    )
+  # Pull stations from directory listing
+  raw_directory |>
+    readLines() |>
+    stringr::str_extract("[\\w\\-]+\\.(csv|CSV)$") |>
+    stringr::str_remove("\\.csv")
 }
 
 get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
