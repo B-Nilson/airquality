@@ -47,7 +47,7 @@ test_that("invalid date_range causes error", {
 
 test_that("too early date_range causes warning/error", {
   station <- "M110514"
-  earliest_time <- lubridate::ymd_h("1990-01-01 01", tz = bcmoe_tzone)
+  earliest_time <- lubridate::ymd_h("1990-01-01 01", tz = bcgov_tzone)
   # Case: All in the past
   expect_error(get_bcgov_data(
     station,
