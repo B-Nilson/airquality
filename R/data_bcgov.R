@@ -404,7 +404,7 @@ bcgov_get_annual_data <- function(
         dplyr::filter(.data$EMS_ID %in% stations)
     }
   } else {
-    stations_data <- stations |> bcgov_get_raw_data()
+    stations_data <- stations |> bcgov_get_raw_data(quiet = quiet)
   }
 
   # Handle no data returned
