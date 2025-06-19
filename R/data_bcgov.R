@@ -361,3 +361,14 @@ determine_years_to_get <- function(years, qaqc_years) {
   # drop NA from case when no non qa/qced years provided
   years_to_get[!is.na(years_to_get)]
 }
+bcgov_get_raw_stations <- function() {
+  raw_directory <- bcgov_ftp_site |>
+    paste0(
+      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
+    )
+  # Pull stations from directory listing
+  raw_directory |>
+    readLines() |>
+    stringr::str_extract("[\\w\\-]+\\.(csv|CSV)$") |>
+    stringr::str_remove("\\.csv")
+}

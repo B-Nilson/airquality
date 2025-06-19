@@ -95,3 +95,13 @@ test_that("expected data returned", {
   obs_raw <- get_bcgov_data(station, date_range, raw = TRUE, verbose = FALSE)
   expect_snapshot(obs_raw)
 })
+
+# Helpers -----------------------------------------------------------------
+
+test_that("able to get raw stations", {
+  raw_stations <- bcgov_get_raw_stations() |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_true(length(raw_stations) > 0)
+  expect_true(is.character(raw_stations))
+  })
