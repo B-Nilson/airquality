@@ -357,6 +357,9 @@ bcgov_make_qaqc_paths <- function(year, params) {
     paste0("/AnnualSummary/")
   available_params <- bcgov_get_qaqc_year_params(year)
   params <- params[params %in% available_params]
+  if(length(params) == 0) {
+    stop("No valid parameters provided for this year.")
+  }
   qaqc_directory |>
     paste0(year) |>
     paste0("/", params, ".csv")
