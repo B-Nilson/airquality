@@ -54,7 +54,7 @@ test_that("too early date_range causes warning/error", {
   # Case: All in the past
   expect_error(get_bcgov_data(
     station,
-    earliest_time - hours(1),
+    earliest_time - lubridate::hours(1),
     quiet = TRUE
   ))
   # Case: Partly in the past
