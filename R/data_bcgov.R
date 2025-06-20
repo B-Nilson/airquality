@@ -38,8 +38,15 @@ get_bcgov_stations <- function(
 ) {
   # Get station metadata for all requested years
   qaqc_years <- bcgov_get_qaqc_years()
-  stations <- years |>
-    bcgov_determine_years_to_get(qaqc_years) |>
+  years_to_get <- years |>
+    bcgov_determine_years_to_get(qaqc_years)
+  if(any(years_to_get < 1998)) {
+    warning("Metadata for years prior to 1998 is not available, using 1998 instead.")
+    years_to_get[years_to_get < 1998] <- 1998
+    years_to_get <- unique(years_to_get)
+  }
+
+  stations <- years_to_get |>
     handyr::for_each(
       .bind = TRUE,
       .as_list = TRUE,
