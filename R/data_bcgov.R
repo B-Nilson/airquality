@@ -493,9 +493,18 @@ bcgov_get_qaqc_data <- function(
   qaqc_directory <- bcgov_ftp_site |>
     paste0("/AnnualSummary/")
   qaqc_paths <- years |>
-    sapply(bcgov_make_qaqc_paths, params = variables) |> 
-    unlist() |> 
+    sapply(\(year) {
+      year |>
+        bcgov_make_qaqc_paths(params = variables) |>
+        handyr::on_error(.return = character(0))
+    }) |>
+    unlist() |>
     as.vector()
+
+  if(length(qaqc_paths) == 0) {
+    stop("No data available for provided date_range / parameters.")
+  }
+
   # Download, format, and join data
   qaqc_data <- qaqc_paths |>
     handyr::for_each(
