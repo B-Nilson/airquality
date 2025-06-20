@@ -492,6 +492,10 @@ bcgov_get_qaqc_data <- function(
     ) |>
     join_list() # TODO: use .join when implemented in for_each
 
+  if (is.null(qaqc_data)) {
+    stop("No data available for provided stations / date_range / parameters.")
+  }
+
   if (!"all" %in% stations) {
     qaqc_data <- qaqc_data |>
       dplyr::filter(.data$EMS_ID %in% stations)
