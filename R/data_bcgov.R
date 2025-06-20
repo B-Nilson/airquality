@@ -290,20 +290,24 @@ bcgov_col_names <- c(
   # Met data
   rh_1hr = "HUMIDITY",
   rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
-  t_1hr = "TEMP_MEAN",
-  t_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
+  temp_1hr = "TEMP_MEAN",
+  temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
   wd_1hr = "WDIR_VECT",
   wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
+  wd_unitvector_1hr = "WDIR_UVECT",
+  wd_unitvector_1hr_instrument = "WDIR_UVECT_INSTRUMENT",
   ws_1hr = "WSPD_SCLR",
   ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
+  ws_vector_1hr = "WSPD_VECT",
+  ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
   precip_1hr = "PRECIP",
   precip_1hr_instrument = "PRECIP_INSTRUMENT",
   snow_1hr = "SNOW",
   snow_1hr_instrument = "SNOW_INSTRUMENT",
   pressure_1hr = "PRESSURE", # TODO: Ensure pressure proper units ....
   pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
-  vapourPressure_1hr = "VAPOUR",
-  vapourPressure_1hr_instrument = "VAPOUR_INSTRUMENT" # ,
+  vapour_pressure_1hr = "VAPOUR",
+  vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT" # ,
 )
 
 # BCgov Helpers ---------------------------------------------------------
