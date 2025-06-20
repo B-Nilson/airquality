@@ -4,16 +4,25 @@ test_that("basic case works", {
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
       stations = station,
+      variables = "pm25",
       date_range = date_range,
       quiet = TRUE
     )
   ))
+
+  # Case: All expected columns
+  expect_true(ncol(obs) == 6)
+  expect_equal(
+    c("date_utc", "date_local", "site_id", "quality_assured", "pm25_1hr", "pm25_1hr_instrument"),
+    names(obs)
+  )
 
   # Case: All date_utc non-NA
   expect_true(all(!is.na(obs$date_utc)))
   # Case: All date_local non-NA
   expect_true(all(!is.na(obs$date_local)))
   # Case: All date_utc within requested date range
+  date_range <- handle_date_range(date_range)
   expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
   expect_true(all(unique(obs$site_id) %in% station))
 
