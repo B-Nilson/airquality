@@ -345,7 +345,8 @@ bcgov_get_qaqc_year_params <- function(year) {
   # Get directories in QAQC directory
   param_files <- qaqc_directory |>
     readLines() |>
-    stringr::str_subset("csv$")
+    stringr::str_subset("csv$") |>
+    stringr::str_subset("station", negate = TRUE)
   # Extract parameters from file names
   param_files |>
     stringr::str_extract("(\\w*)\\.csv$", group = 1)

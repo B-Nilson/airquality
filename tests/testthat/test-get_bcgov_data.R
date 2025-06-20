@@ -104,6 +104,15 @@ test_that("able to get qaqc years", {
   expect_true(max(qaqc_years) >= 2023) # As of 2025-06-19
 })
 
+test_that("able to get qaqc year params", {
+  qaqc_params <- bcgov_get_qaqc_year_params(2000) |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_true(length(qaqc_params) > 0)
+  expect_true(is.character(qaqc_params))
+  expect_true(all(qaqc_params %in% bcgov_col_names))
+})
+
 test_that("able to differentiate qaqc/raw years", {
   years <- 1980:(Sys.Date() |> lubridate::year())
   qaqc_years <- bcgov_get_qaqc_years()
