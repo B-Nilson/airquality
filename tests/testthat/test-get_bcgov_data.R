@@ -113,6 +113,18 @@ test_that("able to get qaqc year params", {
   expect_true(all(qaqc_params %in% bcgov_col_names))
 })
 
+test_that("able to make qaqc paths", {
+  path <- bcgov_make_qaqc_paths(1980, c("PM25", "SO2")) |>
+    expect_no_warning() |>
+    expect_no_error()
+  expect_true(length(path) == 1)
+  expect_true(is.character(path))
+  expect_true(
+    stringr::str_detect(path, "SO2") &
+      stringr::str_detect(path, "1980")
+  )
+})
+
 test_that("able to differentiate qaqc/raw years", {
   years <- 1980:(Sys.Date() |> lubridate::year())
   qaqc_years <- bcgov_get_qaqc_years()
