@@ -68,7 +68,9 @@ test_that("too early date_range causes warning/error", {
   ))
   # Case: Partly in the past
   date_range <- c(earliest_time - lubridate::hours(1), earliest_time)
-  expect_warning(get_bcgov_data(station, date_range, quiet = TRUE))
+  station |> 
+    get_bcgov_data(date_range, variables = "h2s", quiet = TRUE) |> 
+    expect_warning()
 })
 
 test_that("too late date_range causes warning/error", {
