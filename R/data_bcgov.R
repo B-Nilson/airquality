@@ -582,14 +582,17 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
       .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
       .bind = TRUE,
       \(path) {
-        data.table::fread(
-          file = path,
-          colClasses = force_col_class,
-          showProgress = !quiet
-        ) |>
-          bcgov_format_raw_data() |>
-          dplyr::select(-dplyr::any_of(variables_to_drop)) |>
-          handyr::on_error(.return = NULL)
+        withr::with_options(
+          list(timeout = 3600),
+          data.table::fread(
+            file = path,
+            colClasses = force_col_class,
+            showProgress = !quiet
+          ) |>
+            bcgov_format_raw_data() |>
+            dplyr::select(-dplyr::any_of(variables_to_drop)) |>
+            handyr::on_error(.return = NULL)
+        )
       }
     )
 }
