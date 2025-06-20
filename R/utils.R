@@ -67,7 +67,7 @@ handle_date_range <- function(date_range, min_date_allowed = NA, max_date_allowe
         ))
       }
       warning(paste0(
-        "No data available for this source prior to",
+        "No data available for this source prior to ",
         format(min_date_allowed, "%F %H:%M %Z"), ".\n",
         "Set the `date_range` to a period from this date onwards to stop this warning."
       ))
