@@ -655,7 +655,7 @@ get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
 
   # Determine file to get for this year
   if (is.null(qaqc_years)) {
-    qaqc_years <- get_bcgov_qaqc_years()
+    qaqc_years <- bcgov_get_qaqc_years()
   }
   if (year %in% qaqc_years) {
     data_url <- qaqc_url |>
