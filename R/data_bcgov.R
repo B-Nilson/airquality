@@ -230,6 +230,8 @@ get_bcgov_data <- function(
     dplyr::mutate(
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
+        # Some files use HMS instead of HM for some reason..
+        tryCatch(warning = function(w) .data$DATE_PST |> lubridate::ymd_hms(tz = bcgov_tzone)) |> 
         lubridate::with_tz("UTC")
     ) |>
     dplyr::select(dplyr::any_of(bcgov_col_names)) |>
