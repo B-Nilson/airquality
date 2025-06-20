@@ -231,7 +231,9 @@ get_bcgov_data <- function(
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
         # Some files use HMS instead of HM for some reason..
-        tryCatch(warning = function(w) .data$DATE_PST |> lubridate::ymd_hms(tz = bcgov_tzone)) |> 
+        tryCatch(warning = function(w) {
+          .data$DATE_PST |> lubridate::ymd_hms(tz = bcgov_tzone)
+        }) |>
         lubridate::with_tz("UTC")
     ) |>
     dplyr::select(dplyr::any_of(bcgov_col_names)) |>
@@ -357,7 +359,7 @@ bcgov_make_qaqc_paths <- function(year, params) {
     paste0("/AnnualSummary/")
   available_params <- bcgov_get_qaqc_year_params(year)
   params <- params[params %in% available_params]
-  if(length(params) == 0) {
+  if (length(params) == 0) {
     stop("No valid parameters provided for this year.")
   }
   qaqc_directory |>
@@ -370,7 +372,7 @@ join_list <- function(df_list, by = NULL) {
   df_list <- df_list[which(!sapply(df_list, is.null))]
   if (length(df_list) == 1) {
     return(df_list[[1]])
-  }else if(length(df_list) == 0) {
+  } else if (length(df_list) == 0) {
     return(NULL)
   }
 
@@ -470,7 +472,7 @@ bcgov_get_qaqc_data <- function(
   use_rounded_value = TRUE,
   quiet = FALSE
 ) {
-  if(any(variables == "pm2.5")) {
+  if (any(variables == "pm2.5")) {
     variables[variables == "pm2.5"] <- "pm25"
   }
   if (any(variables == "all")) {
@@ -608,7 +610,7 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     stations <- bcgov_get_raw_stations()
   }
 
-  if(any(variables == "pm2.5")) {
+  if (any(variables == "pm2.5")) {
     variables[variables == "pm2.5"] <- "pm25"
   }
   if (any(variables == "all")) {
@@ -619,7 +621,8 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
         stringr::str_starts(variables |> paste0(collapse = "|"))) &
         !(names(bcgov_col_names) %in%
           c('date_utc', 'site_id', 'quality_assured'))
-    ] |> unname()
+    ] |>
+      unname()
   }
 
   # Download each stations file and bind together

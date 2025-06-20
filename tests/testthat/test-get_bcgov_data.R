@@ -13,7 +13,14 @@ test_that("basic case works", {
   # Case: All expected columns
   expect_true(ncol(obs) == 6)
   expect_equal(
-    c("date_utc", "date_local", "site_id", "quality_assured", "pm25_1hr", "pm25_1hr_instrument"),
+    c(
+      "date_utc",
+      "date_local",
+      "site_id",
+      "quality_assured",
+      "pm25_1hr",
+      "pm25_1hr_instrument"
+    ),
     names(obs)
   )
 
@@ -29,7 +36,6 @@ test_that("basic case works", {
   # Case: date_utc the same as converting date_local to UTC
   obs_2 <- obs |> convert_date_utc_to_local()
   expect_equal(obs_2$date_utc, obs_2$date_utc_from_local)
-
 })
 
 # Input: stations ---------------------------------------------------------
@@ -68,8 +74,8 @@ test_that("too early date_range causes warning/error", {
   ))
   # Case: Partly in the past
   date_range <- c(earliest_time - lubridate::hours(1), earliest_time)
-  station |> 
-    get_bcgov_data(date_range, variables = "so2", quiet = TRUE) |> 
+  station |>
+    get_bcgov_data(date_range, variables = "so2", quiet = TRUE) |>
     expect_warning()
 })
 
