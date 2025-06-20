@@ -340,8 +340,10 @@ bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
 # TODO: Combine with duplicate of this made for ABgov once push
 join_list <- function(df_list, by = NULL) {
   df_list <- df_list[which(!sapply(df_list, is.null))]
-  if (length(df_list) < 2) {
+  if (length(df_list) == 1) {
     return(df_list[[1]])
+  }else if(length(df_list) == 0) {
+    return(NULL)
   }
 
   df_list |>
