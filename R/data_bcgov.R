@@ -436,6 +436,9 @@ bcgov_get_qaqc_data <- function(
   use_rounded_value = TRUE,
   quiet = FALSE
 ) {
+  if(any(variables == "pm2.5")) {
+    variables[variables == "pm2.5"] <- "pm25"
+  }
   if (any(variables == "all")) {
     is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
     variables <- bcgov_col_names[is_instrument_col] |>
@@ -557,16 +560,18 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     stations <- bcgov_get_raw_stations()
   }
 
+  if(any(variables == "pm2.5")) {
+    variables[variables == "pm2.5"] <- "pm25"
+  }
   if (any(variables == "all")) {
     variables_to_drop = character(0)
   } else {
-    variables_to_drop <- bcgov_col_names[
+    variables_to_drop <- names(bcgov_col_names)[
       !(names(bcgov_col_names) |>
         stringr::str_starts(variables |> paste0(collapse = "|"))) &
         !(names(bcgov_col_names) %in%
           c('date_utc', 'site_id', 'quality_assured'))
-    ] |>
-      unname()
+    ]
   }
 
   # Download each stations file and bind together
