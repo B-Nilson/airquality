@@ -157,6 +157,7 @@ get_bcgov_stations <- function(
 get_bcgov_data <- function(
   stations,
   date_range,
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -173,6 +174,20 @@ get_bcgov_data <- function(
     lubridate::ymd_h(tz = bcgov_tzone)
   max_date <- Sys.time() |> lubridate::floor_date("hours")
   date_range <- date_range |> handle_date_range(min_date, max_date)
+
+  # Handle variables input
+  variables <- tolower(variables)
+  all_variables <- bcgov_col_names[endsWith(bcgov_col_names, "_INSTRUMENT")] |>
+    names() |>
+    stringr::str_remove("_1hr_instrument")
+  if ("all" %in% variables) {
+    variables <- all_variables
+  } else {
+    variables <- variables[variables %in% all_variables]
+  }
+  if (length(variables) == 0) {
+    stop("No valid variables specified.")
+  }
 
   # Get all years in desired date range and drop all but the first in qaqc_years
   years_to_get <- date_range[1] |>
@@ -199,6 +214,7 @@ get_bcgov_data <- function(
       bcgov_get_annual_data,
       stations = stations,
       qaqc_years = qaqc_years,
+      variables = variables,
       quiet = quiet
     )
   if (nrow(stations_data) == 0) {
@@ -245,7 +261,6 @@ bcgov_col_names <- c(
   # Meta
   date_utc = "date_utc", # Added by bcgov_get_annual_data()
   site_id = "EMS_ID",
-  site_name = "STATION_NAME",
   quality_assured = "quality_assured", # Added by bcgov_get_annual_data()
   # Particulate Matter
   pm25_1hr = "PM25",
@@ -283,8 +298,8 @@ bcgov_col_names <- c(
   ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
   precip_1hr = "PRECIP",
   precip_1hr_instrument = "PRECIP_INSTRUMENT",
-  snowDepth_1hr = "SNOW",
-  snowDepth_1hr_instrument = "SNOW_INSTRUMENT",
+  snow_1hr = "SNOW",
+  snow_1hr_instrument = "SNOW_INSTRUMENT",
   pressure_1hr = "PRESSURE", # TODO: Ensure pressure proper units ....
   pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
   vapourPressure_1hr = "VAPOUR",
@@ -397,14 +412,11 @@ bcgov_get_annual_data <- function(
 
   # Get data for desired stations for this year
   if (is_qaqc_year) {
-    stations_data <- year |>
-      bcgov_get_qaqc_data(variables = variables, quiet = quiet)
-    if (stations != "all") {
-      stations_data <- stations_data |>
-        dplyr::filter(.data$EMS_ID %in% stations)
-    }
+    stations_data <- stations |>
+      bcgov_get_qaqc_data(year = year, variables = variables, quiet = quiet)
   } else {
-    stations_data <- stations |> bcgov_get_raw_data(quiet = quiet)
+    stations_data <- stations |>
+      bcgov_get_raw_data(variables = variables, quiet = quiet)
   }
 
   # Handle no data returned
@@ -418,6 +430,7 @@ bcgov_get_annual_data <- function(
 }
 
 bcgov_get_qaqc_data <- function(
+  stations = "all",
   years,
   variables = "all",
   use_rounded_value = TRUE,
@@ -427,7 +440,17 @@ bcgov_get_qaqc_data <- function(
     is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
     variables <- bcgov_col_names[is_instrument_col] |>
       stringr::str_remove("_INSTRUMENT")
+  } else {
+    variables <- bcgov_col_names[
+      names(bcgov_col_names) %in% (tolower(variables) |> paste0("_1hr"))
+    ] |>
+      unname()
   }
+
+  force_col_class <- c(
+    DATE_PST = "character",
+    EMS_ID = "character"
+  )
 
   # Make paths to files to get
   qaqc_directory <- bcgov_ftp_site |>
@@ -436,7 +459,7 @@ bcgov_get_qaqc_data <- function(
     paste0(years) |>
     paste0("/", variables, ".csv")
   # Download, format, and join data
-  qaqc_paths |>
+  qaqc_data <- qaqc_paths |>
     handyr::for_each(
       .as_list = TRUE,
       .enumerate = TRUE,
@@ -449,13 +472,22 @@ bcgov_get_qaqc_data <- function(
         withr::with_options(
           list(timeout = 3600),
           path |>
-            data.table::fread(showProgress = !quiet) |>
+            data.table::fread(
+              showProgress = !quiet,
+              colClasses = force_col_class
+            ) |>
             bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
             handyr::on_error(.return = NULL)
         )
       }
     ) |>
     join_list() # TODO: use .join when implemented in for_each
+
+  if (!"all" %in% stations) {
+    qaqc_data <- qaqc_data |>
+      dplyr::filter(.data$EMS_ID %in% stations)
+  }
+  return(qaqc_data)
 }
 
 bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
@@ -509,7 +541,7 @@ bcgov_fix_units <- function(units) {
   )
 }
 
-bcgov_get_raw_data <- function(stations, quiet = FALSE) {
+bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   raw_directory <- bcgov_ftp_site |>
     paste0(
       "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
@@ -521,8 +553,20 @@ bcgov_get_raw_data <- function(stations, quiet = FALSE) {
     STATION_NAME = "character"
   )
 
-  if (stations == "all") {
+  if (any(stations == "all")) {
     stations <- bcgov_get_raw_stations()
+  }
+
+  if (any(variables == "all")) {
+    variables_to_drop = character(0)
+  } else {
+    variables_to_drop <- bcgov_col_names[
+      !(names(bcgov_col_names) |>
+        stringr::str_starts(variables |> paste0(collapse = "|"))) &
+        !(names(bcgov_col_names) %in%
+          c('date_utc', 'site_id', 'quality_assured'))
+    ] |>
+      unname()
   }
 
   # Download each stations file and bind together
@@ -539,6 +583,7 @@ bcgov_get_raw_data <- function(stations, quiet = FALSE) {
           showProgress = !quiet
         ) |>
           bcgov_format_raw_data() |>
+          dplyr::select(-dplyr::any_of(variables_to_drop)) |>
           handyr::on_error(.return = NULL)
       }
     )
