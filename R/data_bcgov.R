@@ -339,6 +339,28 @@ bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
   years_to_get[!is.na(years_to_get)]
 }
 
+bcgov_get_qaqc_year_params <- function(year) {
+  qaqc_directory <- bcgov_ftp_site |>
+    paste0("/AnnualSummary/", year, "/")
+  # Get directories in QAQC directory
+  param_files <- qaqc_directory |>
+    readLines() |>
+    stringr::str_subset("csv$")
+  # Extract parameters from file names
+  param_files |>
+    stringr::str_extract("(\\w*)\\.csv$", group = 1)
+}
+
+bcgov_make_qaqc_paths <- function(year, params) {
+  qaqc_directory <- bcgov_ftp_site |>
+    paste0("/AnnualSummary/")
+  available_params <- bcgov_get_qaqc_year_params(year)
+  params <- params[params %in% available_params]
+  qaqc_directory |>
+    paste0(year) |>
+    paste0("/", params, ".csv")
+}
+
 # TODO: Combine with duplicate of this made for ABgov once push
 join_list <- function(df_list, by = NULL) {
   df_list <- df_list[which(!sapply(df_list, is.null))]
@@ -466,9 +488,10 @@ bcgov_get_qaqc_data <- function(
   # Make paths to files to get
   qaqc_directory <- bcgov_ftp_site |>
     paste0("/AnnualSummary/")
-  qaqc_paths <- qaqc_directory |>
-    paste0(years) |>
-    paste0("/", variables, ".csv")
+  qaqc_paths <- years |>
+    sapply(bcgov_make_qaqc_paths, params = variables) |> 
+    unlist() |> 
+    as.vector()
   # Download, format, and join data
   qaqc_data <- qaqc_paths |>
     handyr::for_each(
