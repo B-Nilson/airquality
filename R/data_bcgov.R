@@ -294,8 +294,8 @@ bcgov_col_names <- c(
   temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
   wd_1hr = "WDIR_VECT",
   wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
-  wd_unitvector_1hr = "WDIR_UVECT",
-  wd_unitvector_1hr_instrument = "WDIR_UVECT_INSTRUMENT",
+  wd_unitvector_1hr = "WDIR_UVEC",
+  wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
   ws_1hr = "WSPD_SCLR",
   ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
   ws_vector_1hr = "WSPD_VECT",
@@ -570,12 +570,12 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   if (any(variables == "all")) {
     variables_to_drop = character(0)
   } else {
-    variables_to_drop <- names(bcgov_col_names)[
+    variables_to_drop <- bcgov_col_names[
       !(names(bcgov_col_names) |>
         stringr::str_starts(variables |> paste0(collapse = "|"))) &
         !(names(bcgov_col_names) %in%
           c('date_utc', 'site_id', 'quality_assured'))
-    ]
+    ] |> unname()
   }
 
   # Download each stations file and bind together
