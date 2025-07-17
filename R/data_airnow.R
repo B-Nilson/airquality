@@ -203,13 +203,13 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
   }
   # Standardize formatting
   airnow_data <- airnow_data |>
-    unique() |>
     dplyr::mutate(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
         lubridate::hours(1), # from forward -> backward looking averages
       unit = stringr::str_to_lower(.data$unit) |>
-        handyr::swap("c", "degC")
+        handyr::swap("c", "degC"),
+      quality_assured = FALSE
     ) |>
     dplyr::group_by(unit) |>
     dplyr::group_split() |>
@@ -219,14 +219,14 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
           value = as.numeric(.data$value) |>
             units::set_units(.data$unit[1], mode = "standard")
         ) |> 
-      tidyr::pivot_wider(names_from = "param", values_from = "value")
+      tidyr::pivot_wider(names_from = "param", values_from = "value") |>
+      dplyr::select(dplyr::any_of(airnow_col_names)) |>
+      dplyr::distinct()
     }) |>
     join_list() |>
-    dplyr::mutate(quality_assured = FALSE) |>
-    standardize_colnames(airnow_col_names)
+    dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
   
   if (!fast) {
-    
     # Get meta for stations within date_range
     known_stations <- seq(date_range[1], date_range[2], "25 days") |>
       get_airnow_stations()
