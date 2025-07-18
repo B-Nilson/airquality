@@ -653,6 +653,10 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
       unname()
   }
 
+  if(length(variables) == 1 & length(stations) > 3) {
+    collection_mode <- "variables"
+  }
+
   # Determine files to download
   if (collection_mode == "variables") {
     variables <- bcgov_col_names[
