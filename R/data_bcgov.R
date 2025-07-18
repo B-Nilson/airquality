@@ -217,6 +217,7 @@ get_bcgov_data <- function(
   # Get realtime data if needed
   realtime_start <- lubridate::with_tz(Sys.time(), tz = bcgov_tzone) - lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
+  is_all_realtime <- FALSE # Init
   original_date_range <- date_range
   if (need_realtime){
     realtime_data <- stations |> 
@@ -231,7 +232,6 @@ get_bcgov_data <- function(
       is_all_realtime <- date_range[1] > date_range[2]
     }
   }else {
-    is_all_realtime <- FALSE
     realtime_data <- NULL
   }
 
