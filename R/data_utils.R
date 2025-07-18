@@ -238,3 +238,33 @@ insert_date_local <- function(obs, stations_meta, by = "site_name") {
     dplyr::relocate("date_local", .after = "date_utc") |>
     dplyr::select(-"tz_local")
 }
+
+# TODO: any missing? This is copied from bcmoe data
+default_units <- c(
+  # Particulate Matter
+  pm25_1hr = "ug/m3",
+  pm10_1hr = "ug/m3",
+  # Ozone
+  o3_1hr = "ppb",
+  # Nitrogen Pollutants
+  no_1hr = "ppb",
+  no2_1hr = "ppb",
+  nox_1hr = "ppb",
+  # Sulfur Pollutants
+  so2_1hr = "ppb",
+  trs_1hr = "ppb",
+  h2s_1hr = "ppb",
+  # Carbon Monoxide
+  co_1hr = "ppb",
+  # Met data
+  rh_1hr = "%",
+  temp_1hr = "degC",
+  wd_1hr = "degrees",
+  wd_unitvector_1hr = "degrees",
+  ws_1hr = "m/s",
+  ws_vector_1hr = "m/s",
+  precip_1hr = "mm",
+  snow_1hr = "cm",
+  pressure_1hr = "kPa", 
+  vapour_pressure_1hr = "kPa"
+)

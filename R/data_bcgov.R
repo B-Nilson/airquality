@@ -571,6 +571,9 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
   )
 
   parameter <- qaqc_data$PARAMETER[1]
+  default_unit <- default_units[
+    names(bcgov_col_names[bcgov_col_names %in% parameter])
+  ]
   qaqc_data |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::filter(!is.na(.data[[value_col]])) |>
@@ -579,7 +582,9 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::mutate(
       UNIT = bcgov_fix_units(UNIT),
       dplyr::across(dplyr::all_of(value_col), \(x) {
-        x |> units::set_units(.data$UNIT[1], mode = "standard")
+        x |> 
+          units::set_units(.data$UNIT[1], mode = "standard") |> 
+          units::set_units(default_unit, mode = "standard")
       })
     ) |>
     dplyr::select(-UNIT) |>
@@ -706,6 +711,9 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   for (i in 1:length(unit_cols)) {
     value_col <- value_cols[i]
     unit_col <- unit_cols[i]
+    default_unit <- default_units[
+      names(bcgov_col_names[bcgov_col_names %in% c(value_col, names(value_col))])
+    ]
     raw_data <- raw_data |>
       dplyr::mutate(
         dplyr::across(
@@ -715,7 +723,8 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
               units::set_units(
                 bcgov_fix_units(.data[[unit_col]][1]),
                 mode = "standard"
-              )
+              ) |> 
+              units::set_units(default_unit, mode = "standard")
           }
         )
       )
