@@ -68,6 +68,8 @@ get_bcgov_stations <- function(
     date_removed = "CLOSED"
   )
   stations <- stations |>
+    # Fix NAPS ID placeholder = 10
+    dplyr::mutate(NAPS_ID = .data$NAPS_ID |> handyr::swap(10, NA)) |>
     # Fix reversed lat/lng entries
     dplyr::mutate(
       lat2 = .data$LAT |>
@@ -80,10 +82,10 @@ get_bcgov_stations <- function(
     ) |>
     # Choose and rename columns
     dplyr::select(dplyr::any_of(col_names)) |>
-    dplyr::arrange(.data$site_name, date_created) |>
+    dplyr::arrange(.data$site_id, .data$naps_id, .data$date_created) |>
     # Drop duplicates and NA placeholders
-    dplyr::distinct(site_id, naps_id, .keep_all = TRUE) |> # TODO: is this right? What if duplicates update the lat/lng?
     remove_na_placeholders(na_placeholders = "") |>
+    dplyr::distinct(site_id, .keep_all = TRUE) |> 
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     # Cleanup dates and add local_tz
     dplyr::mutate(
