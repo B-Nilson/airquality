@@ -619,6 +619,9 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   if (any(stations == "all")) {
     stations <- all_stations
   }
+  if(all(!stations %in% all_stations)) {
+    stop("All provided stations not available for raw data")
+  }
   if(any(!stations %in% all_stations)) {
     warning(
       "Some stations not available for raw data: ", 
