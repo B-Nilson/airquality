@@ -49,7 +49,7 @@ get_bcgov_stations <- function(
   stations <- years_to_get |>
     handyr::for_each(
       .bind = TRUE,
-      .as_list = TRUE,
+      .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
       bcgov_get_annual_stations,
       qaqc_years = qaqc_years,
       quiet = quiet
@@ -664,7 +664,7 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     stop("All provided stations not available for raw data")
   }
   if(any(!stations %in% all_stations)) {
-    warning(
+    if (!quiet) warning(
       "Some stations not available for raw data: ", 
       paste0(stations[!stations %in% all_stations], collapse = ", ")
     )
