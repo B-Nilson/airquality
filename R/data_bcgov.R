@@ -604,10 +604,11 @@ bcgov_fix_units <- function(units) {
 }
 
 bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
-  raw_directory <- bcgov_ftp_site |>
-    paste0(
-      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
-    )
+  collection_mode <- "stations" # default collection mode
+  raw_directory_variables <- bcgov_ftp_site |>
+    paste0("/Hourly_Raw_Air_Data/Year_to_Date/")
+  raw_directory_stations <- raw_directory_variables |>
+    paste0("STATION_DATA/")
 
   force_col_class <- c(
     DATE_PST = "character",
@@ -618,7 +619,9 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   all_stations <- bcgov_get_raw_stations()
   if (any(stations == "all")) {
     stations <- all_stations
+    collection_mode <- "variables"
   }
+
   if(all(!stations %in% all_stations)) {
     stop("All provided stations not available for raw data")
   }
@@ -634,6 +637,7 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   
   if (any(variables == "all")) {
     variables_to_drop = character(0)
+    collection_mode <- "stations"
   } else {
     variables_to_drop <- bcgov_col_names[
       !(names(bcgov_col_names) |>
@@ -644,10 +648,23 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
       unname()
   }
 
+  # Determine files to download
+  if (collection_mode == "variables") {
+    variables <- bcgov_col_names[
+      ! bcgov_col_names %in% variables_to_drop & 
+      ! names(bcgov_col_names) %in% c('date_utc', 'site_id', 'quality_assured') &
+      ! stringr::str_detect(bcgov_col_names, "_INSTRUMENT")
+    ] |> 
+      unname()
+    data_paths <- raw_directory_variables |>
+      paste0(variables, ".csv")
+  }else {
+    data_paths <- raw_directory_stations |>
+      paste0(stations, ".csv")
+  }
+
   # Download each stations file and bind together
-  station_paths <- raw_directory |>
-    paste0(stations, ".csv")
-  station_paths |>
+  data_paths |>
     handyr::for_each(
       .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
       .bind = TRUE,
@@ -659,7 +676,7 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
             colClasses = force_col_class,
             showProgress = !quiet
           ) |>
-            bcgov_format_raw_data() |>
+            bcgov_format_raw_data(mode = collection_mode) |>
             dplyr::select(-dplyr::any_of(variables_to_drop)) |>
             handyr::on_error(.return = NULL)
         )
@@ -667,16 +684,24 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     )
 }
 
-bcgov_format_raw_data <- function(raw_data) {
+bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   if (nrow(raw_data) == 0) {
     return(raw_data)
   }
   meta_cols <- c("EMS_ID", "DATE_PST")
-  instrument_cols <- stringr::str_subset(names(raw_data), "_INSTRUMENT$")
-  unit_cols <- stringr::str_subset(names(raw_data), "_UNITS$")
-  value_cols <- unit_cols |>
-    stringr::str_remove("_UNITS$")
-
+  if(mode == "stations") {
+    instrument_cols <- stringr::str_subset(names(raw_data), "_INSTRUMENT$")
+    unit_cols <- stringr::str_subset(names(raw_data), "_UNITS$")
+    value_cols <- unit_cols |>
+      stringr::str_remove("_UNITS$")
+  }else {
+    instrument_cols <- "INSTRUMENT"
+    unit_cols <- "UNIT"
+    value_cols <- "ROUNDED_VALUE"
+    names(value_cols) <- raw_data$PARAMETER[1]
+    names(instrument_cols) <- paste0(raw_data$PARAMETER[1], "_INSTRUMENT")
+  }
+  
   # Assign units to value columns
   for (i in 1:length(unit_cols)) {
     value_col <- value_cols[i]
