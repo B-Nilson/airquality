@@ -214,18 +214,50 @@ get_bcgov_data <- function(
       check_stations_exist(known_stations$site_id, source = "the BC FTP site")
   }
 
-  # Get data for each year for all desired stations
-  stations_data <- years_to_get |>
-    handyr::for_each(
-      .as_list = TRUE, # TODO: remove once handyr update merged (.bind =TRUE will set this by default)
-      .bind = TRUE,
-      .parallel = fast,
-      bcgov_get_annual_data,
-      stations = stations,
-      qaqc_years = qaqc_years,
-      variables = variables,
-      quiet = quiet
-    )
+  # Get realtime data if needed
+  realtime_start <- lubridate::with_tz(Sys.time(), tz = bcgov_tzone) - lubridate::days(30)
+  need_realtime <- any(date_range > realtime_start)
+  original_date_range <- date_range
+  if (need_realtime){
+    realtime_data <- stations |> 
+      bcgov_get_realtime_data(quiet = quiet) |>
+      dplyr::filter(!is.na(PM25), DATE_PST >= realtime_start) |> 
+      handyr::on_error(.return = NULL)
+    if(is.null(realtime_data)){
+      warning("No realtime data available for provided stations and date_range.")
+    }else{
+      first_realtime_date <- lubridate::ymd_hm(min(realtime_data$DATE_PST), tz = bcgov_tzone)
+      date_range <- c(original_date_range[1], first_realtime_date)
+      is_all_realtime <- date_range[1] > date_range[2]
+    }
+  }else {
+    is_all_realtime <- FALSE
+    realtime_data <- NULL
+  }
+
+  if(!is_all_realtime){
+    years_to_get <- date_range[1] |>
+      seq(date_range[2], by = "1 days") |>
+      lubridate::with_tz(bcgov_tzone) |>
+      lubridate::year() |>
+      bcgov_determine_years_to_get(qaqc_years)
+    # Get data for each year for all desired stations
+    archived_data <- years_to_get |>
+      handyr::for_each(
+        .bind = TRUE,
+        .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
+        .parallel = fast,
+        bcgov_get_annual_data,
+        stations = stations,
+        qaqc_years = qaqc_years,
+        variables = variables,
+        quiet = quiet
+      )
+  }else{
+    archived_data <- NULL
+  }
+  stations_data <- dplyr::bind_rows(archived_data, realtime_data)
+  
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
@@ -247,12 +279,13 @@ get_bcgov_data <- function(
     ) |>
     dplyr::select(dplyr::any_of(bcgov_col_names)) |>
     dplyr::filter(
-      .data$date_utc |> dplyr::between(date_range[1], date_range[2])
+      .data$date_utc |> dplyr::between(original_date_range[1], original_date_range[2])
     ) |>
     dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
     dplyr::select_if(~ !all(is.na(.))) |>
-    dplyr::distinct()
+    dplyr::arrange(.data$site_id, .data$date_utc) |>
+    dplyr::distinct(.data$site_id, .data$date_utc, .keep_all = TRUE)
 
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
@@ -693,22 +726,98 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     )
 }
 
+
+bcgov_get_realtime_data <- function(stations, quiet = FALSE) {
+  realtime_directory <- bcgov_ftp_site |>
+    paste0("/Hourly_Raw_Air_Data/Station/")
+
+  force_col_class <- c(
+    DATE_PST = "character",
+    EMS_ID = "character",
+    STATION = "character"
+  )
+
+  all_stations <- bcgov_get_raw_stations(realtime = TRUE)
+  if (any(stations == "all")) {
+    stations <- all_stations
+  }
+
+  if(all(!stations %in% all_stations)) {
+    stop("All provided stations not available for realtime data")
+  }
+  if(any(!stations %in% all_stations)) {
+    if (!quiet) warning(
+      "Some stations not available for realtime data: ", 
+      paste0(stations[!stations %in% all_stations], collapse = ", ")
+    )
+  }
+  stations <- stations[stations %in% all_stations]
+
+  variables[variables == "pm2.5"] <- "pm25"
+  
+  if (any(variables == "all")) {
+    variables_to_drop = character(0)
+  } else {
+    variables_to_drop <- bcgov_col_names[
+      !(names(bcgov_col_names) |>
+        stringr::str_starts(variables |> paste0(collapse = "|"))) &
+        !(names(bcgov_col_names) %in%
+          c('date_utc', 'site_id', 'quality_assured'))
+    ] |>
+      unname()
+  }
+
+  # Download each stations file and bind together
+  realtime_directory |>
+    paste0(stations, ".csv") |>
+    handyr::for_each(
+      .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
+      .bind = TRUE,
+      \(path) {
+        withr::with_options(
+          list(timeout = 3600),
+          data.table::fread(
+            file = path,
+            colClasses = force_col_class,
+            showProgress = !quiet
+          ) |>
+            bcgov_format_raw_data(mode = "realtime") |>
+            dplyr::select(-dplyr::any_of(variables_to_drop)) |>
+            handyr::on_error(.return = NULL, .message = TRUE)
+        )
+      }
+    ) |> 
+    dplyr::mutate(quality_assured = FALSE)
+}
+
 bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   if (nrow(raw_data) == 0) {
     return(raw_data)
   }
-  meta_cols <- c("EMS_ID", "DATE_PST")
+  if(mode == "variables") {
+    return(
+      bcgov_format_qaqc_data(raw_data, use_rounded_value = TRUE)
+    )
+  }
   if(mode == "stations") {
+    meta_cols <- c("EMS_ID", "DATE_PST")
     instrument_cols <- stringr::str_subset(names(raw_data), "_INSTRUMENT$")
     unit_cols <- stringr::str_subset(names(raw_data), "_UNITS$")
     value_cols <- unit_cols |>
       stringr::str_remove("_UNITS$")
   }else {
-    instrument_cols <- "INSTRUMENT"
-    unit_cols <- "UNIT"
-    value_cols <- "ROUNDED_VALUE"
-    names(value_cols) <- raw_data$PARAMETER[1]
-    names(instrument_cols) <- paste0(raw_data$PARAMETER[1], "_INSTRUMENT")
+    meta_cols <- c("EMS_ID", "DATE_PST")
+    instrument_cols <- character(0)
+    value_cols <- bcgov_col_names[bcgov_col_names %in% names(raw_data)] |> 
+      unname()
+    value_cols <- value_cols[!value_cols %in% meta_cols]
+    unit_cols <- paste0(value_cols, "_UNITS")
+    # Insert default units as unit columns as no units provided
+    for(i in 1:length(unit_cols)) { # TODO: confirm units are correct here
+      raw_data[[unit_cols[i]]] <- default_units[
+        names(bcgov_col_names[bcgov_col_names %in% value_cols[i]])
+      ]
+    }
   }
   
   # Assign units to value columns
@@ -739,16 +848,21 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
     dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols)))
 }
 
-bcgov_get_raw_stations <- function() {
+bcgov_get_raw_stations <- function(realtime = FALSE) {
   raw_directory <- bcgov_ftp_site |>
     paste0(
-      "/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"
+      "/Hourly_Raw_Air_Data/",
+      ifelse(realtime, "Station/", "Year_to_Date/STATION_DATA/")
     )
   # Pull stations from directory listing
-  raw_directory |>
+  stations <- raw_directory |>
     readLines() |>
     stringr::str_extract("[\\w\\-]+\\.(csv|CSV)$") |>
     stringr::str_remove("\\.csv")
+
+  stations[
+    !is.na(stations) & ! stringr::str_starts(stations, "AQHI")
+  ]
 }
 
 get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
