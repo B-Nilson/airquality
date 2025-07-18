@@ -619,9 +619,8 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     stations <- bcgov_get_raw_stations()
   }
 
-  if (any(variables == "pm2.5")) {
-    variables[variables == "pm2.5"] <- "pm25"
-  }
+  variables[variables == "pm2.5"] <- "pm25"
+  
   if (any(variables == "all")) {
     variables_to_drop = character(0)
   } else {
