@@ -615,9 +615,17 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
     STATION_NAME = "character"
   )
 
+  all_stations <- bcgov_get_raw_stations()
   if (any(stations == "all")) {
-    stations <- bcgov_get_raw_stations()
+    stations <- all_stations
   }
+  if(any(!stations %in% all_stations)) {
+    warning(
+      "Some stations not available for raw data: ", 
+      paste0(stations[!stations %in% all_stations], collapse = ", ")
+    )
+  }
+  stations <- stations[stations %in% all_stations]
 
   variables[variables == "pm2.5"] <- "pm25"
   
