@@ -52,7 +52,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
       .as_list = TRUE, .bind = TRUE,
       \(d){
         p <- airnow_paths[names(airnow_paths) == as.character(d)]
-        read_data(file = p) |> 
+        read_data(file = p, encoding = "UTF-8") |> 
           handyr::on_error(.return = NULL) |>
           dplyr::mutate(file_date = d)
       }
