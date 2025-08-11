@@ -66,8 +66,14 @@
 #'   networks = "FEM", sources = "AirNow"
 #' )
 #' }
-get_station_data <- function(locations, date_range, buffer_dist = 10,
-                             networks = "all", sources = "all", verbose = TRUE) {
+get_station_data <- function(
+  locations,
+  date_range,
+  buffer_dist = 10,
+  networks = "all",
+  sources = "all",
+  verbose = TRUE
+) {
   # Determine what, when, and where to get data
   data_funs <- get_data_collection_funs(networks, sources)
   date_range <- date_range |> handle_date_range()
@@ -87,13 +93,16 @@ determine_search_area <- function(locations, buffer_dist = 10, verbose) {
   rlang::check_installed("sf")
   # TODO: allow for station ids/names
   if (is.character(locations)) {
-    search_area <- locations |> 
+    search_area <- locations |>
       handyr::for_each(
-        .as_list = TRUE, .bind = TRUE,
+        .as_list = TRUE,
+        .bind = TRUE,
         get_location_polygons
       )
     if (is.null(search_area)) {
-      stop(paste0("Unable to find a polygonal boundary for specified location."))
+      stop(paste0(
+        "Unable to find a polygonal boundary for specified location."
+      ))
     }
   } else if ("sf" %in% class(locations)) {
     search_area <- locations
@@ -105,7 +114,8 @@ determine_search_area <- function(locations, buffer_dist = 10, verbose) {
   if (buffer_dist > 0) {
     if (verbose) {
       warning(paste(
-        "Adding a search buffer of", buffer_dist,
+        "Adding a search buffer of",
+        buffer_dist,
         "km to each location (see arg `buffer_dist`)"
       ))
     }
@@ -127,67 +137,88 @@ get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   dates <- seq(date_range[1], date_range[2], "30 days")
   stations <- names(data_funs) |>
     handyr::for_each(
-      .as_list = TRUE, .bind = TRUE,
-      \(net) names(data_funs[[net]]) |> 
-        handyr::for_each(
-          .as_list = TRUE, .bind = TRUE, 
-          \(src) data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
-            dplyr::mutate(source = src, network = net) |>
-            handyr::on_error(.return = NULL, .message = TRUE)
-      )
-  )
+      .as_list = TRUE,
+      .bind = TRUE,
+      \(net) {
+        names(data_funs[[net]]) |>
+          handyr::for_each(
+            .as_list = TRUE,
+            .bind = TRUE,
+            \(src) {
+              data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
+                dplyr::mutate(source = src, network = net) |>
+                handyr::on_error(.return = NULL, .message = TRUE)
+            }
+          )
+      }
+    )
   sf::st_agr(stations) <- "constant"
   stations <- stations |>
     sf::st_intersection(search_area) |>
     dplyr::select("site_id", "site_name", "network", "source", "geometry")
   if (nrow(stations) == 0) {
-    stop("No stations in location(s) and date range for selected networks/sources.")
+    stop(
+      "No stations in location(s) and date range for selected networks/sources."
+    )
   }
   return(stations)
 }
 
 get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
   networks <- unique(stations$network)
-  networks |> handyr::for_each(
-    .as_list = TRUE, .bind = TRUE,
-    \(net){
-      sources <- names(data_funs[[net]])
-      sources |> handyr::for_each(
-        .as_list = TRUE, .bind = TRUE,
-        \(src){
-          site_ids <- stations |>
-            dplyr::filter(.data$source == src & .data$network == net) |>
-            dplyr::pull(.data$site_id) |>
-            unique()
-          if (length(site_ids) == 0) {
-            return(NULL)
-          }
-          if (verbose) {
-            message(paste(
-              net, "-", src, ":", length(site_ids),
-              "station(s) to check for data"
-            ))
-          }
-          data_fun <- data_funs[[net]][[src]]$data
-          data_fun(stations = site_ids, date_range, verbose = verbose) |>
-            dplyr::mutate(source = src, network = net) |>
-            handyr::on_error(.return = NULL, .message = TRUE)
-      })
-  })
+  networks |>
+    handyr::for_each(
+      .as_list = TRUE,
+      .bind = TRUE,
+      \(net) {
+        sources <- names(data_funs[[net]])
+        sources |>
+          handyr::for_each(
+            .as_list = TRUE,
+            .bind = TRUE,
+            \(src) {
+              site_ids <- stations |>
+                dplyr::filter(.data$source == src & .data$network == net) |>
+                dplyr::pull(.data$site_id) |>
+                unique()
+              if (length(site_ids) == 0) {
+                return(NULL)
+              }
+              if (verbose) {
+                message(paste(
+                  net,
+                  "-",
+                  src,
+                  ":",
+                  length(site_ids),
+                  "station(s) to check for data"
+                ))
+              }
+              data_fun <- data_funs[[net]][[src]]$data
+              data_fun(stations = site_ids, date_range, verbose = verbose) |>
+                dplyr::mutate(source = src, network = net) |>
+                handyr::on_error(.return = NULL, .message = TRUE)
+            }
+          )
+      }
+    )
 }
 
 get_data_collection_funs <- function(networks = "all", sources = "all") {
   data_collection_funs <- list(
-    FEM = list( # Federal Equivalent Method monitors
-      BCgov  = list(data = get_bcgov_data, meta = get_bcgov_stations),
-      ABgov  = list(data = get_abgov_data, meta = get_abgov_stations),
+    FEM = list(
+      # Federal Equivalent Method monitors
+      BCgov = list(data = get_bcgov_data, meta = get_bcgov_stations),
+      ABgov = list(data = get_abgov_data, meta = get_abgov_stations),
       AirNow = list(data = get_airnow_data, meta = get_airnow_stations)
     ) # , Temporarily degraded until testing complete
     # LCM = list( # Low-Cost Monitors
     #   PurpleAir = list(data = get_purpleair_data, meta = get_purpleair_stations)
     # )
   )
-  if (!"all" %in% networks) data_collection_funs <- data_collection_funs[networks]
+  if (!"all" %in% networks) {
+    data_collection_funs <- data_collection_funs[networks]
+  }
   if (!"all" %in% sources) {
     data_collection_funs <- data_collection_funs |>
       lapply(\(srcs) srcs[names(srcs) %in% sources])
@@ -195,7 +226,10 @@ get_data_collection_funs <- function(networks = "all", sources = "all") {
   return(data_collection_funs)
 }
 
-data_citation <- function(source) {
+data_citation <- function(source, verbose = TRUE) {
+  if (!verbose) {
+    return(invisible(NULL))
+  }
   source_meta <- list(
     BCgov = list(
       name = "the British Columbia Ministry of Environment and Climate Change Strategy",
@@ -215,13 +249,18 @@ data_citation <- function(source) {
     )
   )
   message(paste0(
-    "Data from the '", source, "'",
-    " repository are collected from ", source_meta[[source]]$name,
+    "Data from the '",
+    source,
+    "'",
+    " repository are collected from ",
+    source_meta[[source]]$name,
     " and are NOT to be used commercially.",
     " Recent observations are not quality assured,",
     " and are intended for research and/or situational awareness",
     " (**NOT for regulatory decision making**).",
-    " See `", source_meta[[source]]$url, "` for more information."
+    " See `",
+    source_meta[[source]]$url,
+    "` for more information."
   ))
 }
 
@@ -234,9 +273,11 @@ insert_date_local <- function(obs, stations_meta) {
       by = "site_name"
     ) |>
     dplyr::rowwise() |>
-    dplyr::mutate(date_local = .data$date_utc |>
-      lubridate::with_tz(.data$tz_local) |>
-      format("%F %H:%M %z")) |>
+    dplyr::mutate(
+      date_local = .data$date_utc |>
+        lubridate::with_tz(.data$tz_local) |>
+        format("%F %H:%M %z")
+    ) |>
     dplyr::ungroup() |>
     dplyr::relocate("date_local", .after = "date_utc") |>
     dplyr::select(-"tz_local")
