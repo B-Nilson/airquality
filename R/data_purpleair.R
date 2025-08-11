@@ -215,6 +215,8 @@ purpleair_api <- function(
     pa_data <- api_response$sensor |>
       dplyr::as_tibble() |>
       dplyr::mutate(time_stamp = response_timestamp)
+  }else {
+    return(api_response)
   }
 
   pa_data |>
