@@ -416,7 +416,7 @@ purpleair_base_units <- list(
   pm10.0_atm_b = "ug/m3",
   pm10.0_cf_1 = "ug/m3",
   pm10.0_cf_1_a = "ug/m3",
-  pm10.0_cf_1_b = "ug/m3",
+  pm10.0_cf_1_b = "ug/m3"
 )
 
 # See https://community.purpleair.com/t/loop-api-calls-for-historical-data/4623
