@@ -210,6 +210,9 @@ purpleair_api <- function(
     }
     if (!"time_stamp" %in% names(pa_data)) {
       pa_data$time_stamp <- response_timestamp
+    }else {
+      pa_data$time_stamp <- pa_data$time_stamp |>
+        lubridate::as_datetime(tz = "UTC")
     }
     if ("last_seen" %in% names(pa_data)) {
       pa_data$last_seen <- pa_data$last_seen |> 
