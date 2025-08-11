@@ -215,6 +215,17 @@ purpleair_api <- function(
       pa_data$last_seen <- pa_data$last_seen |> 
         lubridate::as_datetime(tz = "UTC")
     }
+    # Set units
+    for (col_name in names(purpleair_base_units)) {
+      if (col_name %in% names(pa_data)) {
+        pa_data[[col_name]] <- pa_data[[col_name]] |>
+          units::set_units(purpleair_base_units[[col_name]], mode = "standard")
+      }
+    }
+    if ("temperature" %in% names(pa_data)) {
+      pa_data$temperature <- pa_data$temperature |>
+        units::set_units("degC", mode = "standard")
+    }
   } else if ("sensor" %in% names(api_response)) {
     pa_data <- api_response$sensor |>
       dplyr::as_tibble() |>
@@ -372,6 +383,31 @@ purpleair_points_costs <- list(
     pm10.0_atm = 2,
     pm10.0_cf_1 = 2
   )
+)
+
+purpleair_base_units <- list(
+  humidity = "%",
+  temperature = "degF",
+  pressure = "mbar", 
+  voc = "IAQ", # TODO: test
+  visual_range = "km", # TODO: check
+  pm1.0 = "ug/m3",
+  pm1.0_cf_1 = "ug/m3",
+  pm1.0_atm = "ug/m3",
+  pm2.5_10minute = "ug/m3",
+  pm2.5_30minute = "ug/m3",
+  pm2.5_60minute = "ug/m3",
+  pm2.5_6hour = "ug/m3",
+  pm2.5_24hour = "ug/m3",
+  pm2.5_1week = "ug/m3",
+  pm2.5 = "ug/m3",
+  pm2.5_atm = "ug/m3",
+  pm2.5_cf_1 = "ug/m3",
+  pm2.5_alt = "ug/m3",
+  pm10.0 = "ug/m3",
+  pm10.0_atm = "ug/m3",
+  pm10.0_cf_1 = "ug/m3"
+
 )
 
 # See https://community.purpleair.com/t/loop-api-calls-for-historical-data/4623
