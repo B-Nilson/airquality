@@ -203,20 +203,19 @@ purpleair_api <- function(
             stats::setNames(response_fields)
         }
       ) |>
-      dplyr::select(dplyr::all_of(response_fields))
+      dplyr::select(dplyr::all_of(response_fields)) |> 
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::any_of(c("time_stamp", "last_seen", "date_created")),
+          \(x) lubridate::as_datetime(x, tz = "UTC")
+        )
+      )
 
     if (!"sensor_index" %in% names(pa_data)) {
       pa_data$sensor_index <- api_response$sensor_index
     }
     if (!"time_stamp" %in% names(pa_data)) {
       pa_data$time_stamp <- response_timestamp
-    }else {
-      pa_data$time_stamp <- pa_data$time_stamp |>
-        lubridate::as_datetime(tz = "UTC")
-    }
-    if ("last_seen" %in% names(pa_data)) {
-      pa_data$last_seen <- pa_data$last_seen |> 
-        lubridate::as_datetime(tz = "UTC")
     }
     # Set units
     for (col_name in names(purpleair_base_units)) {
