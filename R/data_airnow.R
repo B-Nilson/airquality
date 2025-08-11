@@ -58,7 +58,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
       }
     ) |>
     stats::setNames(file_header) |>
-    standardize_colnames(col_names = desired_columns) |>
+    dplyr::select(dplyr::any_of(desired_columns)) |>
     remove_na_placeholders(na_placeholders = na_placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
@@ -66,6 +66,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 
   # Convert to spatial if desired
   if (use_sf) {
+    rlang::check_installed("sf")
     stations <- stations |>
       sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
   }

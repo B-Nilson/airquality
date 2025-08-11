@@ -4,7 +4,15 @@
 \alias{get_abgov_data}
 \title{Download air quality station observations from the Alberta (Canada) Government}
 \usage{
-get_abgov_data(stations, date_range, raw = FALSE, verbose = TRUE)
+get_abgov_data(
+  stations,
+  date_range,
+  raw = FALSE,
+  fast = FALSE,
+  verbose = TRUE,
+  stations_per_call = 1,
+  days_per_call = 90
+)
 }
 \arguments{
 \item{stations}{A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).}
@@ -17,8 +25,19 @@ Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
 if raw data files desired (i.e. without a standardized format). Default is FALSE.}
 
+\item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+Default is FALSE.}
+
 \item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
 non-critical messages/warnings should be printed}
+
+\item{stations_per_call}{(Optional) A single numeric value indicating the maximum number of stations to request per API call.
+The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.
+Default is 1.}
+
+\item{days_per_call}{(Optional) A single numeric value indicating the maximum number of days (per station) to request per API call.
+This is a safety measure to prevent the API from timing out by requesting too many days at once.
+Default is 90.}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
@@ -37,7 +56,10 @@ station name(s) (see [get_abgov_stations()]) and a specified date or date range.
 }
 \examples{
 \donttest{
-get_abgov_data("Calgary Southeast", c("2024-01-05 00", "2024-01-05 23"))
+get_abgov_data(
+  stations = "Calgary Southeast",
+  date_range = c("2024-01-05 00", "2025-01-05 23")
+)
 }
 }
 \seealso{

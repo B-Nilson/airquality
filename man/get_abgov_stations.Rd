@@ -7,7 +7,7 @@
 get_abgov_stations(..., use_sf = FALSE)
 }
 \arguments{
-\item{...}{[Not Used]}
+\item{...}{Not used. For compatibility with other metadata functions and future expansion.}
 
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
 }
