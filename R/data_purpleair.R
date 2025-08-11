@@ -402,12 +402,21 @@ purpleair_base_units <- list(
   pm2.5_1week = "ug/m3",
   pm2.5 = "ug/m3",
   pm2.5_atm = "ug/m3",
+  pm2.5_atm_a = "ug/m3",
+  pm2.5_atm_b = "ug/m3",
   pm2.5_cf_1 = "ug/m3",
+  pm2.5_cf_1_a = "ug/m3",
+  pm2.5_cf_1_b = "ug/m3",
   pm2.5_alt = "ug/m3",
+  pm2.5_alt_a = "ug/m3",
+  pm2.5_alt_b = "ug/m3",
   pm10.0 = "ug/m3",
   pm10.0_atm = "ug/m3",
-  pm10.0_cf_1 = "ug/m3"
-
+  pm10.0_atm_a = "ug/m3",
+  pm10.0_atm_b = "ug/m3",
+  pm10.0_cf_1 = "ug/m3",
+  pm10.0_cf_1_a = "ug/m3",
+  pm10.0_cf_1_b = "ug/m3",
 )
 
 # See https://community.purpleair.com/t/loop-api-calls-for-historical-data/4623
