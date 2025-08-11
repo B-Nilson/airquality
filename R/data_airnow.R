@@ -52,7 +52,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
       .as_list = TRUE, .bind = TRUE,
       \(d){
         p <- airnow_paths[names(airnow_paths) == as.character(d)]
-        read_data(file = p) |> 
+        read_data(file = p, encoding = "UTF-8") |> 
           handyr::on_error(.return = NULL) |>
           dplyr::mutate(file_date = d)
       }
@@ -204,32 +204,36 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
   }
   # Standardize formatting
   airnow_data <- airnow_data |>
-    unique() |>
     dplyr::mutate(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
-        lubridate::hours(1) # from forward -> backward looking averages
+        lubridate::hours(1), # from forward -> backward looking averages
+      unit = stringr::str_to_lower(.data$unit) |>
+        handyr::swap("c", "degC"),
+      quality_assured = FALSE
     ) |>
-    tidyr::pivot_wider(names_from = c("param", "unit"), values_from = "value") |>
-    dplyr::mutate(quality_assured = FALSE) |>
-    dplyr::select(dplyr::any_of(airnow_col_names))
+    dplyr::group_by(unit) |>
+    dplyr::group_split() |>
+    handyr::for_each(\(unit_data) {
+      unit_data |>
+        dplyr::mutate(
+          value = as.numeric(.data$value) |>
+            units::set_units(.data$unit[1], mode = "standard")
+        ) |> 
+      tidyr::pivot_wider(names_from = "param", values_from = "value") |>
+      dplyr::select(dplyr::any_of(airnow_col_names)) |>
+      dplyr::distinct()
+    }) |>
+    join_list() |>
+    dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
   
   if (!fast) {
-    
     # Get meta for stations within date_range
     known_stations <- seq(date_range[1], date_range[2], "25 days") |>
       get_airnow_stations()
     # Insert date_local based on local_tz column in metadata
     airnow_data <- airnow_data |>
       insert_date_local(stations_meta = known_stations)
-  }
-
-  # Standardize units if needed
-  if ("pressure_1hr_kpa" %in% names(airnow_data)) {
-    airnow_data$barpr_1hr_kpa <- airnow_data$pressure_1hr_kpa / 10 # originally in mb
-  }
-  if ("co_1hr_ppb" %in% names(airnow_data)) {
-    airnow_data$co_1hr_ppb <- airnow_data$co_1hr_ppb * 1000 # originally in pmm
   }
 
   return(airnow_data)
@@ -244,34 +248,34 @@ airnow_col_names <- c(
   site_name = "site",
   quality_assured = "quality_assured", # Added by get_airnow_data()
   # Particulate Matter
-  pm25_1hr_ugm3 = "PM2.5_UG/M3",
-  pm10_1hr_ugm3 = "PM10_UG/M3",
-  bc_1hr_ugm3 = "BC_UG/M3",
+  pm25_1hr = "PM2.5",
+  pm10_1hr = "PM10",
+  bc_1hr = "BC",
   # Ozone
-  o3_1hr_ppb = "OZONE_PPB",
+  o3_1hr = "OZONE",
   # Nitrogen Pollutants
-  no_1hr_ppb = "NO_PPB",
-  no2t_1hr_ppb = "NO2T_PPB", # t == "true measure"
-  no2_1hr_ppb = "NO2_PPB",
-  no2y_1hr_ppb = "NO2Y_PPB", # y == "reactive"
-  nox_1hr_ppb = "NOX_PPB",
-  noy_1hr_ppb = "NOY_PPB", # y == "reactive"
-  no3_1hr_ugm3 = "NO3_UG/M3",
+  no_1hr = "NO",
+  no2t_1hr = "NO2T", # t == "true measure"
+  no2_1hr = "NO2",
+  no2y_1hr = "NO2Y", # y == "reactive"
+  nox_1hr = "NOX",
+  noy_1hr = "NOY", # y == "reactive"
+  no3_1hr = "NO3",
   # Sulfur Pollutants
-  so4_1hr_ugm3 = "SO4_UG/M3",
-  so2_1hr_ppb = "SO2_PPB",
-  so2t_1hr_ppb = "SO2T_PPB", # t == "trace"
+  so4_1hr = "SO4",
+  so2_1hr = "SO2",
+  so2t_1hr = "SO2T", # t == "trace"
   # Carbon Monoxide
-  co_1hr_ppb = "CO_PPM", # Converted by get_airnow_data()
-  cot_1hr_ppb = "COT_PPB", # t == "trace"
+  co_1hr = "CO",
+  cot_1hr = "COT", # t == "trace"
   # Met data
-  rh_1hr_percent = "RHUM_PERCENT",
-  t_1hr_celcius = "TEMP_C",
-  wd_1hr_degrees = "WD_DEGREES",
-  ws_1hr_ms = "WS_MS",
-  precip_1hr_mm = "PRECIP_MM",
-  pressure_1hr_kpa = "BARPR_MILLIBAR", # Converted by get_airnow_data()
-  solar_1hr_wm2 = "SRAD_WATTS/M2"
+  rh_1hr = "RHUM",
+  t_1hr = "TEMP",
+  wd_1hr = "WD",
+  ws_1hr = "WS",
+  precip_1hr = "PRECIP",
+  pressure_1hr = "BARPR",
+  solar_1hr = "SRAD"
 )
 
 make_airnow_filepaths <- function(dates) {
