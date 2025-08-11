@@ -211,6 +211,10 @@ purpleair_api <- function(
     if (!"time_stamp" %in% names(pa_data)) {
       pa_data$time_stamp <- response_timestamp
     }
+    if ("last_seen" %in% names(pa_data)) {
+      pa_data$last_seen <- pa_data$last_seen |> 
+        lubridate::as_datetime(tz = "UTC")
+    }
   } else if ("sensor" %in% names(api_response)) {
     pa_data <- api_response$sensor |>
       dplyr::as_tibble() |>
