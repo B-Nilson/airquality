@@ -183,7 +183,7 @@ get_bcgov_data <- function(
     paste("01-01 01") |>
     lubridate::ymd_h(tz = bcgov_tzone)
   max_date <- Sys.time() |> lubridate::floor_date("hours")
-  date_range <- date_range |> handle_date_range(min_date, max_date)
+  date_range <- date_range |> handle_date_range(within = c(min_date, max_date))
 
   # Handle variables input
   variables <- tolower(variables)

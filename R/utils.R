@@ -74,8 +74,8 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
         x |> lubridate::ymd_h(tz = tz)
       )
   }
-  min_date_allowed <- converter(allowed_date_range[1])
-  max_date_allowed <- converter(allowed_date_range[2])
+  min_date_allowed <- converter(within[1])
+  max_date_allowed <- converter(within[2])
   # Handle dates before min date allowed
   if (!is.null(min_date_allowed)) {
     if (any(date_range < min_date_allowed)) {
