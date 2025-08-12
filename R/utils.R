@@ -65,51 +65,51 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
     }
   }
   # Convert within to min/max dates
-  converter <- \(x) {
-    x |>
-      switch(
-        "now" = Sys.time() |>
-          lubridate::floor_date("hours") |>
-          lubridate::with_tz(tz),
-        x |> lubridate::ymd_h(tz = tz)
-      )
+  if (lubridate::is.POSIXct(within)) {
+    within <- within |>
+      lubridate::with_tz(tz) |>
+      format("%F %H")
   }
-  min_date_allowed <- converter(within[1])
-  max_date_allowed <- converter(within[2])
+  within <- within |>
+    handyr::swap("now", with = Sys.time() |>
+          lubridate::floor_date("hours") |>
+          lubridate::with_tz(tz) |> 
+          format("%F %H")) |> 
+    lubridate::ymd_h(tz = tz)
   # Handle dates before min date allowed
-  if (!is.null(min_date_allowed)) {
-    if (any(date_range < min_date_allowed)) {
-      if (all(date_range < min_date_allowed)) {
+  if (!is.null(within[1])) {
+    if (any(date_range < within[1])) {
+      if (all(date_range < within[1])) {
         stop(paste(
           "At least one date_range value must be on or after",
-          format(min_date_allowed, "%F %Z")
+          format(within[1], "%F %Z")
         ))
       }
       warning(paste0(
         "No data available for this source prior to",
-        format(min_date_allowed, "%F %H:%M %Z"),
+        format(within[1], "%F %H:%M %Z"),
         ".\n",
         "Set the `date_range` to a period from this date onwards to stop this warning."
       ))
-      date_range[date_range < min_date_allowed] <- min_date_allowed
+      date_range[date_range < within[1]] <- within[1]
     }
   }
   # Handle dates after max date allowed
-  if (!is.na(max_date_allowed)) {
-    if (any(date_range > max_date_allowed)) {
-      if (all(date_range > max_date_allowed)) {
+  if (!is.na(within[2])) {
+    if (any(date_range > within[2])) {
+      if (all(date_range > within[2])) {
         stop(paste(
           "At least one date_range value must be on or before",
-          format(max_date_allowed, "%F %Z")
+          format(within[2], "%F %Z")
         ))
       }
       warning(paste0(
         "No hourly data available from this source beyond the current hour (UTC).\n",
         "Set the `date_range` to a period from ",
-        format(max_date_allowed, "%F %H:%M %Z"),
+        format(within[2], "%F %H:%M %Z"),
         " and earlier to stop this warning."
       ))
-      date_range[date_range > max_date_allowed] <- max_date_allowed
+      date_range[date_range > within[2]] <- within[2]
     }
   }
   date_range |> lubridate::with_tz(tz)
