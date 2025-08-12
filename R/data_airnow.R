@@ -135,7 +135,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
   ## Handle date_range inputs
   min_date <- "2014-01-01 01" |> lubridate::ymd_h(tz = "UTC")
   max_date <- Sys.time() |> lubridate::floor_date("hours")
-  date_range <- handle_date_range(date_range, min_date, max_date)
+  date_range <- handle_date_range(date_range, within = c(min_date, max_date))
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if (max(date_range) - max_date > lubridate::hours(-48)) { # if date_range in past 48 hours
