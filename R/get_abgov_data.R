@@ -9,8 +9,8 @@
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 #' Default is FALSE.
-#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be printed
+#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be silenced
 #' @param stations_per_call (Optional) A single numeric value indicating the maximum number of stations to request per API call.
 #' The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.
 #' Default is 1.
@@ -49,7 +49,7 @@ get_abgov_data <- function(
   date_range,
   raw = FALSE,
   fast = FALSE,
-  verbose = TRUE,
+  quiet = FALSE,
   stations_per_call = 1,
   days_per_call = 90
 ) {
@@ -61,7 +61,7 @@ get_abgov_data <- function(
   drop_cols <- c("Id", "ReadingDate", "DeterminantParameterName")
 
   # Output citation message to user
-  data_citation("ABgov", verbose = verbose)
+  data_citation("ABgov", verbose = !quiet)
 
   # Handle date_range inputs
   date_range <- date_range |>
