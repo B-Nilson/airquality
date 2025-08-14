@@ -82,7 +82,8 @@ get_abgov_data <- function(
     get_abgov_data_qaqc(
       date_range = date_range,
       parameters = "all",
-      fast = fast
+      fast = fast,
+      quiet = quiet
     ) |>
     handyr::on_error(.return = data.frame(), .message = TRUE)
 
