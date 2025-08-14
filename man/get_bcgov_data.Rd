@@ -4,7 +4,14 @@
 \alias{get_bcgov_data}
 \title{Download air quality station observations from the British Columbia (Canada) Government}
 \usage{
-get_bcgov_data(stations, date_range, raw = FALSE, fast = FALSE, verbose = TRUE)
+get_bcgov_data(
+  stations,
+  date_range,
+  variables = "all",
+  raw = FALSE,
+  fast = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{stations}{A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).}
@@ -20,8 +27,8 @@ if raw data files desired (i.e. without a standardized format). Default is FALSE
 \item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 Default is FALSE.}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed}
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
@@ -74,8 +81,6 @@ Other Data Collection:
 \code{\link{purpleair_api}()}
 
 Other Canadian Air Quality: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},

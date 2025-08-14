@@ -4,13 +4,20 @@
 \alias{get_bcgov_stations}
 \title{Download air quality station metadata from the British Columbia (Canada) Government}
 \usage{
-get_bcgov_stations(years = lubridate::year(Sys.time()), use_sf = FALSE)
+get_bcgov_stations(
+  years = lubridate::year(lubridate::with_tz(Sys.time(), bcgov_tzone)),
+  use_sf = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{years}{(Optional) one or more integer values indicating the year(s) to get metadata for.
 Default is the current year.}
 
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
+
+\item{quiet}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
+Default is FALSE}
 }
 \value{
 A tibble of metadata for British Columbia air quality monitoring stations.
@@ -45,8 +52,6 @@ Other Data Collection:
 \code{\link{purpleair_api}()}
 
 Other Canadian Air Quality: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
