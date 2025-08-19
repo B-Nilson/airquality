@@ -25,13 +25,7 @@ bcgov_get_raw_data <- function(
   }
 
   # Standardize common var names
-  # TODO: make a standardized variable handler for all data sources
-  variables <- tolower(variables)
-  variables[variables == "pm2.5"] <- "pm25"
-  variables[variables == "humidity"] <- "rh"
-  variables[variables == "temperature"] <- "temp"
-  variables[variables == "wdir"] <- "wd"
-  variables[variables == "wspd"] <- "ws"
+  variables <- standardize_input_vars(variables)
 
   # Handle "all" in stations
   all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
@@ -174,4 +168,15 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   raw_data |>
     dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols))) |>
     dplyr::mutate(quality_assured = FALSE)
+}
+
+# TODO: implement for all sources
+standardize_input_vars <- function(variables) {
+  variables <- tolower(variables)
+  variables[variables == "pm2.5"] <- "pm25"
+  variables[variables == "humidity"] <- "rh"
+  variables[variables == "temperature"] <- "temp"
+  variables[variables == "wdir"] <- "wd"
+  variables[variables == "wspd"] <- "ws"
+  return(variables)
 }
