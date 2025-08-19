@@ -32,11 +32,22 @@
 #' get_bcgov_stations(years = 1998:2000)
 #' }
 get_bcgov_stations <- function(
-  years = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
+  years = lubridate::year(lubridate::now(tz = bcgov_tzone)),
   use_sf = FALSE,
   quiet = FALSE
 ) {
-  # Get station metadata for all requested years
+  col_names <- c(
+    site_id = "EMS_ID",
+    naps_id = "NAPS_ID",
+    site_name = "STATION_NAME",
+    lat = "LAT",
+    lng = "LONG",
+    elev = "ELEVATION",
+    date_created = "OPENED",
+    date_removed = "CLOSED"
+  )
+
+  # Determine years to get (raw data covers 1+ year(s))
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- years |>
     bcgov_determine_years_to_get(qaqc_years)
@@ -48,27 +59,25 @@ get_bcgov_stations <- function(
     years_to_get <- unique(years_to_get)
   }
 
+  # Get annual station metadata as needed
   stations <- years_to_get |>
     handyr::for_each(
       .bind = TRUE,
-      .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
       bcgov_get_annual_stations,
       qaqc_years = qaqc_years,
       quiet = quiet
-    )
+    ) |>
+    handyr::on_error(.return = NULL)
+
+  # Handle failed retrievals
+  if (nrow(stations) == 0) {
+    stations <- NULL
+  }
+  if (is.null(stations)) {
+    stop("Failed to retrieve station metadata for provided years.")
+  }
 
   # Standardize formatting
-  col_names <- c(
-    site_id = "EMS_ID",
-    naps_id = "NAPS_ID",
-    site_name = "STATION_NAME",
-    city = "CITY",
-    lat = "LAT",
-    lng = "LONG",
-    elev = "ELEVATION",
-    date_created = "OPENED",
-    date_removed = "CLOSED"
-  )
   stations <- stations |>
     # Fix NAPS ID placeholder = 10
     dplyr::mutate(NAPS_ID = .data$NAPS_ID |> handyr::swap(10, NA)) |>
@@ -84,11 +93,16 @@ get_bcgov_stations <- function(
     ) |>
     # Choose and rename columns
     dplyr::select(dplyr::any_of(col_names)) |>
-    dplyr::arrange(.data$site_id, .data$naps_id, .data$date_created) |>
     # Drop duplicates and NA placeholders
     remove_na_placeholders(na_placeholders = "") |>
+    dplyr::arrange(
+      .data$site_id,
+      .data$naps_id,
+      .data$site_name,
+      dplyr::desc(.data$date_created)
+    ) |>
     dplyr::distinct(site_id, .keep_all = TRUE) |>
-    dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
+    dplyr::filter(complete.cases(.data$site_id, .data$lat, .data$lng)) |>
     # Cleanup dates and add local_tz
     dplyr::mutate(
       # Convert date_created and date_removed to date objects
@@ -104,7 +118,7 @@ get_bcgov_stations <- function(
   if (use_sf) {
     rlang::check_installed("sf")
     stations <- stations |>
-      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84")
+      sf::st_as_sf(coords = c("lng", "lat"), crs = "WGS84") # TODO: confirm CRS and standardize if needed
   }
 
   return(stations)
