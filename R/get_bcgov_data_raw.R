@@ -171,6 +171,6 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   # Drop unnecessary columns for memory-saving
   # TODO: see if they will do in source? files are quite bloated...
   raw_data |>
-    dplyr::mutate(quality_assured = FALSE) |>
-    dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols)))
+    dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols))) |>
+    dplyr::mutate(quality_assured = FALSE)
 }
