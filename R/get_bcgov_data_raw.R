@@ -109,6 +109,7 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
     )
   }
 
+  # Get column names and insert unit columns if needed
   meta_cols <- c("EMS_ID", "DATE_PST")
   if (mode == "stations") {
     instrument_cols <- names(raw_data) |> stringr::str_subset("_INSTRUMENT$")

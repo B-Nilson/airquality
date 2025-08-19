@@ -84,7 +84,7 @@ get_bcgov_data <- function(
   original_date_range <- date_range # copy for later
 
   # Handle variables input
-  variables <- tolower(variables)
+  variables <- standardize_input_vars(variables)
   all_variables <- bcgov_col_names[endsWith(
     names(bcgov_col_names),
     "_instrument"
@@ -113,7 +113,10 @@ get_bcgov_data <- function(
       get_bcgov_stations(use_sf = FALSE, quiet = quiet)
 
     stations <- stations |>
-      check_stations_exist(known_stations$site_id, source = "the BC FTP site")
+      check_stations_exist(
+        known_stations = known_stations$site_id, 
+        source = "the BC FTP site"
+      )
   }
 
   # Get realtime data if needed
@@ -121,11 +124,10 @@ get_bcgov_data <- function(
     lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
-    variable_cols <- bcgov_col_names[
-      names(bcgov_col_names) |>
-        stringr::str_starts(variables |> paste0(collapse = "|")) &
-        !names(bcgov_col_names) |> endsWith("_instrument")
-    ]
+    is_value_or_instrument <- names(bcgov_col_names) |>
+      stringr::str_starts(variables |> paste0(collapse = "|"))
+    is_instrument <- names(bcgov_col_names) |> endsWith("_instrument")
+    variable_cols <- bcgov_col_names[is_value_or_instrument & !is_instrument]
     realtime_data <- stations |>
       bcgov_get_raw_data(
         variables = variables,
@@ -136,7 +138,7 @@ get_bcgov_data <- function(
         !dplyr::if_all(dplyr::any_of(variable_cols), is.na),
         lubridate::ymd_hm(.data$DATE_PST, tz = bcgov_tzone) > realtime_start
       ) |>
-      handyr::on_error(.return = NULL, .warn = TRUE)
+      handyr::on_error(.return = NULL)
     if (nrow(realtime_data) == 0) {
       warning(
         "No realtime data available for provided variables, stations and date_range."
@@ -164,6 +166,7 @@ get_bcgov_data <- function(
     is_all_realtime <- FALSE
   }
 
+  # Get raw/qaqc data as needed
   if (!is_all_realtime) {
     # Update years to get in case realtime covers all of last year (rare)
     years_to_get <- date_range[1] |>
@@ -185,12 +188,13 @@ get_bcgov_data <- function(
   } else {
     archived_data <- NULL
   }
-  stations_data <- dplyr::bind_rows(archived_data, realtime_data)
 
+  # Combine raw/qaqc data with realtime
+  stations_data <- archived_data |> 
+    dplyr::bind_rows(realtime_data)
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
-
   if (raw) {
     return(stations_data)
   }
@@ -280,10 +284,10 @@ bcgov_col_names <- c(
   precip_1hr_instrument = "PRECIP_INSTRUMENT",
   snow_1hr = "SNOW",
   snow_1hr_instrument = "SNOW_INSTRUMENT",
-  pressure_1hr = "PRESSURE", # TODO: Ensure pressure proper units ....
+  pressure_1hr = "PRESSURE",
   pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
   vapour_pressure_1hr = "VAPOUR",
-  vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT" # ,
+  vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
 )
 
 # BCgov Helpers ---------------------------------------------------------

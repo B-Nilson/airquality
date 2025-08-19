@@ -5,28 +5,23 @@ bcgov_get_qaqc_data <- function(
   use_rounded_value = TRUE,
   quiet = FALSE
 ) {
-  if (any(variables == "pm2.5")) {
-    variables[variables == "pm2.5"] <- "pm25"
-  }
+  qaqc_directory <- bcgov_ftp_site |>
+    paste0("/AnnualSummary/")
+
+  # Handle input variables
+  variables <- standardize_input_vars(variables)
   if (any(variables == "all")) {
     is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
     variables <- bcgov_col_names[is_instrument_col] |>
       stringr::str_remove("_INSTRUMENT")
   } else {
     variables <- bcgov_col_names[
-      names(bcgov_col_names) %in% (tolower(variables) |> paste0("_1hr"))
+      names(bcgov_col_names) %in% paste0(variables, "_1hr")
     ] |>
       unname()
   }
 
-  force_col_class <- c(
-    DATE_PST = "character",
-    EMS_ID = "character"
-  )
-
   # Make paths to files to get
-  qaqc_directory <- bcgov_ftp_site |>
-    paste0("/AnnualSummary/")
   qaqc_paths <- years |>
     sapply(\(year) {
       year |>
@@ -35,7 +30,6 @@ bcgov_get_qaqc_data <- function(
     }) |>
     unlist() |>
     as.vector()
-
   if (length(qaqc_paths) == 0) {
     stop("No data available for provided date_range / parameters.")
   }
@@ -57,7 +51,7 @@ bcgov_get_qaqc_data <- function(
             data.table::fread(
               verbose = !quiet,
               showProgress = !quiet,
-              colClasses = force_col_class
+              colClasses = "character"
             ) |>
             bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
             handyr::on_error(.return = NULL)
