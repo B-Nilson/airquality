@@ -182,27 +182,3 @@ bcgov_get_raw_stations <- function(realtime = FALSE) {
     !is.na(stations) & !stringr::str_starts(stations, "AQHI")
   ]
 }
-
-get_annual_bcgov_stations <- function(year, qaqc_years = NULL) {
-  bc_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  qaqc_url <- paste0(bc_ftp_site, "AnnualSummary/{year}/")
-  raw_url <- paste0(bc_ftp_site, "Hourly_Raw_Air_Data/Year_to_Date/")
-  stations_file <- "bc_air_monitoring_stations.csv"
-
-  # Determine file to get for this year
-  if (is.null(qaqc_years)) {
-    qaqc_years <- bcgov_get_qaqc_years()
-  }
-  if (year %in% qaqc_years) {
-    data_url <- qaqc_url |>
-      stringr::str_replace("\\{year\\}", as.character(year))
-  } else {
-    data_url <- raw_url
-  }
-  read_data(
-    file = paste0(data_url, stations_file),
-    data.table = FALSE,
-    colClasses = c("OPENED" = "character", "CLOSED" = "character")
-  ) |>
-    handyr::on_error(.return = NULL)
-}
