@@ -11,15 +11,13 @@ test_that("basic case works", {
   ))
 
   # Case: All expected columns
-  expect_true(ncol(obs) == 6)
   expect_equal(
     c(
       "date_utc",
       "date_local",
       "site_id",
       "quality_assured",
-      "pm25_1hr",
-      "pm25_1hr_instrument"
+      "pm25_1hr"
     ),
     names(obs)
   )
