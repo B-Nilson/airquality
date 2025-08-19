@@ -9,7 +9,7 @@ get_airnow_data(
   date_range,
   raw = FALSE,
   fast = FALSE,
-  verbose = TRUE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -28,8 +28,8 @@ raw data files desired (i.e. without a standardized format). Default is FALSE.}
 \item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 Default is FALSE.}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed}
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.

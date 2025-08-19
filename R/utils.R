@@ -17,22 +17,21 @@ get_lag_n_mean <- function(x, n = 3) {
 # TODO: move this to handyr
 read_data <- function(
   ...,
-  showProgress = FALSE,
-  verbose = FALSE,
+  quiet = FALSE,
   data.table = FALSE
 ) {
-  if (verbose) {
+  if (!quiet) {
     data.table::fread(
       ...,
-      showProgress = showProgress,
-      verbose = verbose,
+      showProgress = !quiet,
+      verbose = !quiet,
       data.table = data.table
     )
   } else {
     invisible(data.table::fread(
       ...,
       showProgress = showProgress,
-      verbose = verbose,
+      verbose = !quiet,
       data.table = data.table
     ))
   }
