@@ -1,25 +1,41 @@
 
-bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
-  collection_mode <- "stations" # default collection mode
-  raw_directory_variables <- bcgov_ftp_site |>
-    paste0("/Hourly_Raw_Air_Data/Year_to_Date/")
-  raw_directory_stations <- raw_directory_variables |>
-    paste0("STATION_DATA/")
+bcgov_get_raw_data <- function(stations, variables = "all", mode = "stations", quiet = FALSE) {
+  stopifnot(mode %in% c("stations", "variables", "realtime"))
+
+  raw_directories <- list(
+    stations = bcgov_ftp_site |>
+      paste0("/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"),
+    variables = bcgov_ftp_site |>
+      paste0("/Hourly_Raw_Air_Data/Year_to_Date/"),
+    realtime = bcgov_ftp_site |>
+      paste0("/Hourly_Raw_Air_Data/Station/")
+  )
 
   force_col_class <- c(
     DATE_PST = "character",
     EMS_ID = "character",
     STATION_NAME = "character"
   )
+  if (mode == "realtime") {
+    names(force_col_class)[3] <- "STATION"
+  }
 
   # Standardize common var names
+  # TODO: make a standardized variable handler for all data sources
+  variables <- tolower(variables)
   variables[variables == "pm2.5"] <- "pm25"
+  variables[variables == "humidity"] <- "rh"
+  variables[variables == "temperature"] <- "temp"
+  variables[variables == "wdir"] <- "wd"
+  variables[variables == "wspd"] <- "ws"
 
   # Handle "all" in stations
-  all_stations <- bcgov_get_raw_stations()
+  all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
   if (any(stations == "all")) {
     stations <- all_stations
-    collection_mode <- "variables" # force variable mode if all stations desired
+    if (mode != "realtime") {
+      mode <- "variables" # force variable mode if all stations desired
+    }
   }
 
   # Handle invalid stations
@@ -49,27 +65,28 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
   }
 
   # Force variable mode if only one variable and more than a few stations
-  if(length(variables) == 1 & length(stations) > 3) {
-    collection_mode <- "variables"
-  } else if(length(variables) == 2 & length(stations) > 10) {
-    collection_mode <- "variables"
+  if(length(variables) == 1 & length(stations) > 3 & mode != "realtime") {
+    mode <- "variables"
+  } else if(length(variables) == 2 & length(stations) > 10 & mode != "realtime") {
+    mode <- "variables"
   } 
 
   # Determine files to download
-  if (collection_mode == "variables") {
+  if (mode == "variables") {
     is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
-    variables <- bcgov_col_names[
+    file_variables <- bcgov_col_names[
       !bcgov_col_names %in% cols_to_drop & !is_id_col & !is_instrument_col
     ] |> 
       unname()
-    data_paths <- raw_directory_variables |>
-      paste0(variables, ".csv")
+    data_paths <- raw_directories$variables |>
+      paste0(file_variables, ".csv")
   }else {
-    data_paths <- raw_directory_stations |>
+    data_paths <- raw_directories[[mode]] |>
       paste0(stations, ".csv")
   }
 
   # Download each stations file and bind together
+  # TODO: troubleshoot:  "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//Hourly_Raw_Air_Data/Station/E296370.csv" "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//Hourly_Raw_Air_Data/Station/E315110_2.csv"
   data_paths |>
     handyr::for_each(
       .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
@@ -82,7 +99,7 @@ bcgov_get_raw_data <- function(stations, variables = "all", quiet = FALSE) {
             colClasses = force_col_class,
             showProgress = !quiet
           ) |>
-            bcgov_format_raw_data(mode = collection_mode) |>
+            bcgov_format_raw_data(mode = mode) |>
             dplyr::select(-dplyr::any_of(cols_to_drop)) |>
             handyr::on_error(.return = NULL)
         )
@@ -144,6 +161,7 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
   }
   # Drop unnecessary columns for memory-saving
   # TODO: see if they will do in source? files are quite bloated...
-  raw_data |>
+  raw_data  |> 
+    dplyr::mutate(quality_assured = FALSE) |>
     dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols)))
 }

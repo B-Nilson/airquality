@@ -111,11 +111,22 @@ get_bcgov_data <- function(
   is_all_realtime <- FALSE # Init
   original_date_range <- date_range
   if (need_realtime){
-    realtime_data <- stations |> 
-      bcgov_get_realtime_data(quiet = quiet) |>
-      dplyr::filter(!is.na(PM25), DATE_PST >= realtime_start) |> 
-      handyr::on_error(.return = NULL)
-    if(is.null(realtime_data)){
+    variable_cols <- bcgov_col_names[
+      names(bcgov_col_names) |> 
+        stringr::str_starts(variables |> paste0(collapse = "|")) &
+        !names(bcgov_col_names) |> endsWith("_instrument")
+    ]
+    realtime_data <- stations |>
+      bcgov_get_raw_data(variables = variables, quiet = quiet, mode = "realtime") |>
+      dplyr::filter(
+        !dplyr::if_all(dplyr::any_of(variable_cols), is.na),
+        lubridate::ymd_hm(.data$DATE_PST, tz = bcgov_tzone) > realtime_start
+      ) |> 
+      handyr::on_error(.return = NULL, .warn = TRUE)
+    if (nrow(realtime_data) == 0) {
+      warning("No realtime data available for provided variables, stations and date_range.")
+      realtime_data <- NULL
+    }else if(is.null(realtime_data)){
       warning("No realtime data available for provided stations and date_range.")
     }else{
       first_realtime_date <- realtime_data |>
