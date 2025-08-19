@@ -81,10 +81,14 @@ get_bcgov_data <- function(
     lubridate::ymd_h(tz = bcgov_tzone)
   max_date <- Sys.time() |> lubridate::floor_date("hours")
   date_range <- date_range |> handle_date_range(within = c(min_date, max_date))
+  original_date_range <- date_range # copy for later
 
   # Handle variables input
   variables <- tolower(variables)
-  all_variables <- bcgov_col_names[endsWith(bcgov_col_names, "_INSTRUMENT")] |>
+  all_variables <- bcgov_col_names[endsWith(
+    names(bcgov_col_names),
+    "_instrument"
+  )] |>
     names() |>
     stringr::str_remove("_1hr_instrument")
   if ("all" %in% variables) {
@@ -113,11 +117,9 @@ get_bcgov_data <- function(
   }
 
   # Get realtime data if needed
-  realtime_start <- lubridate::with_tz(Sys.time(), tz = bcgov_tzone) -
+  realtime_start <- lubridate::now(tz = bcgov_tzone) -
     lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
-  is_all_realtime <- FALSE # Init
-  original_date_range <- date_range
   if (need_realtime) {
     variable_cols <- bcgov_col_names[
       names(bcgov_col_names) |>
@@ -159,9 +161,11 @@ get_bcgov_data <- function(
     }
   } else {
     realtime_data <- NULL
+    is_all_realtime <- FALSE
   }
 
   if (!is_all_realtime) {
+    # Update years to get in case realtime covers all of last year (rare)
     years_to_get <- date_range[1] |>
       seq(date_range[2], by = "1 days") |>
       lubridate::with_tz(bcgov_tzone) |>
@@ -171,7 +175,6 @@ get_bcgov_data <- function(
     archived_data <- years_to_get |>
       handyr::for_each(
         .bind = TRUE,
-        .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
         .parallel = fast,
         bcgov_get_annual_data,
         stations = stations,
@@ -208,9 +211,9 @@ get_bcgov_data <- function(
       .data$date_utc |>
         dplyr::between(original_date_range[1], original_date_range[2])
     ) |>
-    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
     dplyr::select_if(~ !all(is.na(.))) |>
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
     dplyr::arrange(.data$site_id, .data$date_utc) |>
     dplyr::distinct(.data$site_id, .data$date_utc, .keep_all = TRUE)
 
