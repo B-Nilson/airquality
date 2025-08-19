@@ -174,7 +174,11 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
     make_airnow_filepaths() |>
     handyr::for_each(
       .as_list = TRUE, .bind = TRUE, .parallel = fast,
-      \(pth) data.table::fread(file = pth, showProgress = !verbose) |>
+      \(pth) data.table::fread(
+          file = pth,
+          verbose = verbose,
+          showProgress = verbose
+        ) |>
         handyr::on_error(.return = NULL)
     ) |>
     stats::setNames(file_header)

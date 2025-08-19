@@ -104,6 +104,7 @@ bcgov_get_raw_data <- function(
           data.table::fread(
             file = path,
             colClasses = force_col_class,
+            verbose = !quiet,
             showProgress = !quiet
           ) |>
             bcgov_format_raw_data(mode = mode) |>
