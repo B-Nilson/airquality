@@ -40,8 +40,10 @@ get_bcgov_stations <- function(
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- years |>
     bcgov_determine_years_to_get(qaqc_years)
-  if(any(years_to_get < 1998)) {
-    warning("Metadata for years prior to 1998 is not available, using 1998 instead.")
+  if (any(years_to_get < 1998)) {
+    warning(
+      "Metadata for years prior to 1998 is not available, using 1998 instead."
+    )
     years_to_get[years_to_get < 1998] <- 1998
     years_to_get <- unique(years_to_get)
   }
@@ -85,7 +87,7 @@ get_bcgov_stations <- function(
     dplyr::arrange(.data$site_id, .data$naps_id, .data$date_created) |>
     # Drop duplicates and NA placeholders
     remove_na_placeholders(na_placeholders = "") |>
-    dplyr::distinct(site_id, .keep_all = TRUE) |> 
+    dplyr::distinct(site_id, .keep_all = TRUE) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     # Cleanup dates and add local_tz
     dplyr::mutate(
@@ -163,7 +165,7 @@ bcgov_get_raw_stations <- function(realtime = FALSE) {
     stringr::str_remove("\\.csv")
 
   stations[
-    !is.na(stations) & ! stringr::str_starts(stations, "AQHI")
+    !is.na(stations) & !stringr::str_starts(stations, "AQHI")
   ]
 }
 

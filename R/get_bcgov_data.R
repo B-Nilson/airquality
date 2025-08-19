@@ -106,46 +106,55 @@ get_bcgov_data <- function(
   }
 
   # Get realtime data if needed
-  realtime_start <- lubridate::with_tz(Sys.time(), tz = bcgov_tzone) - lubridate::days(30)
+  realtime_start <- lubridate::with_tz(Sys.time(), tz = bcgov_tzone) -
+    lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
   is_all_realtime <- FALSE # Init
   original_date_range <- date_range
-  if (need_realtime){
+  if (need_realtime) {
     variable_cols <- bcgov_col_names[
-      names(bcgov_col_names) |> 
+      names(bcgov_col_names) |>
         stringr::str_starts(variables |> paste0(collapse = "|")) &
         !names(bcgov_col_names) |> endsWith("_instrument")
     ]
     realtime_data <- stations |>
-      bcgov_get_raw_data(variables = variables, quiet = quiet, mode = "realtime") |>
+      bcgov_get_raw_data(
+        variables = variables,
+        quiet = quiet,
+        mode = "realtime"
+      ) |>
       dplyr::filter(
         !dplyr::if_all(dplyr::any_of(variable_cols), is.na),
         lubridate::ymd_hm(.data$DATE_PST, tz = bcgov_tzone) > realtime_start
-      ) |> 
+      ) |>
       handyr::on_error(.return = NULL, .warn = TRUE)
     if (nrow(realtime_data) == 0) {
-      warning("No realtime data available for provided variables, stations and date_range.")
+      warning(
+        "No realtime data available for provided variables, stations and date_range."
+      )
       realtime_data <- NULL
-    }else if(is.null(realtime_data)){
-      warning("No realtime data available for provided stations and date_range.")
-    }else{
+    } else if (is.null(realtime_data)) {
+      warning(
+        "No realtime data available for provided stations and date_range."
+      )
+    } else {
       first_realtime_date <- realtime_data |>
         dplyr::group_by(EMS_ID) |>
         dplyr::summarise(
-          first_realtime_date = DATE_PST |> 
-            lubridate::ymd_hm(tz = bcgov_tzone) |> 
-            min() 
-        ) |> 
+          first_realtime_date = DATE_PST |>
+            lubridate::ymd_hm(tz = bcgov_tzone) |>
+            min()
+        ) |>
         dplyr::pull(first_realtime_date) |>
         max()
       date_range <- c(original_date_range[1], first_realtime_date)
       is_all_realtime <- date_range[1] >= date_range[2]
     }
-  }else {
+  } else {
     realtime_data <- NULL
   }
 
-  if(!is_all_realtime){
+  if (!is_all_realtime) {
     years_to_get <- date_range[1] |>
       seq(date_range[2], by = "1 days") |>
       lubridate::with_tz(bcgov_tzone) |>
@@ -163,11 +172,11 @@ get_bcgov_data <- function(
         variables = variables,
         quiet = quiet
       )
-  }else{
+  } else {
     archived_data <- NULL
   }
   stations_data <- dplyr::bind_rows(archived_data, realtime_data)
-  
+
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")
   }
@@ -189,7 +198,8 @@ get_bcgov_data <- function(
     ) |>
     dplyr::select(dplyr::any_of(bcgov_col_names)) |>
     dplyr::filter(
-      .data$date_utc |> dplyr::between(original_date_range[1], original_date_range[2])
+      .data$date_utc |>
+        dplyr::between(original_date_range[1], original_date_range[2])
     ) |>
     dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>

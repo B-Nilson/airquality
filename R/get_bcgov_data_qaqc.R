@@ -1,4 +1,3 @@
-
 bcgov_get_qaqc_data <- function(
   stations = "all",
   years,
@@ -37,7 +36,7 @@ bcgov_get_qaqc_data <- function(
     unlist() |>
     as.vector()
 
-  if(length(qaqc_paths) == 0) {
+  if (length(qaqc_paths) == 0) {
     stop("No data available for provided date_range / parameters.")
   }
 
@@ -107,8 +106,8 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::mutate(
       UNIT = bcgov_fix_units(UNIT),
       dplyr::across(dplyr::all_of(value_col), \(x) {
-        x |> 
-          units::set_units(.data$UNIT[1], mode = "standard") |> 
+        x |>
+          units::set_units(.data$UNIT[1], mode = "standard") |>
           units::set_units(default_unit, mode = "standard")
       })
     ) |>
