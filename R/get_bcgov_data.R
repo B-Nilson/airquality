@@ -118,9 +118,17 @@ get_bcgov_data <- function(
     if(is.null(realtime_data)){
       warning("No realtime data available for provided stations and date_range.")
     }else{
-      first_realtime_date <- lubridate::ymd_hm(min(realtime_data$DATE_PST), tz = bcgov_tzone)
+      first_realtime_date <- realtime_data |>
+        dplyr::group_by(EMS_ID) |>
+        dplyr::summarise(
+          first_realtime_date = DATE_PST |> 
+            lubridate::ymd_hm(tz = bcgov_tzone) |> 
+            min() 
+        ) |> 
+        dplyr::pull(first_realtime_date) |>
+        max()
       date_range <- c(original_date_range[1], first_realtime_date)
-      is_all_realtime <- date_range[1] > date_range[2]
+      is_all_realtime <- date_range[1] >= date_range[2]
     }
   }else {
     realtime_data <- NULL
