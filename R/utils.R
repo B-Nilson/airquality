@@ -64,6 +64,18 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
       )
     }
   }
+  # Handle NA's in within (no bound)
+  if (is.na(within[1])) {
+    within[1] <- "1970-01-01 00" |> lubridate::ymd_h(tz = "UTC")
+  }
+  if (is.na(within[2])) {
+    within[2] <- lubridate::now(tz = "UTC")
+  }
+  if (is.numeric(within)) {
+    within <- within |>
+      lubridate::as_datetime(tz = tz)
+  }
+  
   # Convert within to min/max dates
   if (lubridate::is.POSIXct(within)) {
     within <- within |>
