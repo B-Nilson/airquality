@@ -62,6 +62,13 @@ get_bcgov_data <- function(
   fast = FALSE,
   quiet = FALSE
 ) {
+  stopifnot(is.character(stations))
+  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
+  stopifnot(is.character(variables))
+  stopifnot(is.logical(raw))
+  stopifnot(is.logical(fast))
+  stopifnot(is.logical(quiet))
+
   # Output citation message to user
   if (!quiet) {
     data_citation("BCgov")
