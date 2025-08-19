@@ -15,15 +15,6 @@ bcgov_get_raw_data <- function(
       paste0("/Hourly_Raw_Air_Data/Station/")
   )
 
-  force_col_class <- c(
-    DATE_PST = "character",
-    EMS_ID = "character",
-    STATION_NAME = "character"
-  )
-  if (mode == "realtime") {
-    names(force_col_class)[3] <- "STATION"
-  }
-
   # Standardize common var names
   variables <- standardize_input_vars(variables)
 
@@ -90,23 +81,22 @@ bcgov_get_raw_data <- function(
   # Download each stations file and bind together
   data_paths |>
     handyr::for_each(
-      .as_list = TRUE, # TODO: remove once handyr updated (should be default when .bind = TRUE)
       .bind = TRUE,
       \(path) {
         withr::with_options(
           list(timeout = 3600),
           data.table::fread(
             file = path,
-            colClasses = force_col_class,
+            colClasses = "character",
             verbose = !quiet,
             showProgress = !quiet
           ) |>
-            bcgov_format_raw_data(mode = mode) |>
-            dplyr::select(-dplyr::any_of(cols_to_drop)) |>
             handyr::on_error(.return = NULL)
         )
       }
-    )
+    ) |>
+    bcgov_format_raw_data(mode = mode) |>
+    dplyr::select(-dplyr::any_of(cols_to_drop))
 }
 
 bcgov_format_raw_data <- function(raw_data, mode = "stations") {
