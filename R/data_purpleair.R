@@ -3,7 +3,7 @@ get_purpleair_data <- function(
   date_range,
   api_key,
   raw = FALSE,
-  verbose = TRUE
+  quiet = FALSE
 ) {}
 
 get_purpleair_stations <- function(
@@ -18,8 +18,8 @@ get_purpleair_stations <- function(
 #' @param write_key (Optional) A single character value of your PurpleAir API write key (see develop.purpleair.com). If NULL, read_key must be provided.
 #' @param channel A single character value indicating what API channel to use (Currently supported: keys, organization, sensors, groups)
 #' @param parameters (Optional) A named list containing paramaters to be supplied to the API request (see api.purpleair.com).
-#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be printed.
+#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be silenced.
 #'
 #' @md
 #' @description
@@ -42,7 +42,7 @@ get_purpleair_stations <- function(
 #' and (depending on the request type you want to make) a named list of parameters.
 #' See api.purpleair.com for which parameters are avalailable for each request type.
 #' Based on the provided channel/parameters, the request and estimated points cost will be displayed,
-#' and the request will be made if desired. Set `verbose` to `FALSE` to silence this and always run the request
+#' and the request will be made if desired. Set `quiet` to `TRUE` to silence this and always run the request
 #' (caution, some requests may cost a lot of points)
 #'
 #' @return
@@ -85,7 +85,7 @@ purpleair_api <- function(
   write_key = NULL,
   channel,
   parameters = NULL,
-  verbose = TRUE,
+  quiet = FALSE,
   estimate_cost = TRUE
 ) {
   api_url <- "https://api.purpleair.com/v1/"
@@ -135,7 +135,7 @@ purpleair_api <- function(
   api_key <- ifelse(!is.null(read_key), read_key, write_key)
   request_name <- api_key |>
     determine_purpleair_request(channel, parameters)
-  if (verbose) {
+  if (!quiet) {
     message(purpleair_request_msg(channel, request_name))
   }
   endpoint <- purpleair_api_endpoints[[channel]][[request_name]]
@@ -160,7 +160,7 @@ purpleair_api <- function(
   # Estimate expected points cost (BETA)
   if (estimate_cost) {
     expected_cost <- request_name |>
-      purpleair_points_estimator(parameters, verbose) |>
+      purpleair_points_estimator(parameters, quiet = quiet) |>
       handyr::on_error(.return = -1)
 
     if (!is.na(expected_cost)) {
@@ -434,7 +434,7 @@ purpleair_request_limits <- list(
   avg_525600 = 1 / 24 / 365 * 24 * 36500
 )
 
-purpleair_points_estimator <- function(request, parameters, verbose = FALSE) {
+purpleair_points_estimator <- function(request, parameters, quiet = FALSE) {
   request_costs <- purpleair_points_costs$endpoints[[
     stringr::str_to_lower(request) |> stringr::str_replace_all(" ", "_")
   ]]
@@ -453,7 +453,7 @@ purpleair_points_estimator <- function(request, parameters, verbose = FALSE) {
   }
 
   if (request %in% c("Get Sensors Data", "Get Members Data")) {
-    if (verbose) {
+    if (!quiet) {
       message(paste0(
         "It is difficult to estimate the points cost of `",
         request,
@@ -466,7 +466,7 @@ purpleair_points_estimator <- function(request, parameters, verbose = FALSE) {
       ))
     }
     if (
-      request == "Get Sensors Data" & !"nwlat" %in% names(parameters) & verbose
+      request == "Get Sensors Data" & !"nwlat" %in% names(parameters) & !quiet
     ) {
       message(
         "This request may cost a significant amount of points (100k+) given that a bounding box is not supplied"
@@ -520,7 +520,7 @@ purpleair_points_estimator <- function(request, parameters, verbose = FALSE) {
     n_rows <- max_rows
   }
   total_cost <- request_costs[1] + row_costs * n_rows
-  if (verbose & total_cost > 0) {
+  if (!quiet & total_cost > 0) {
     message(paste("This is estimated to cost up to", total_cost, "points."))
   }
   return(total_cost)

@@ -19,8 +19,8 @@
 #'   Default is "all".
 #' @param sources (Optional) A character vector indicating which data sources to get data from.
 #'   Default is "all".
-#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
-#'   non-critical messages/warnings should be printed
+#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
+#'   non-critical messages/warnings should be silenced.
 #'
 #' @description
 #' This is the general use function for gathering air quality observation data in a
@@ -72,24 +72,24 @@ get_station_data <- function(
   buffer_dist = 10,
   networks = "all",
   sources = "all",
-  verbose = TRUE
+  quiet = FALSE
 ) {
   # Determine what, when, and where to get data
   data_funs <- get_data_collection_funs(networks, sources)
   date_range <- date_range |> handle_date_range()
   search_area <- locations |>
-    determine_search_area(buffer_dist = buffer_dist, verbose = verbose)
+    determine_search_area(buffer_dist = buffer_dist, quiet = quiet)
 
   # Get data for our stations/date_range
   stations <- data_funs |>
     get_stations_in_search_area(search_area, date_range)
   data <- data_funs |>
-    get_data_for_stations(stations, date_range, verbose)
+    get_data_for_stations(stations, date_range, quiet = quiet)
   list(stations = stations, data = data)
 }
 
 # Get polygons of locations to search for stations within
-determine_search_area <- function(locations, buffer_dist = 10, verbose) {
+determine_search_area <- function(locations, buffer_dist = 10, quiet = FALSE) {
   rlang::check_installed("sf")
   # TODO: allow for station ids/names
   if (is.character(locations)) {
@@ -112,7 +112,7 @@ determine_search_area <- function(locations, buffer_dist = 10, verbose) {
 
   sf::st_agr(search_area) <- "constant"
   if (buffer_dist > 0) {
-    if (verbose) {
+    if (!quiet) {
       warning(paste(
         "Adding a search buffer of",
         buffer_dist,
@@ -125,10 +125,10 @@ determine_search_area <- function(locations, buffer_dist = 10, verbose) {
 }
 
 # TODO: Document
-get_location_polygons <- function(location_name, verbose = TRUE) {
+get_location_polygons <- function(location_name, quiet = FALSE) {
   location_name |>
     osmdata::getbb(format_out = "sf_polygon") |>
-    handyr::on_error(.return = NULL, .message = verbose)
+    handyr::on_error(.return = NULL, .message = !quiet)
 }
 
 # Get station metadata during period in our search area
@@ -164,7 +164,7 @@ get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   return(stations)
 }
 
-get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
+get_data_for_stations <- function(data_funs, stations, date_range, quiet = FALSE) {
   networks <- unique(stations$network)
   networks |>
     handyr::for_each(
@@ -184,7 +184,7 @@ get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
               if (length(site_ids) == 0) {
                 return(NULL)
               }
-              if (verbose) {
+              if (!quiet) {
                 message(paste(
                   net,
                   "-",
@@ -195,7 +195,7 @@ get_data_for_stations <- function(data_funs, stations, date_range, verbose) {
                 ))
               }
               data_fun <- data_funs[[net]][[src]]$data
-              data_fun(stations = site_ids, date_range, verbose = verbose) |>
+              data_fun(stations = site_ids, date_range, quiet = quiet) |>
                 dplyr::mutate(source = src, network = net) |>
                 handyr::on_error(.return = NULL, .message = TRUE)
             }
@@ -226,8 +226,8 @@ get_data_collection_funs <- function(networks = "all", sources = "all") {
   return(data_collection_funs)
 }
 
-data_citation <- function(source, verbose = TRUE) {
-  if (!verbose) {
+data_citation <- function(source, quiet = FALSE) {
+  if (quiet) {
     return(invisible(NULL))
   }
   source_meta <- list(

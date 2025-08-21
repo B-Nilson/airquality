@@ -87,8 +87,8 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 #' Default is FALSE.
-#' @param verbose (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be printed
+#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
+#' non-critical messages/warnings should be silenced
 #'
 #' @description
 #' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
@@ -128,9 +128,9 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' date_range <- lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 #' }
-get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FALSE, verbose = TRUE) {
+get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FALSE, quiet = FALSE) {
   # Output citation message to user
-  if (verbose) data_citation("AirNow")
+  if (!quiet) data_citation("AirNow")
 
   ## Handle date_range inputs
   min_date <- "2014-01-01 01" |> lubridate::ymd_h(tz = "UTC")
@@ -141,7 +141,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if (max(date_range) - max_date > lubridate::hours(-48)) { # if date_range in past 48 hours
     if (max(date_range) - max_date > lubridate::minutes(-55)) { # if date_range in past 55 minutes
-      if (verbose) {
+      if (!quiet) {
         warning(paste(
           "The current hour AirNow files is updated twice per hour",
           "(at 25 and 55 minutes past the hour) or more frequently if possible.",
@@ -151,7 +151,7 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
         ))
       }
     } else { # if date_range in past 48 hours but not past 55 minutes
-      if (verbose) {
+      if (!quiet) {
         warning(paste(
           "All hourly AirNow files for the preceding 48 hours will be updated every hour",
           "to ensure data completeness and quality.",
@@ -174,7 +174,11 @@ get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FA
     make_airnow_filepaths() |>
     handyr::for_each(
       .as_list = TRUE, .bind = TRUE, .parallel = fast,
-      \(pth) data.table::fread(file = pth, showProgress = !verbose) |>
+      \(pth) data.table::fread(
+          file = pth,
+          verbose = !quiet,
+          showProgress = !quiet
+        ) |>
         handyr::on_error(.return = NULL)
     ) |>
     stats::setNames(file_header)

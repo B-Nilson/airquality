@@ -9,7 +9,7 @@ get_abgov_data(
   date_range,
   raw = FALSE,
   fast = FALSE,
-  verbose = TRUE,
+  quiet = FALSE,
   stations_per_call = 1,
   days_per_call = 90
 )
@@ -28,8 +28,8 @@ if raw data files desired (i.e. without a standardized format). Default is FALSE
 \item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
 Default is FALSE.}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed}
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced}
 
 \item{stations_per_call}{(Optional) A single numeric value indicating the maximum number of stations to request per API call.
 The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.

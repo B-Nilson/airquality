@@ -3,7 +3,7 @@ test_that("Plot created without error", {
   obs <- get_station_data(
     "Vanderhoof, BC, Canada", date_range,
     sources = "BCgov",
-    verbose = FALSE
+    quiet = TRUE
   )$data
   expect_no_error(obs |> 
     tile_plot(x = "hour", y = "day", z = "pm25_1hr_ugm3", FUN = mean, date_col = "date_utc"))

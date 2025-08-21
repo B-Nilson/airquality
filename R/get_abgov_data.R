@@ -61,7 +61,7 @@ get_abgov_data <- function(
   drop_cols <- c("Id", "ReadingDate", "DeterminantParameterName")
 
   # Output citation message to user
-  data_citation("ABgov", verbose = !quiet)
+  data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
   date_range <- date_range |>

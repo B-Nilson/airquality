@@ -14,13 +14,13 @@ test_that("Keys/Org. API calls work as expected", {
   write_key <- Sys.getenv("purpleair_api_write")
 
   # Keys channel
-  test <- purpleair_api(read_key = read_key, channel = "keys", verbose = FALSE)
+  test <- purpleair_api(read_key = read_key, channel = "keys", quiet = TRUE)
   expect_equal(test$api_key_type, "READ")
-  test <- purpleair_api(write_key = write_key, channel = "keys", verbose = FALSE)
+  test <- purpleair_api(write_key = write_key, channel = "keys", quiet = TRUE)
   expect_equal(test$api_key_type, "WRITE")
 
   # Organization channel
-  test <- purpleair_api(read_key = read_key, channel = "organization", verbose = FALSE)
+  test <- purpleair_api(read_key = read_key, channel = "organization", quiet = TRUE)
   expect_type(test$remaining_points, "integer")
 })
 
@@ -47,14 +47,14 @@ test_that("Sensors API calls work as expected", {
   # Get Sensors Data
   test <- purpleair_api(
     read_key = read_key, channel = channel,
-    parameters = parameters[1:5], verbose = FALSE
+    parameters = parameters[1:5], quiet = TRUE
   )
   expect_equal(names(test), expected_headers)
 
   # Get Sensor Data
   test <- purpleair_api(
     read_key = read_key, channel = channel,
-    parameters = parameters[5:6], verbose = FALSE
+    parameters = parameters[5:6], quiet = TRUE
   )
   Sys.sleep(0.5) # Avoid API call frequency limits
   expect_length(test$time_stamp, 1)
@@ -63,7 +63,7 @@ test_that("Sensors API calls work as expected", {
   # Get Sensor History
   test <- purpleair_api(
     read_key = read_key, channel = channel,
-    parameters = parameters[5:7], verbose = FALSE
+    parameters = parameters[5:7], quiet = TRUE
   )
   expect_equal(names(test), expected_headers)
 })

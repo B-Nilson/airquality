@@ -10,7 +10,7 @@ get_station_data(
   buffer_dist = 10,
   networks = "all",
   sources = "all",
-  verbose = TRUE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -32,8 +32,8 @@ Default is "all".}
 \item{sources}{(Optional) A character vector indicating which data sources to get data from.
 Default is "all".}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed}
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.}
 }
 \value{
 A list with two elements, the first called "stations" is an sf POINT object with all

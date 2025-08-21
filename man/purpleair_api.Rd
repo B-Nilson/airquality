@@ -9,7 +9,7 @@ purpleair_api(
   write_key = NULL,
   channel,
   parameters = NULL,
-  verbose = TRUE,
+  quiet = FALSE,
   estimate_cost = TRUE
 )
 }
@@ -22,8 +22,8 @@ purpleair_api(
 
 \item{parameters}{(Optional) A named list containing paramaters to be supplied to the API request (see api.purpleair.com).}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed.}
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.}
 }
 \value{
 If channel either "keys" or "organization", or invalid/missing parameters, then a list with the request results
@@ -51,7 +51,7 @@ In order to retrieve these data you must:
 and (depending on the request type you want to make) a named list of parameters.
 See api.purpleair.com for which parameters are avalailable for each request type.
 Based on the provided channel/parameters, the request and estimated points cost will be displayed,
-and the request will be made if desired. Set \code{verbose} to \code{FALSE} to silence this and always run the request
+and the request will be made if desired. Set \code{quiet} to \code{TRUE} to silence this and always run the request
 (caution, some requests may cost a lot of points)
 }
 \examples{
