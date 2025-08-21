@@ -49,7 +49,6 @@ bcgov_get_qaqc_data <- function(
           list(timeout = 3600),
           path |>
             data.table::fread(
-              verbose = !quiet,
               showProgress = !quiet,
               colClasses = "character"
             ) |>

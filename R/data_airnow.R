@@ -176,7 +176,6 @@ get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, f
       .as_list = TRUE, .bind = TRUE, .parallel = fast,
       \(pth) data.table::fread(
           file = pth,
-          verbose = !quiet,
           showProgress = !quiet
         ) |>
         handyr::on_error(.return = NULL)

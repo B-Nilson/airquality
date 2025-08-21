@@ -88,7 +88,6 @@ bcgov_get_raw_data <- function(
           data.table::fread(
             file = path,
             colClasses = "character",
-            verbose = !quiet,
             showProgress = !quiet
           ) |>
             handyr::on_error(.return = NULL)

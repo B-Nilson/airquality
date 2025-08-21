@@ -24,14 +24,12 @@ read_data <- function(
     data.table::fread(
       ...,
       showProgress = !quiet,
-      verbose = !quiet,
       data.table = data.table
     )
   } else {
     invisible(data.table::fread(
       ...,
       showProgress = showProgress,
-      verbose = !quiet,
       data.table = data.table
     ))
   }

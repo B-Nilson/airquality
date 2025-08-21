@@ -162,8 +162,7 @@ bcgov_get_annual_stations <- function(
   # Download the file
   metadata_path |>
     data.table::fread(
-      colClasses = force_col_classes, 
-      verbose = !quiet,
+      colClasses = force_col_classes,
       showProgress = !quiet
     ) |>
     dplyr::tibble() |>
