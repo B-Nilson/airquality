@@ -26,11 +26,12 @@ convert_units <- function(x, in_unit, out_unit, y = NULL) {
   }
 
   # Determine conversion type
-  all_units <- all_conversions |> lapply(\(conversions){
-    names(conversions) |>
-      stringr::str_split("_to_") |>
-      unlist()
-  })
+  all_units <- all_conversions |>
+    lapply(\(conversions) {
+      names(conversions) |>
+        stringr::str_split("_to_") |>
+        unlist()
+    })
   conversion_type <- sapply(all_units, \(x) in_unit %in% x)
   conversion_type <- names(conversion_type[conversion_type])[1]
 
@@ -66,8 +67,11 @@ all_conversions <- list(
     RH_to_DEWPOINT = function(RH, T) {
       b <- ifelse(T >= 0, 17.368, 17.966) # Over water, or over ice
       c <- ifelse(T >= 0, 238.88, 247.15) # Over water, or over ice
-      return(c * log(RH / 100 * saturation_vapour_pressure(T) / 6.1121) /
-        (b - log(RH / 100 * saturation_vapour_pressure(T) / 6.1121)))
+      return(
+        c *
+          log(RH / 100 * saturation_vapour_pressure(T) / 6.1121) /
+          (b - log(RH / 100 * saturation_vapour_pressure(T) / 6.1121))
+      )
     },
     DEWPOINT_to_RH = function(Td, T) {
       saturation_vapour_pressure(Td) / saturation_vapour_pressure(T) * 100
@@ -85,19 +89,24 @@ all_conversions <- list(
 
 saturation_vapour_pressure <- function(temperature_c) {
   if (!dplyr::between(temperature_c, -80, 50)) {
-    warning("Saturation vapour pressure estimation method only optimized within [-80, 50] celcius")
+    warning(
+      "Saturation vapour pressure estimation method only optimized within [-80, 50] celcius"
+    )
   }
   # Using the Arden Buck equation (Buck, 1996)
-  ifelse(temperature_c > 0,
+  ifelse(
+    temperature_c > 0,
     # over water
-    6.1121 * exp(
-      (18.678 - temperature_c / 234.5) *
-        (temperature_c / (257.14 + temperature_c))
-    ),
+    6.1121 *
+      exp(
+        (18.678 - temperature_c / 234.5) *
+          (temperature_c / (257.14 + temperature_c))
+      ),
     # over ice
-    6.1115 * exp(
-      (23.036 - temperature_c / 333.7) *
-        (temperature_c / (279.82 + temperature_c))
-    )
+    6.1115 *
+      exp(
+        (23.036 - temperature_c / 333.7) *
+          (temperature_c / (279.82 + temperature_c))
+      )
   ) # units hPa (millibars)
 }

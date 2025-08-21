@@ -108,7 +108,7 @@ get_abgov_data <- function(
       ) |>
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }
-  
+
   # Format and combine
   stations_data <- list(qaqc_data, raw_data) |>
     dplyr::bind_rows() |>

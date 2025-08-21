@@ -114,7 +114,7 @@ get_bcgov_data <- function(
 
     stations <- stations |>
       check_stations_exist(
-        known_stations = known_stations$site_id, 
+        known_stations = known_stations$site_id,
         source = "the BC FTP site"
       )
   }
@@ -190,7 +190,7 @@ get_bcgov_data <- function(
   }
 
   # Combine raw/qaqc data with realtime
-  stations_data <- archived_data |> 
+  stations_data <- archived_data |>
     dplyr::bind_rows(realtime_data)
   if (nrow(stations_data) == 0) {
     stop("No data available for provided stations and date_range")

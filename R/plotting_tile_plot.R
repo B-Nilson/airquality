@@ -45,8 +45,21 @@
 #'   subtitle = "Plot Subtitle", caption = "Plot Caption"
 #' )
 #' }
-tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, facet_rows = 1, facet_scales = "fixed", FUN = mean, ...) {
-  if (is.null(names(facet_by))) names(facet_by) <- facet_by
+tile_plot <- function(
+  obs,
+  x,
+  y,
+  z,
+  date_col = "date_utc",
+  facet_by = NULL,
+  facet_rows = 1,
+  facet_scales = "fixed",
+  FUN = mean,
+  ...
+) {
+  if (is.null(names(facet_by))) {
+    names(facet_by) <- facet_by
+  }
 
   # Handle date-based grouping options
   #   (i.e. add "year" column if year provided but not present in obs)
@@ -64,13 +77,13 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
     ))
 
   # Drop infilled rows to allow for free facet scales if desired
-  if(facet_scales %in% c("free_y", "free")){
+  if (facet_scales %in% c("free_y", "free")) {
     pd = pd |>
       dplyr::group_by(y, !!!(rlang::syms(names(facet_by)))) |>
       dplyr::filter(!all(is.na(z))) |>
       dplyr::ungroup()
   }
-  if(facet_scales %in% c("free_x", "free")){
+  if (facet_scales %in% c("free_x", "free")) {
     pd = pd |>
       dplyr::group_by(x, !!!(rlang::syms(names(facet_by)))) |>
       dplyr::filter(!all(is.na(z))) |>
@@ -94,21 +107,28 @@ tile_plot <- function(obs, x, y, z, date_col = "date_utc", facet_by = NULL, face
     ggplot2::scale_y_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_fill_viridis_c(na.value = NA, limits = c(0, NA)) +
     ggplot2::labs(
-      x = xlab, y = ylab,
+      x = xlab,
+      y = ylab,
       fill = z
     )
 }
 
 add_lubridate_cols <- function(obs, FUN_names, date_col = "date_utc") {
   special_cases <- c(
-    "year", "quarter", "month", "day", "wday",
-    "hour", "minute", "second"
+    "year",
+    "quarter",
+    "month",
+    "day",
+    "wday",
+    "hour",
+    "minute",
+    "second"
   )
-  cols_to_make <- FUN_names %in% special_cases &
-    !FUN_names %in% names(obs)
+  cols_to_make <- FUN_names %in% special_cases & !FUN_names %in% names(obs)
   for (col in FUN_names[cols_to_make]) {
     lubridate_fun <- getExportedValue("lubridate", col)
-    if (col %in% c("month", "wday")) { # Use abreviated text labels where available
+    if (col %in% c("month", "wday")) {
+      # Use abreviated text labels where available
       obs[[col]] <- obs[[date_col]] |> lubridate_fun(label = TRUE, abbr = TRUE)
       col_levels <- levels(obs[[col]])[levels(obs[[col]]) %in% obs[[col]]]
       obs[[col]] <- obs[[col]] |> factor(col_levels)

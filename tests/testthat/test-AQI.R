@@ -11,16 +11,13 @@ test_that("AQI returns expected output", {
 })
 
 # TODO: write test
-test_that("AQI for PM2.5 is correct", {
-})
+test_that("AQI for PM2.5 is correct", {})
 
 # TODO: write test
-test_that("AQI for PM10 is correct", {
-})
+test_that("AQI for PM10 is correct", {})
 
 # TODO: write test
-test_that("AQI for NO2 is correct", {
-})
+test_that("AQI for NO2 is correct", {})
 
 test_that("AQI for O3 is correct", {
   output <- AQI(
@@ -32,12 +29,10 @@ test_that("AQI for O3 is correct", {
 })
 
 # TODO: write test
-test_that("AQI for SO2 is correct", {
-})
+test_that("AQI for SO2 is correct", {})
 
 # TODO: write test
-test_that("AQI for CO is correct", {
-})
+test_that("AQI for CO is correct", {})
 
 # TODO: add more values to test
 test_that("AQI for multi-pollutant is correct", {

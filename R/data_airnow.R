@@ -31,16 +31,42 @@
 #' }
 get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
   file_header <- c(
-    "siteID", "param", "site_location_code", "site", "status", "operator_code",
-    "operator", "usa_region", "lat", "lon", "elev", "tz_offset", "country",
-    "UNKNOWN", "UNKNOWN", "location_code", "location", "UNKNOWN", "region",
-    "UNKNOWN", "city", "UNKNOWN", "UNKNOWN", "file_date"
+    "siteID",
+    "param",
+    "site_location_code",
+    "site",
+    "status",
+    "operator_code",
+    "operator",
+    "usa_region",
+    "lat",
+    "lon",
+    "elev",
+    "tz_offset",
+    "country",
+    "UNKNOWN",
+    "UNKNOWN",
+    "location_code",
+    "location",
+    "UNKNOWN",
+    "region",
+    "UNKNOWN",
+    "city",
+    "UNKNOWN",
+    "UNKNOWN",
+    "file_date"
   )
   desired_columns <- c(
-    site_id = "siteID", site_name = "site", city = "city",
-    lat = "lat", lng = "lon", elev = "elev",
-    status = "status", operator = "operator",
-    tz_offset = "tz_offset", as_of = "file_date"
+    site_id = "siteID",
+    site_name = "site",
+    city = "city",
+    lat = "lat",
+    lng = "lon",
+    elev = "elev",
+    status = "status",
+    operator = "operator",
+    tz_offset = "tz_offset",
+    as_of = "file_date"
   )
   na_placeholders <- c("N/A", "na", "n/a")
 
@@ -49,10 +75,11 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
   airnow_paths <- make_airnow_metapaths(dates)
   stations <- names(airnow_paths) |>
     handyr::for_each(
-      .as_list = TRUE, .bind = TRUE,
-      \(d){
+      .as_list = TRUE,
+      .bind = TRUE,
+      \(d) {
         p <- airnow_paths[names(airnow_paths) == as.character(d)]
-        read_data(file = p, encoding = "UTF-8") |> 
+        read_data(file = p, encoding = "UTF-8") |>
           handyr::on_error(.return = NULL) |>
           dplyr::mutate(file_date = d)
       }
@@ -62,7 +89,9 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
     remove_na_placeholders(na_placeholders = na_placeholders) |>
     dplyr::filter(!is.na(.data$lat), !is.na(.data$lng)) |>
     dplyr::distinct(dplyr::across(-"as_of"), .keep_all = TRUE) |>
-    dplyr::mutate(tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat))
+    dplyr::mutate(
+      tz_local = handyr::get_timezone(lng = .data$lng, lat = .data$lat)
+    )
 
   # Convert to spatial if desired
   if (use_sf) {
@@ -128,19 +157,29 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' date_range <- lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 #' }
-get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, fast = FALSE, quiet = FALSE) {
+get_airnow_data <- function(
+  stations = "all",
+  date_range = "now",
+  raw = FALSE,
+  fast = FALSE,
+  quiet = FALSE
+) {
   # Output citation message to user
-  if (!quiet) data_citation("AirNow")
+  if (!quiet) {
+    data_citation("AirNow")
+  }
 
   ## Handle date_range inputs
   min_date <- "2014-01-01 01" |> lubridate::ymd_h(tz = "UTC")
   max_date <- Sys.time() |> lubridate::floor_date("hours")
-  date_range <- date_range |> 
+  date_range <- date_range |>
     handle_date_range(within = c(min_date, max_date))
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
-  if (max(date_range) - max_date > lubridate::hours(-48)) { # if date_range in past 48 hours
-    if (max(date_range) - max_date > lubridate::minutes(-55)) { # if date_range in past 55 minutes
+  if (max(date_range) - max_date > lubridate::hours(-48)) {
+    # if date_range in past 48 hours
+    if (max(date_range) - max_date > lubridate::minutes(-55)) {
+      # if date_range in past 55 minutes
       if (!quiet) {
         warning(paste(
           "The current hour AirNow files is updated twice per hour",
@@ -150,7 +189,8 @@ get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, f
           "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."
         ))
       }
-    } else { # if date_range in past 48 hours but not past 55 minutes
+    } else {
+      # if date_range in past 48 hours but not past 55 minutes
       if (!quiet) {
         warning(paste(
           "All hourly AirNow files for the preceding 48 hours will be updated every hour",
@@ -159,7 +199,7 @@ get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, f
         ))
       }
     }
-  } 
+  }
 
   # Get hourly data files for desired date range
   # Make hourly file paths
@@ -167,18 +207,29 @@ get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, f
   dates <- seq(date_range[1], date_range[2], "1 hours") +
     lubridate::hours(-1) # files are forward looking averages
   file_header <- c(
-    "date", "time", "siteID", "site",
-    "tz_offset", "param", "unit", "value", "operator"
+    "date",
+    "time",
+    "siteID",
+    "site",
+    "tz_offset",
+    "param",
+    "unit",
+    "value",
+    "operator"
   )
   airnow_data <- dates |>
     make_airnow_filepaths() |>
     handyr::for_each(
-      .as_list = TRUE, .bind = TRUE, .parallel = fast,
-      \(pth) data.table::fread(
+      .as_list = TRUE,
+      .bind = TRUE,
+      .parallel = fast,
+      \(pth) {
+        data.table::fread(
           file = pth,
           showProgress = !quiet
         ) |>
-        handyr::on_error(.return = NULL)
+          handyr::on_error(.return = NULL)
+      }
     ) |>
     stats::setNames(file_header)
 
@@ -223,14 +274,14 @@ get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, f
         dplyr::mutate(
           value = as.numeric(.data$value) |>
             units::set_units(.data$unit[1], mode = "standard")
-        ) |> 
-      tidyr::pivot_wider(names_from = "param", values_from = "value") |>
-      dplyr::select(dplyr::any_of(airnow_col_names)) |>
-      dplyr::distinct()
+        ) |>
+        tidyr::pivot_wider(names_from = "param", values_from = "value") |>
+        dplyr::select(dplyr::any_of(airnow_col_names)) |>
+        dplyr::distinct()
     }) |>
     join_list() |>
     dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
-  
+
   if (!fast) {
     # Get meta for stations within date_range
     known_stations <- seq(date_range[1], date_range[2], "25 days") |>
@@ -300,7 +351,8 @@ make_airnow_metapaths <- function(dates) {
   if (any(dates < min_date)) {
     warning(paste(
       "Metadata files on AirNow only available from",
-      min_date |> format("%F %H (UTC)"), "onwards.",
+      min_date |> format("%F %H (UTC)"),
+      "onwards.",
       "Station information returned may be inaccurate for dates before this."
     ))
     dates <- c(min_date, dates[dates > min_date])

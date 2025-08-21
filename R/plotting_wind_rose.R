@@ -53,21 +53,26 @@
 #' )
 #' }
 wind_rose <- function(
-    obs,
-    data_cols = c(ws = "ws_1hr_ms", wd = "wd_1hr_degrees"),
-    facet_by = NULL,
-    facet_rows = 1,
-    wd_nbins = c(16, 8, 4)[1],
-    ws_min = 0,
-    ws_step = 2,
-    fills = "default",
-    colour = "black",
-    alpha = 0.8,
-    bar_width = 1,
-    ...) {
+  obs,
+  data_cols = c(ws = "ws_1hr_ms", wd = "wd_1hr_degrees"),
+  facet_by = NULL,
+  facet_rows = 1,
+  wd_nbins = c(16, 8, 4)[1],
+  ws_min = 0,
+  ws_step = 2,
+  fills = "default",
+  colour = "black",
+  alpha = 0.8,
+  bar_width = 1,
+  ...
+) {
   # Handle inputs
-  if (is.null(names(data_cols))) names(data_cols) <- c("ws", "wd")
-  if (is.null(names(facet_by))) names(facet_by) <- facet_by
+  if (is.null(names(data_cols))) {
+    names(data_cols) <- c("ws", "wd")
+  }
+  if (is.null(names(facet_by))) {
+    names(facet_by) <- facet_by
+  }
   wd_step <- dplyr::case_when(
     wd_nbins == 16 ~ 22.5,
     wd_nbins == 8 ~ 45,
@@ -91,7 +96,8 @@ wind_rose <- function(
     ) |>
     # Get counts for each ws/wd bin in each rose
     dplyr::group_by(
-      .data$ws_bin, .data$wd_bin,
+      .data$ws_bin,
+      .data$wd_bin,
       dplyr::across(dplyr::all_of(facet_by))
     ) |>
     dplyr::summarise(n = dplyr::n(), .groups = "drop") |>
@@ -145,14 +151,18 @@ wind_rose <- function(
   }
 
   # Add data
-  gg + ggplot2::geom_col(
-    ggplot2::aes(
-      x = .data$wd_bin,
-      y = .data$p,
-      fill = forcats::fct_rev(.data$ws_bin)
-    ),
-    colour = colour, alpha = alpha, width = bar_width, ...
-  )
+  gg +
+    ggplot2::geom_col(
+      ggplot2::aes(
+        x = .data$wd_bin,
+        y = .data$p,
+        fill = forcats::fct_rev(.data$ws_bin)
+      ),
+      colour = colour,
+      alpha = alpha,
+      width = bar_width,
+      ...
+    )
 }
 
 cut_wind_speed <- function(ws, ws_min = 0, ws_step = 2) {
@@ -161,23 +171,35 @@ cut_wind_speed <- function(ws, ws_min = 0, ws_step = 2) {
     c(max_ws) |>
     unique()
   speed_labels <- paste(
-    speed_bins, "-", dplyr::lead(speed_bins)
+    speed_bins,
+    "-",
+    dplyr::lead(speed_bins)
   )[
     1:(length(speed_bins) - 1)
   ]
 
-  cut(ws,
-    include.lowest = TRUE,
-    breaks = speed_bins, labels = speed_labels
-  )
+  cut(ws, include.lowest = TRUE, breaks = speed_bins, labels = speed_labels)
 }
 
 get_cardinal_direction <- function(wd, wd_step = 22.5) {
   dir_labels <- c(
-    "N", "NNE", "NE", "ENE",
-    "E", "ESE", "SE", "SSE",
-    "S", "SSW", "SW", "WSW",
-    "W", "WNW", "NW", "NNW", "N"
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+    "N"
   )
   if (wd_step == 22.5) {
     set <- 1:length(dir_labels)

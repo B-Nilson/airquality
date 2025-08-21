@@ -54,10 +54,13 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
   if (is.character(date_range)) {
     if ("now" %in% date_range) {
       date_range <- date_range |>
-        handyr::swap("now", with = lubridate::now(tz = tz) |>
-          lubridate::floor_date("hours") |>
-          lubridate::with_tz("UTC") |>
-          format("%F %H"))
+        handyr::swap(
+          "now",
+          with = lubridate::now(tz = tz) |>
+            lubridate::floor_date("hours") |>
+            lubridate::with_tz("UTC") |>
+            format("%F %H")
+        )
     }
     date_range <- date_range |>
       lubridate::ymd_h(tz = "UTC") |>
@@ -79,7 +82,7 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
     within <- within |>
       lubridate::as_datetime(tz = tz)
   }
-  
+
   # Convert within to min/max dates
   if (lubridate::is.POSIXct(within)) {
     within <- within |>
@@ -87,10 +90,13 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
       format("%F %H")
   }
   within <- within |>
-    handyr::swap("now", with = Sys.time() |>
-          lubridate::floor_date("hours") |>
-          lubridate::with_tz(tz) |> 
-          format("%F %H")) |> 
+    handyr::swap(
+      "now",
+      with = Sys.time() |>
+        lubridate::floor_date("hours") |>
+        lubridate::with_tz(tz) |>
+        format("%F %H")
+    ) |>
     lubridate::ymd_h(tz = tz)
   # Handle dates before min date allowed
   if (!is.null(within[1])) {

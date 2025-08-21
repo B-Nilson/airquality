@@ -28,7 +28,8 @@ test_that("quiet arg works", {
     format("%Y-%m-%d %H")
   stations <- get_abgov_stations()
   expect_no_message(expect_no_warning(expect_no_error(
-    stations$site_name[1] |> get_abgov_data(quiet = TRUE, date_range = date_range)
+    stations$site_name[1] |>
+      get_abgov_data(quiet = TRUE, date_range = date_range)
   )))
 })
 

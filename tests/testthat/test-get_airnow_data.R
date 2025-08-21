@@ -1,7 +1,11 @@
 test_that("an error/warning is not thrown in normal usaage", {
   date_range <- "2019-02-01 00"
   obs <- expect_no_warning(expect_no_error(
-    get_airnow_data(stations = "000010102", date_range = date_range, quiet = TRUE)
+    get_airnow_data(
+      stations = "000010102",
+      date_range = date_range,
+      quiet = TRUE
+    )
   ))
 })
 
@@ -34,7 +38,11 @@ test_that("invalid date_range causes error", {
   # Case: invalid input value
   expect_error(get_airnow_data(station, "bananas", quiet = TRUE))
   # Case: too many dates
-  expect_error(get_airnow_data(station, c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"), quiet = TRUE))
+  expect_error(get_airnow_data(
+    station,
+    c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"),
+    quiet = TRUE
+  ))
 })
 
 test_that("too early date_range causes warning/error", {
@@ -44,7 +52,11 @@ test_that("too early date_range causes warning/error", {
   expect_error(get_airnow_data(station, earliest_time - hours(1), quiet = TRUE))
   # Case: Partly in the past
   date_range <- c(earliest_time - lubridate::hours(1), earliest_time)
-  expect_warning(expect_warning(get_airnow_data(station, date_range, quiet = TRUE)))
+  expect_warning(expect_warning(get_airnow_data(
+    station,
+    date_range,
+    quiet = TRUE
+  )))
 })
 
 test_that("too late date_range causes warning/error", {
@@ -63,8 +75,18 @@ test_that("too late date_range causes warning/error", {
 # Inputs: raw -------------------------------------------------------------
 
 test_that("raw data differs", {
-  obs <- get_airnow_data("000010102", "2018-02-01 00", raw = FALSE, quiet = TRUE)
-  obs_raw <- get_airnow_data("000010102", "2018-02-01 00", raw = TRUE, quiet = TRUE)
+  obs <- get_airnow_data(
+    "000010102",
+    "2018-02-01 00",
+    raw = FALSE,
+    quiet = TRUE
+  )
+  obs_raw <- get_airnow_data(
+    "000010102",
+    "2018-02-01 00",
+    raw = TRUE,
+    quiet = TRUE
+  )
 
   # Case: column counts should differ
   expect_true(ncol(obs) != ncol(obs_raw))
@@ -75,8 +97,18 @@ test_that("raw data differs", {
 # Inputs: fast ------------------------------------------------------------
 
 test_that("fast data differs", {
-  obs <- get_airnow_data("000010102", "2018-02-01 00", fast = FALSE, quiet = TRUE)
-  obs_fast <- get_airnow_data("000010102", "2018-02-01 00", fast = TRUE, quiet = TRUE)
+  obs <- get_airnow_data(
+    "000010102",
+    "2018-02-01 00",
+    fast = FALSE,
+    quiet = TRUE
+  )
+  obs_fast <- get_airnow_data(
+    "000010102",
+    "2018-02-01 00",
+    fast = TRUE,
+    quiet = TRUE
+  )
   expect_true(ncol(obs) != ncol(obs_fast))
   expect_true(!all(names(obs_fast) %in% names(obs)))
 })
@@ -112,6 +144,11 @@ test_that("expected data returned", {
   obs <- get_airnow_data("000010102", date_range, quiet = TRUE)
   expect_snapshot(obs)
 
-  obs_raw <- get_airnow_data("000010102", "2018-02-01 00", raw = TRUE, quiet = TRUE)
+  obs_raw <- get_airnow_data(
+    "000010102",
+    "2018-02-01 00",
+    raw = TRUE,
+    quiet = TRUE
+  )
   expect_snapshot(obs_raw)
 })

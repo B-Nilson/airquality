@@ -164,7 +164,12 @@ get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   return(stations)
 }
 
-get_data_for_stations <- function(data_funs, stations, date_range, quiet = FALSE) {
+get_data_for_stations <- function(
+  data_funs,
+  stations,
+  date_range,
+  quiet = FALSE
+) {
   networks <- unique(stations$network)
   networks |>
     handyr::for_each(
@@ -309,6 +314,6 @@ default_units <- c(
   ws_vector_1hr = "m/s",
   precip_1hr = "mm",
   snow_1hr = "cm",
-  pressure_1hr = "kPa", 
+  pressure_1hr = "kPa",
   vapour_pressure_1hr = "kPa"
 )

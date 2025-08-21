@@ -53,20 +53,28 @@
 #' AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #' AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 AQI <- function(
-    dates = Sys.time(),
-    o3_8hr_ppm = NA, o3_1hr_ppm = NA,
-    pm25_24hr_ugm3 = NA, pm25_1hr_ugm3 = NA,
-    pm10_24hr_ugm3 = NA, pm10_1hr_ugm3 = NA,
-    co_8hr_ppm = NA, co_1hr_ppm = NA,
-    so2_1hr_ppb = NA, no2_1hr_ppb = NA) {
+  dates = Sys.time(),
+  o3_8hr_ppm = NA,
+  o3_1hr_ppm = NA,
+  pm25_24hr_ugm3 = NA,
+  pm25_1hr_ugm3 = NA,
+  pm10_24hr_ugm3 = NA,
+  pm10_1hr_ugm3 = NA,
+  co_8hr_ppm = NA,
+  co_1hr_ppm = NA,
+  so2_1hr_ppb = NA,
+  no2_1hr_ppb = NA
+) {
   # TODO: Reference https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
 
   # Determine which pollutants provided as input
   AQI_pols <- methods::formalArgs(AQI)[-1]
-  all_missing <- AQI_pols |> handyr::for_each(
-    .as_list = TRUE, .name = TRUE,
-    \(pol) all(is.na(get(pol)))
-  )
+  all_missing <- AQI_pols |>
+    handyr::for_each(
+      .as_list = TRUE,
+      .name = TRUE,
+      \(pol) all(is.na(get(pol)))
+    )
   all_missing$so2_24hr_ppb <- TRUE
   # Ensure at least one pollutants data is provided
   if (all(unlist(all_missing))) {
@@ -79,11 +87,16 @@ AQI <- function(
   # Combine inputs and fill date gaps with NAs
   dat <- dplyr::tibble(
     date = dates,
-    o3_8hr_ppm, o3_1hr_ppm,
-    pm25_24hr_ugm3, pm25_1hr_ugm3,
-    pm10_24hr_ugm3, pm10_1hr_ugm3,
-    co_8hr_ppm, co_1hr_ppm,
-    so2_1hr_ppb, so2_24hr_ppb = NA,
+    o3_8hr_ppm,
+    o3_1hr_ppm,
+    pm25_24hr_ugm3,
+    pm25_1hr_ugm3,
+    pm10_24hr_ugm3,
+    pm10_1hr_ugm3,
+    co_8hr_ppm,
+    co_1hr_ppm,
+    so2_1hr_ppb,
+    so2_24hr_ppb = NA,
     no2_1hr_ppb
   ) |>
     tidyr::complete(date = seq(min(dates), max(dates), "1 hours")) |>
@@ -127,8 +140,10 @@ AQI <- function(
 
   # Get Daily mean values for all pollutants/averaging times
   dat <- dat |>
-    dplyr::group_by(date = .data$date |>
-      lubridate::floor_date("days")) |>
+    dplyr::group_by(
+      date = .data$date |>
+        lubridate::floor_date("days")
+    ) |>
     dplyr::summarise(
       .groups = "drop",
       dplyr::across(
@@ -195,27 +210,26 @@ aqi_levels <- list(
 
 # Returns Risk category when AQI value provided
 AQI_risk_category <- function(AQI) {
-  labels <- seq_along(aqi_levels) |> sapply(\(i){
-    names(aqi_levels)[i] |>
-      stringr::str_remove("2$") |>
-      rep(length(aqi_levels[[i]]))
-  })
-  factor(AQI,
-    levels = unlist(aqi_levels),
-    labels = unlist(labels)
-  )
+  labels <- seq_along(aqi_levels) |>
+    sapply(\(i) {
+      names(aqi_levels)[i] |>
+        stringr::str_remove("2$") |>
+        rep(length(aqi_levels[[i]]))
+    })
+  factor(AQI, levels = unlist(aqi_levels), labels = unlist(labels))
 }
 
 # Get risk category for breakpoint determination for AQI formulation
 AQI_bp_cat <- function(obs, bps) {
   handyr::silence(
     output = FALSE,
-    bps$risk_category |> lapply(\(cat) {
-      bp <- bps[bps$risk_category == cat, ]
-      ifelse(obs >= bp$bp_low & obs <= bp$bp_high, cat, NA)
-    }) |>
+    bps$risk_category |>
+      lapply(\(cat) {
+        bp <- bps[bps$risk_category == cat, ]
+        ifelse(obs >= bp$bp_low & obs <= bp$bp_high, cat, NA)
+      }) |>
       as.data.frame() |>
-      apply(1, \(row){
+      apply(1, \(row) {
         ifelse(all(is.na(row)), NA, row[!is.na(row)])
       }) |>
       unlist()
@@ -237,11 +251,13 @@ AQI_from_con <- function(dat, pol) {
     # Determine the risk category based on the concentrations and break points
     dplyr::mutate(dplyr::across(
       dplyr::all_of(cols[1]),
-      \(x) AQI_bp_cat(
-        obs = dat[[pol]] |>
-          handyr::swap(NA, with = 0),
-        bps = AQI_breakpoints[[pol]]
-      )
+      \(x) {
+        AQI_bp_cat(
+          obs = dat[[pol]] |>
+            handyr::swap(NA, with = 0),
+          bps = AQI_breakpoints[[pol]]
+        )
+      }
     )) |>
     # Append the corresponding break points and AQI breaks for each hour
     dplyr::left_join(
@@ -250,15 +266,19 @@ AQI_from_con <- function(dat, pol) {
       by = dplyr::join_by(!!cols[1] == "risk_category")
     )
   # Calculate AQI for each hour based on those
-  dat |> dplyr::mutate(dplyr::across(
-    dplyr::all_of(cols[2]),
-    \(x) dat[[pol]] |> AQI_formulation(
-      bp_low = dat[[paste0("bp_low_", pol)]],
-      bp_high = dat[[paste0("bp_high_", pol)]],
-      aqi_low = dat[[paste0("aqi_low_", pol)]],
-      aqi_high = dat[[paste0("aqi_high_", pol)]]
-    )
-  ))
+  dat |>
+    dplyr::mutate(dplyr::across(
+      dplyr::all_of(cols[2]),
+      \(x) {
+        dat[[pol]] |>
+          AQI_formulation(
+            bp_low = dat[[paste0("bp_low_", pol)]],
+            bp_high = dat[[paste0("bp_high_", pol)]],
+            aqi_low = dat[[paste0("aqi_low_", pol)]],
+            aqi_high = dat[[paste0("aqi_high_", pol)]]
+          )
+      }
+    ))
 }
 
 # Define breakpoints for AQI formulation

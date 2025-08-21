@@ -203,7 +203,7 @@ purpleair_api <- function(
             stats::setNames(response_fields)
         }
       ) |>
-      dplyr::select(dplyr::all_of(response_fields)) |> 
+      dplyr::select(dplyr::all_of(response_fields)) |>
       dplyr::mutate(
         dplyr::across(
           dplyr::any_of(c("time_stamp", "last_seen", "date_created")),
@@ -232,7 +232,7 @@ purpleair_api <- function(
     pa_data <- api_response$sensor |>
       dplyr::as_tibble() |>
       dplyr::mutate(time_stamp = response_timestamp)
-  }else {
+  } else {
     return(api_response)
   }
 
@@ -390,7 +390,7 @@ purpleair_points_costs <- list(
 purpleair_base_units <- list(
   humidity = "%",
   temperature = "degF",
-  pressure = "mbar", 
+  pressure = "mbar",
   voc = "IAQ", # TODO: test
   visual_range = "km", # TODO: check
   pm1.0 = "ug/m3",

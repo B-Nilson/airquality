@@ -65,7 +65,7 @@ test_that("too early date_range causes warning/error", {
   earliest_time <- lubridate::ymd_h("1980-01-01 01", tz = bcgov_tzone)
   # Case: All in the past
   expect_error(
-    station |> 
+    station |>
       get_bcgov_data(
         date_range = earliest_time - lubridate::hours(1),
         quiet = TRUE

@@ -2,10 +2,13 @@ test_that("CAAQS returns expected output", {
   obs <- data.frame(
     date = seq(
       lubridate::ymd_h("2020-01-01 00"),
-      lubridate::ymd_h("2023-12-31 23"), "1 hours"
+      lubridate::ymd_h("2023-12-31 23"),
+      "1 hours"
     ),
-    pm25 = 100, o3 = 15,
-    no2 = 1, so2 = 30
+    pm25 = 100,
+    o3 = 15,
+    no2 = 1,
+    so2 = 30
   )
 
   output <- CAAQS(

@@ -34,16 +34,21 @@
 #'   dates = obs$date, pm25_1hr_ugm3 = obs$pm25,
 #'   o3_1hr_ppb = obs$o3, no2_1hr_ppb = obs$no2, so2_1hr_ppb = obs$so2
 #' )
-CAAQS <- function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
-                  no2_1hr_ppb = NULL, so2_1hr_ppb = NULL,
-                  min_completeness = 0.5) {
+CAAQS <- function(
+  dates,
+  pm25_1hr_ugm3 = NULL,
+  o3_1hr_ppb = NULL,
+  no2_1hr_ppb = NULL,
+  so2_1hr_ppb = NULL,
+  min_completeness = 0.5
+) {
   # Join inputs
   obs <- dplyr::bind_cols(
     date = dates,
     pm25 = pm25_1hr_ugm3,
-    o3   = o3_1hr_ppb,
-    no2  = no2_1hr_ppb,
-    so2  = so2_1hr_ppb
+    o3 = o3_1hr_ppb,
+    no2 = no2_1hr_ppb,
+    so2 = so2_1hr_ppb
   ) |>
     dplyr::mutate(year = lubridate::year(.data$date))
 
@@ -79,8 +84,10 @@ CAAQS <- function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
     insufficient_years <- has_enough_obs$year[unlist(!has_enough_obs[pol])]
     if (length(insufficient_years)) {
       warning(paste(
-        "Insufficient data collected for pol:", pol,
-        "for year(s):", paste(insufficient_years, collapse = ", "),
+        "Insufficient data collected for pol:",
+        pol,
+        "for year(s):",
+        paste(insufficient_years, collapse = ", "),
         "see argument `min_completeness`"
       ))
       is_insufficient_year <- obs$year %in% insufficient_years
@@ -90,20 +97,22 @@ CAAQS <- function(dates, pm25_1hr_ugm3 = NULL, o3_1hr_ppb = NULL,
 
   # Fill in missing hours with NAs
   obs <- obs |>
-    tidyr::complete(date = seq(
-      min(dates) |> lubridate::floor_date("years"),
-      (max(dates) |> lubridate::ceiling_date("years")) - lubridate::hours(1),
-      "1 hours"
-    )) |>
+    tidyr::complete(
+      date = seq(
+        min(dates) |> lubridate::floor_date("years"),
+        (max(dates) |> lubridate::ceiling_date("years")) - lubridate::hours(1),
+        "1 hours"
+      )
+    ) |>
     dplyr::arrange(.data$date)
 
   # Calculate CAAQS attainment where data provided
   thresholds <- CAAQS_thesholds()
   list(
     pm25 = if (!is.null(pm25_1hr_ugm3)) CAAQS_pm25(obs, thresholds),
-    o3   = if (!is.null(o3_1hr_ppb)) CAAQS_o3(obs, thresholds),
-    no2  = if (!is.null(no2_1hr_ppb)) CAAQS_no2(obs, thresholds),
-    so2  = if (!is.null(so2_1hr_ppb)) CAAQS_so2(obs, thresholds)
+    o3 = if (!is.null(o3_1hr_ppb)) CAAQS_o3(obs, thresholds),
+    no2 = if (!is.null(no2_1hr_ppb)) CAAQS_no2(obs, thresholds),
+    so2 = if (!is.null(so2_1hr_ppb)) CAAQS_so2(obs, thresholds)
   )
 }
 
@@ -114,7 +123,10 @@ CAAQS_pm25 <- function(obs, thresholds) {
     dplyr::group_by(
       date = .data$date |> lubridate::floor_date("days")
     ) |>
-    dplyr::summarise(dplyr::across(dplyr::everything(), c(mean = mean_no_na))) |>
+    dplyr::summarise(dplyr::across(
+      dplyr::everything(),
+      c(mean = mean_no_na)
+    )) |>
     # Daily mean -> annual 98th percentile and annual mean
     dplyr::group_by(year = lubridate::year(.data$date)) |>
     dplyr::summarise(
@@ -128,25 +140,32 @@ CAAQS_pm25 <- function(obs, thresholds) {
     dplyr::mutate(
       `3yr_mean_of_perc_98` = .data$perc_98_of_daily_means |>
         get_lag_n_mean(n = 3),
-      management_level_daily = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-          thresholds = thresholds$pm25$daily
-        )
-      ),
+      management_level_daily = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+              thresholds = thresholds$pm25$daily
+            )
+          }
+        ),
       `3yr_mean_of_means` = .data$mean_of_daily_means |>
         get_lag_n_mean(n = 3),
-      management_level_annual = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`3yr_mean_of_means`[.data$year == y],
-          thresholds = thresholds$pm25$annual
+      management_level_annual = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`3yr_mean_of_means`[.data$year == y],
+              thresholds = thresholds$pm25$annual
+            )
+          }
         )
-      )
     ) |>
     dplyr::relocate(
-      "management_level_daily", "mean_of_daily_means",
+      "management_level_daily",
+      "mean_of_daily_means",
       .after = "3yr_mean_of_perc_98"
     )
 }
@@ -154,12 +173,16 @@ CAAQS_pm25 <- function(obs, thresholds) {
 CAAQS_o3 <- function(obs, thresholds) {
   obs |>
     # hourly mean -> 8 hourly mean
-    dplyr::group_by(date = .data$date |>
-      lubridate::floor_date("8 hours")) |>
+    dplyr::group_by(
+      date = .data$date |>
+        lubridate::floor_date("8 hours")
+    ) |>
     dplyr::summarise(`8hr_mean_o3` = .data$o3 |> mean_no_na()) |>
     # 8 hourly mean -> daily max
     dplyr::group_by(date = .data$date |> lubridate::floor_date("days")) |>
-    dplyr::summarise(daily_max_8hr_mean_o3 = .data$`8hr_mean_o3` |> handyr::max(na.rm = TRUE)) |>
+    dplyr::summarise(
+      daily_max_8hr_mean_o3 = .data$`8hr_mean_o3` |> handyr::max(na.rm = TRUE)
+    ) |>
     # daily max -> annual 4th highest
     dplyr::group_by(year = .data$date |> lubridate::year()) |>
     dplyr::arrange(dplyr::desc(.data$daily_max_8hr_mean_o3)) |>
@@ -171,13 +194,16 @@ CAAQS_o3 <- function(obs, thresholds) {
     dplyr::mutate(
       `3yr_mean` = .data$fourth_highest_daily_max_8hr_mean_o3 |>
         get_lag_n_mean(n = 3),
-      management_level_8hr = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`3yr_mean`[.data$year == y],
-          thresholds = thresholds$o3$`8hr`
+      management_level_8hr = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`3yr_mean`[.data$year == y],
+              thresholds = thresholds$o3$`8hr`
+            )
+          }
         )
-      )
     )
 }
 
@@ -210,20 +236,26 @@ CAAQS_no2 <- function(obs, thresholds) {
     dplyr::mutate(
       `3yr_mean_of_perc_98` = .data$perc_98_of_daily_maxima |>
         get_lag_n_mean(n = 3),
-      management_level_hourly = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`annual_mean_of_hourly`[.data$year == y],
-          thresholds = thresholds$no2$hourly
+      management_level_hourly = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`annual_mean_of_hourly`[.data$year == y],
+              thresholds = thresholds$no2$hourly
+            )
+          }
+        ),
+      management_level_annual = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
+              thresholds = thresholds$no2$annual
+            )
+          }
         )
-      ),
-      management_level_annual = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`3yr_mean_of_perc_98`[.data$year == y],
-          thresholds = thresholds$no2$annual
-        )
-      )
     ) |>
     dplyr::relocate(
       "management_level_hourly",
@@ -260,20 +292,26 @@ CAAQS_so2 <- function(obs, thresholds) {
     dplyr::mutate(
       `3yr_mean_of_perc_99` = .data$perc_99_of_daily_maxima |>
         get_lag_n_mean(n = 3),
-      management_level_hourly = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`annual_mean_of_hourly`[.data$year == y],
-          thresholds = thresholds$so2$hourly
+      management_level_hourly = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`annual_mean_of_hourly`[.data$year == y],
+              thresholds = thresholds$so2$hourly
+            )
+          }
+        ),
+      management_level_annual = .data$year |>
+        sapply(
+          \(y) {
+            CAAQS_meets_standard(
+              year = y,
+              metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
+              thresholds = thresholds$so2$annual
+            )
+          }
         )
-      ),
-      management_level_annual = .data$year |> sapply(
-        \(y) CAAQS_meets_standard(
-          year = y,
-          metric = .data$`3yr_mean_of_perc_99`[.data$year == y],
-          thresholds = thresholds$so2$annual
-        )
-      )
     ) |>
     dplyr::relocate(
       "management_level_hourly",
@@ -288,10 +326,12 @@ CAAQS_meets_standard <- function(year, metric, thresholds) {
     return(NA)
   }
   # Calculate CAAQS attainment
-  attainment <- mgmt_levels |> handyr::for_each(
-    .as_list = TRUE, .bind = TRUE,
-    \(lvl) metric > lvl
-  )
+  attainment <- mgmt_levels |>
+    handyr::for_each(
+      .as_list = TRUE,
+      .bind = TRUE,
+      \(lvl) metric > lvl
+    )
   attainment <- attainment |>
     apply(1, \(x) handyr::min(which(x), na.rm = TRUE))
   attainment[!is.na(attainment)] <- names(mgmt_levels)[
