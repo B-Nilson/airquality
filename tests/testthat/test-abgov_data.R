@@ -18,6 +18,20 @@ test_that("able to get stations", {
   expect_snapshot(names(test))
 })
 
+test_that("quiet arg works", {
+  date_range <- c(
+    Sys.time() - lubridate::days(2),
+    Sys.time() |>
+      lubridate::floor_date("hours")
+  ) |>
+    lubridate::with_tz("UTC") |>
+    format("%Y-%m-%d %H")
+  stations <- get_abgov_stations()
+  expect_no_message(expect_no_warning(expect_no_error(
+    stations$site_name[1] |> get_abgov_data(quiet = TRUE, date_range = date_range)
+  )))
+})
+
 test_that("expected date range available", {})
 
 test_that("qaqc data function works for all sites/parameters/date_range", {

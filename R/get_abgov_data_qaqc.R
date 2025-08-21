@@ -5,7 +5,8 @@ get_abgov_data_qaqc <- function(
     lubridate::floor_date("hours"),
   max_tries = 100,
   raw = FALSE,
-  fast = FALSE
+  fast = FALSE,
+  quiet = FALSE
 ) {
   # Constants
   allowed_date_range <- c("1980-01-01 00", "now") # TODO: confirm this
@@ -34,8 +35,10 @@ get_abgov_data_qaqc <- function(
     handyr::for_each(
       \(d_range) {
         d_range <- d_range |> sapply(format, format = "%F") |> unname()
-        "Requesting data for:" |>
-          handyr::log_step(d_range[1], "–", d_range[2])
+        if (!quiet) {
+          "Requesting data for:" |>
+            handyr::log_step(d_range[1], "–", d_range[2])
+        }
         keys$station |>
           unique() |>
           sapply(\(station_key) {
@@ -58,8 +61,10 @@ get_abgov_data_qaqc <- function(
       .bind = TRUE,
       .enumerate = TRUE,
       \(tokens, i) {
-        "Downloading data for request:" |>
-          handyr::log_step(i, "/", length(request_tokens))
+        if (!quiet) {
+          "Downloading data for request:" |>
+            handyr::log_step(i, "/", length(request_tokens))
+        }
         tokens |>
           handyr::for_each(
             .bind = TRUE,
