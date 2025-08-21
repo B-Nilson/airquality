@@ -47,6 +47,7 @@
 get_abgov_data <- function(
   stations,
   date_range = "now",
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE,
@@ -66,6 +67,11 @@ get_abgov_data <- function(
   # Handle date_range inputs
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
+
+  # Handle input variables
+  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  variables <- variables |>
+    standardize_input_vars(all_variables)
 
   # Only get data for stations that exist on the APIs
   if (!fast) {

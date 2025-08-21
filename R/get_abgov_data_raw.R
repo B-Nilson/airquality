@@ -1,16 +1,26 @@
 get_abgov_data_raw <- function(
   stations,
   date_range,
+  variables = "all",
   stations_per_call = 1,
   days_per_call = 90,
   quiet = FALSE
 ) {
   api_url <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
   api_endpoint <- "StationMeasurements"
+  
+  # Handle input variables
+  id_cols <- c("site_name", "date_utc", "quality_assured")
+  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+  get_all_vars <- all(all_variables %in% variables)
+
   # Make request(s) as needed to load all desired data
   api_args <- stations |>
     build_abgov_data_args(
       date_range,
+      variables = variables,
       stations_per_call = stations_per_call,
       days_per_call = days_per_call
     )
@@ -54,9 +64,17 @@ get_abgov_data_raw <- function(
 build_abgov_data_args <- function(
   stations,
   date_range,
+  variables = "all",
   stations_per_call = 3,
   days_per_call = 3
 ) {
+  # Handle input variables
+  id_cols <- c("site_name", "date_utc", "quality_assured")
+  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+  get_all_vars <- all(all_variables %in% variables)
+
   # Build station filter(s)
   station_filters <- seq(1, length(stations), stations_per_call) |>
     sapply(\(s) {
@@ -97,8 +115,13 @@ build_abgov_data_args <- function(
               c("Value", "StationName", "ParameterName", "ReadingDate") |>
                 paste0(collapse = ",")
             )
-          # Parameter filter is required, so do a dummy one that allows for any param
-          param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
+          if (get_all_vars) {
+            # Parameter filter is required, so do a dummy one that allows for any parameter
+            param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
+          } else {
+            param_filter <- paste0("indexof('", variables, "', ParameterName) ge 1") |> 
+              paste(collapse = " and ")
+          }
           filter_query <- station_filter |>
             paste(date_filter, param_filter, sep = " and ")
           column_filter |>

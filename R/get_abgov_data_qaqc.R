@@ -1,6 +1,6 @@
 get_abgov_data_qaqc <- function(
   stations = "all",
-  parameters = "all",
+  variables = "all",
   date_range = Sys.time() |>
     lubridate::floor_date("hours"),
   max_tries = 100,
@@ -15,6 +15,13 @@ get_abgov_data_qaqc <- function(
   # Handle date_range inputs
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
+  
+  # Handle input variables
+  id_cols <- c("site_name", "date_utc", "quality_assured")
+  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+  get_all_vars <- all(all_variables %in% variables)
 
   # Break up date range into smaller chunks depending on duration
   max_duration <- date_range |>
@@ -27,7 +34,7 @@ get_abgov_data_qaqc <- function(
 
   # Get API keys for our stations/parameters
   keys <- stations |>
-    abgov_get_qaqc_keys(parameters = parameters)
+    abgov_get_qaqc_keys(parameters = variables)
 
   # Initiate data request(s) and get token(s) for tracking progress
   request_tokens <- date_range |>
