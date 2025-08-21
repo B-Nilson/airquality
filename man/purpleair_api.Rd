@@ -91,8 +91,6 @@ Other Data Collection:
 \code{\link{get_bcgov_stations}()}
 
 Other Canadian Air Quality: 
-\code{\link{AQHI}()},
-\code{\link{AQHI_plus}()},
 \code{\link{CAAQS}()},
 \code{\link{get_abgov_data}()},
 \code{\link{get_abgov_stations}()},
