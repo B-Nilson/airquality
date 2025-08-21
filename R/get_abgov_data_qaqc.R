@@ -121,8 +121,7 @@ get_abgov_data_qaqc <- function(
       \(dat) {
         dat |>
           dplyr::mutate(
-            `Measurement Value` = `Measurement Value` |>
-              as.numeric() |>
+            `Measurement Value` = as.numeric(`Measurement Value`) |>
               units::set_units(Unit[1], mode = "standard")
           ) |>
           dplyr::select(-Unit) |>
@@ -135,7 +134,19 @@ get_abgov_data_qaqc <- function(
     # TODO: remove by once join_luist made flexible
     handyr::join_list(by = c("date_utc", "quality_assured", "site_name")) |>
     dplyr::select(dplyr::any_of(abgov_col_names)) |>
-    dplyr::filter(rowSums(!is.na(dplyr::across(-c(1:4)))) > 0)
+    dplyr::filter(rowSums(!is.na(dplyr::across(-c(1:4)))) > 0) |> 
+    # standardize units
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::any_of(names(default_units)), 
+        \(x) {
+          x |> convert_units( 
+            in_unit = units::units(x),
+            out_unit = default_units[names(default_units) == dplyr::cur_column()]
+          )
+        }
+      )
+    )
 }
 
 abgov_init_data_request <- function(

@@ -40,16 +40,14 @@ get_abgov_data_raw <- function(
       values_from = pivot_cols[2]
     ) |>
     dplyr::select(dplyr::any_of(abgov_col_names)) |>
-    # Insert units
+    # Insert units and standardize if needed
     dplyr::mutate(
-      dplyr::across(dplyr::any_of(names(abgov_units)), \(x) {
-        x |>
-          as.numeric() |>
-          units::set_units(
-            abgov_units[names(abgov_units) == dplyr::cur_column()],
-            mode = "standard"
-          )
-      })
+      dplyr::across(
+        dplyr::any_of(names(abgov_units)), 
+        convert_units,
+        in_unit = abgov_units[names(abgov_units) == dplyr::cur_column()],
+        out_unit = default_units[names(default_units) == dplyr::cur_column()]
+      )
     )
 }
 
