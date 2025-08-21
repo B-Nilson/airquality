@@ -93,12 +93,34 @@ test_that("too late date_range causes warning/error", {
 
 # Metadata ----------------------------------------------------------------
 
-test_that("able to get raw stations", {
-  raw_stations <- bcgov_get_raw_stations() |>
+test_that("able to get metadata", {
+  metadata <- get_bcgov_stations(quiet = TRUE) |>
     expect_no_error() |>
     expect_no_warning()
-  expect_true(length(raw_stations) > 0)
-  expect_true(is.character(raw_stations))
+  # Dims/class correct
+  expect_true(nrow(metadata) > 0 & ncol(metadata) > 0)
+  expect_true(tibble::is_tibble(metadata))
+  # No NAs where shouldn't be
+  expect_true(all(!is.na(metadata$site_id)))
+  expect_true(all(!is.na(metadata$site_name)))
+  expect_true(all(!is.na(metadata$lat)))
+  expect_true(all(!is.na(metadata$lng)))
+  expect_true(all(!is.na(metadata$tz_local)))
+})
+
+test_that("use_sf arg works", {
+  skip_if_not_installed("sf")
+  metadata <- get_bcgov_stations(use_sf = TRUE, quiet = TRUE) |>
+    expect_no_error() |>
+    expect_no_warning()
+  # Dims/class correct
+  expect_true(nrow(metadata) > 0 & ncol(metadata) > 0)
+  expect_s3_class(metadata, "sf")
+  # No NAs where shouldn't be
+  expect_true(all(!is.na(metadata$site_id)))
+  expect_true(all(!is.na(metadata$site_name)))
+  expect_true(all(!is.na(metadata$geometry)))
+  expect_true(all(!is.na(metadata$tz_local)))
 })
 
 test_that("able to get annual metadata", {
@@ -113,6 +135,14 @@ test_that("able to get annual metadata", {
   stations <- bcgov_get_annual_stations(2000)
   expect_true(nrow(stations) > 0 & ncol(stations) > 0)
   expect_true(tibble::is_tibble(stations))
+})
+
+test_that("able to get raw stations", {
+  raw_stations <- bcgov_get_raw_stations() |>
+    expect_no_error() |>
+    expect_no_warning()
+  expect_true(length(raw_stations) > 0)
+  expect_true(is.character(raw_stations))
 })
 
 # Helpers -----------------------------------------------------------------
