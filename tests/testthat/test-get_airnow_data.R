@@ -72,6 +72,15 @@ test_that("raw data differs", {
   expect_true(!all(names(obs_raw) %in% names(obs)))
 })
 
+# Inputs: fast ------------------------------------------------------------
+
+test_that("fast data differs", {
+  obs <- get_airnow_data("000010102", "2018-02-01 00", fast = FALSE, verbose = FALSE)
+  obs_fast <- get_airnow_data("000010102", "2018-02-01 00", fast = TRUE, verbose = FALSE)
+  expect_true(ncol(obs) != ncol(obs_fast))
+  expect_true(!all(names(obs_fast) %in% names(obs)))
+})
+
 # Outputs: dates ----------------------------------------------------------
 
 test_that("all dates non-na and within requested period", {

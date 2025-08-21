@@ -9,7 +9,8 @@ purpleair_api(
   write_key = NULL,
   channel,
   parameters = NULL,
-  verbose = TRUE
+  verbose = TRUE,
+  estimate_cost = TRUE
 )
 }
 \arguments{
@@ -25,12 +26,12 @@ purpleair_api(
 non-critical messages/warnings should be printed.}
 }
 \value{
-If channel either "keys" or "organization", or invalid/missing parameters, then a list with the call results
+If channel either "keys" or "organization", or invalid/missing parameters, then a list with the request results
 If sensors or groups channel, then a tibble with the data returned from the request
 }
 \description{
 PurpleAir provides access to the observations from their network of low-cost PM2.5 monitors through a points-based API system.
-New accounts start with 1M points, and each call has a cost from 1-5 points plus the number of rows times the total column cost
+New accounts start with 1M points, and each request has a cost from 1-5 points plus the number of rows times the total column cost
 (which depends on the column, typically 1-2 points per column).
 Point can be purchased on develop.purpleair.com and cost less if buying in bulk.
 
@@ -51,7 +52,7 @@ and (depending on the request type you want to make) a named list of parameters.
 See api.purpleair.com for which parameters are avalailable for each request type.
 Based on the provided channel/parameters, the request and estimated points cost will be displayed,
 and the request will be made if desired. Set \code{verbose} to \code{FALSE} to silence this and always run the request
-(caution, some calls may cost a lot of points)
+(caution, some requests may cost a lot of points)
 }
 \examples{
 \dontrun{
@@ -59,11 +60,11 @@ read_key <- Sys.getenv("purpleair_api_read")
 write_key <- Sys.getenv("purpleair_api_write")
 
 parameters <- list( # see api.purpleair.com for more
-  nwlat = 63.595851, nwlng = -135.899856,
-  selat = 63.592657, selng = -135.891057,
+  nwlat = 53.93, nwlng = -122.77,
+  selat = 53.9, selng = -122.73,
   fields = "temperature",
   sensor_index = 198385,
-  start_timestamp = lubridate::ymd_h("2024-08-15 00", tz = "UTC")
+  start_timestamp = Sys.time() - lubridate::hours(1)
 )
 
 

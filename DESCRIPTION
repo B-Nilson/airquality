@@ -10,6 +10,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    sf,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
@@ -26,14 +27,17 @@ Imports:
     methods,
     osmdata,
     rlang,
-    sf,
     stringr,
     tibble,
     tidyr,
-    xml2
+    uuid,
+    xml2,
+    zoo
 RoxygenNote: 7.3.2
 URL: https://github.com/B-Nilson/airquality
 BugReports: https://github.com/B-Nilson/airquality/issues
 Remotes:  
     github::B-Nilson/handyr,
     github::B-Nilson/aqhi
+Depends: 
+    R (>= 3.5)

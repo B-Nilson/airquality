@@ -4,7 +4,14 @@
 \alias{get_bcgov_data}
 \title{Download air quality station observations from the British Columbia (Canada) Government}
 \usage{
-get_bcgov_data(stations, date_range, raw = FALSE, verbose = TRUE)
+get_bcgov_data(
+  stations,
+  date_range,
+  variables = "all",
+  raw = FALSE,
+  fast = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{stations}{A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).}
@@ -17,8 +24,11 @@ Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
 if raw data files desired (i.e. without a standardized format). Default is FALSE.}
 
-\item{verbose}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be printed}
+\item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+Default is FALSE.}
+
+\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
