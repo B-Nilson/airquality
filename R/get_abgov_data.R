@@ -45,7 +45,7 @@
 #' )
 #' }
 get_abgov_data <- function(
-  stations,
+  stations = "all",
   date_range = "now",
   variables = "all",
   raw = FALSE,
@@ -54,6 +54,15 @@ get_abgov_data <- function(
   stations_per_call = 1,
   days_per_call = 90
 ) {
+  stopifnot(is.character(stations))
+  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
+  stopifnot(is.character(variables))
+  stopifnot(is.logical(raw))
+  stopifnot(is.logical(fast))
+  stopifnot(is.logical(quiet))
+  stopifnot(is.numeric(stations_per_call))
+  stopifnot(is.numeric(days_per_call))
+
   # Constants
   tzone <- "America/Edmonton" # TODO: confirm this
   allowed_date_range <- c("1970-01-01 00", "now") # TODO: confirm this
@@ -148,14 +157,14 @@ abgov_col_names <- c(
   # Particulate Matter
   pm25_1hr = "PM2.5 Mass", # qaqc
   pm25_1hr = "Fine Particulate Matter", # raw
-  # pm10_1hr_ugm3 = "PM10",
+  # pm10_1hr_ugm3 = "PM10", # TODO: check this
   # Ozone
   o3_1hr = "Ozone",
   # Nitrogen Pollutants
   no_1hr = "Nitric Oxide",
   no2_1hr = "Nitrogen Dioxide",
-  nox_1hr = "Total Oxides of ",
-  nh3_1hr = "",
+  nox_1hr = "Total Oxides of ", # TODO: check this
+  nh3_1hr = "", # TODO: check this
   # Sulfur Pollutants
   so2_1hr = "Sulphur ",
   trs_1hr = "Total Reduced Sulphur",
