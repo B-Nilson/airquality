@@ -84,21 +84,10 @@ get_bcgov_data <- function(
   original_date_range <- date_range # copy for later
 
   # Handle variables input
-  variables <- standardize_input_vars(variables)
-  all_variables <- bcgov_col_names[endsWith(
-    names(bcgov_col_names),
-    "_instrument"
-  )] |>
-    names() |>
+  all_variables <- names(bcgov_col_names)[endsWith(bcgov_col_names, "_INSTRUMENT")] |>
     stringr::str_remove("_1hr_instrument")
-  if ("all" %in% variables) {
-    variables <- all_variables
-  } else {
-    variables <- variables[variables %in% all_variables]
-  }
-  if (length(variables) == 0) {
-    stop("No valid variables specified.")
-  }
+  variables <- variables |>
+    standardize_input_vars(all_variables)
 
   # Get all years in desired date range and drop all but the first in qaqc_years
   years_to_get <- date_range[1] |>

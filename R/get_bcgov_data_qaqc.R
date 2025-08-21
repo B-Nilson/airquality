@@ -9,17 +9,11 @@ bcgov_get_qaqc_data <- function(
     paste0("/AnnualSummary/")
 
   # Handle input variables
-  variables <- standardize_input_vars(variables)
-  if (any(variables == "all")) {
-    is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
-    variables <- bcgov_col_names[is_instrument_col] |>
-      stringr::str_remove("_INSTRUMENT")
-  } else {
-    variables <- bcgov_col_names[
-      names(bcgov_col_names) %in% paste0(variables, "_1hr")
-    ] |>
-      unname()
-  }
+  is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
+  all_variables <- names(bcgov_col_names)[is_instrument_col] |>
+    stringr::str_remove("_1hr_instrument")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
 
   # Make paths to files to get
   qaqc_paths <- years |>
