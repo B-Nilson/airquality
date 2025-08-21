@@ -22,9 +22,9 @@ A few useful functions for working with air quality data.
 ``` r 
 library(airquality)
 
-# Convert between units [under development]
-convert_units(c(-20, 0, 20), in_unit = "C", out_unit = "F")
-convert_units(c(0, 50, 100), c(5, 10, 25), "%", "DEW POINT")
+# Convert between units
+convert_units(c(-20, 0, 20), in_unit = "degC", out_unit = "degF")
+convert_units(c(0, 50, 100), in_unit = "ppm", out_unit = "ppb", keep_units = FALSE)
 
 ```
 

@@ -1,13 +1,13 @@
-# TODO: add tests
+# TODO: move to handyr
 #' Convert between common units
 #'
-#' @param x Vector of values to be converted.
-#' @param in_unit A single character value indicating the units of `x`.
-#' @param out_unit A single character value indicating the units to convert `x` to.
-#' @param y (Optional) [UNDER DEVELOPMENT] Vector of extra values required for certain conversions. (i.e. temperature for converting RH to DEWPOINT)
+#' @param x Vector of numeric values to be converted.
+#' @param in_unit A single character value indicating the units of `x`. See `units::available_units()` for options.
+#' @param out_unit A single character value indicating the units to convert `x` to. See `units::available_units()` for options.
+#' @param keep_units (Optional) A single logical (TRUE or FALSE) value indicating if the units of `x` should be kept.
 #'
 #' @description
-#' `convert_units` provides a simple way to convert between common units in air quality / meteorology.
+#' `convert_units` provides a simple way to convert between units, leveraging the `units` package.
 #'
 #' @family Utilities
 #'
@@ -15,77 +15,18 @@
 #' @export
 #'
 #' @examples
-#' convert_units(c(-20:20), in_unit = "C", out_unit = "F")
-#' convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
-convert_units <- function(x, in_unit, out_unit, y = NULL) {
-  # Handle inputs
-  in_unit <- toupper(in_unit)
-  out_unit <- toupper(out_unit)
-  if (in_unit == out_unit) {
-    return(x)
-  }
+#' convert_units(c(-20:20), in_unit = "degC", out_unit = "degF")
+#' convert_units(c(0:10), in_unit = "ppm", out_unit = "ppb", keep_units = TRUE)
+convert_units <- function(x, in_unit, out_unit, keep_units = FALSE) {
+  converted <- x |>
+    units::set_units(in_unit, mode = "standard") |>
+    units::set_units(out_unit, mode = "standard")
 
-  # Determine conversion type
-  all_units <- all_conversions |>
-    lapply(\(conversions) {
-      names(conversions) |>
-        stringr::str_split("_to_") |>
-        unlist()
-    })
-  conversion_type <- sapply(all_units, \(x) in_unit %in% x)
-  conversion_type <- names(conversion_type[conversion_type])[1]
-
-  # Convert into shared base unit first if needed
-  base_unit <- all_units[[conversion_type]][1]
-  is_base_unit <- in_unit == base_unit | out_unit == base_unit
-  if (!is_base_unit) {
-    x <- x |> convert_units(in_unit, base_unit, y) # TODO: correct to use y here always?
-    in_unit <- base_unit
-  }
-
-  # Apply conversion to desired unit
-  conversion <- paste0(in_unit, "_to_", out_unit)
-  conversion_fun <- all_conversions[[conversion_type]][[conversion]]
-  if (is.null(y)) conversion_fun(x) else conversion_fun(x, y)
+  if (!keep_units) {
+    converted <- as.numeric(converted)
+  } 
+  return(converted)
 }
-
-# TODO: add to this
-all_conversions <- list(
-  concentrations = list(
-    PPM_to_PPB = function(PPM) PPM * 1000,
-    PPB_to_PPM = function(PPB) PPB / 1000,
-    PPM_to_UGM3 = function(PPM) PPM,
-    UGM3_to_PPM = function(UGM3) UGM3
-  ),
-  temperature = list(
-    C_to_F = function(C) (C * 9 / 5) + 32,
-    C_to_K = function(C) C + 273.15,
-    F_to_C = function(F) (F - 32) * 5 / 9,
-    K_to_C = function(K) K - 273.15
-  ),
-  humidity = list(
-    RH_to_DEWPOINT = function(RH, T) {
-      b <- ifelse(T >= 0, 17.368, 17.966) # Over water, or over ice
-      c <- ifelse(T >= 0, 238.88, 247.15) # Over water, or over ice
-      return(
-        c *
-          log(RH / 100 * saturation_vapour_pressure(T) / 6.1121) /
-          (b - log(RH / 100 * saturation_vapour_pressure(T) / 6.1121))
-      )
-    },
-    DEWPOINT_to_RH = function(Td, T) {
-      saturation_vapour_pressure(Td) / saturation_vapour_pressure(T) * 100
-    }
-  ),
-  trigonometry = list(
-    DEGREES_to_RADIANS = function(degrees) {
-      (degrees * pi / 180) %% (2 * pi)
-    },
-    RADIANS_to_DEGREES = function(radians) {
-      (radians * 180 / pi) %% 360
-    }
-  )
-)
 
 saturation_vapour_pressure <- function(temperature_c) {
   if (!dplyr::between(temperature_c, -80, 50)) {

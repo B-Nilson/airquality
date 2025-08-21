@@ -4,25 +4,25 @@
 \alias{convert_units}
 \title{Convert between common units}
 \usage{
-convert_units(x, in_unit, out_unit, y = NULL)
+convert_units(x, in_unit, out_unit, keep_units = FALSE)
 }
 \arguments{
-\item{x}{Vector of values to be converted.}
+\item{x}{Vector of numeric values to be converted.}
 
-\item{in_unit}{A single character value indicating the units of `x`.}
+\item{in_unit}{A single character value indicating the units of `x`. See `units::available_units()` for options.}
 
-\item{out_unit}{A single character value indicating the units to convert `x` to.}
+\item{out_unit}{A single character value indicating the units to convert `x` to. See `units::available_units()` for options.}
 
-\item{y}{(Optional) [UNDER DEVELOPMENT] Vector of extra values required for certain conversions. (i.e. temperature for converting RH to DEWPOINT)}
+\item{keep_units}{(Optional) A single logical (TRUE or FALSE) value indicating if the units of `x` should be kept.}
 }
 \value{
 a vector of `x` converted from `in_unit` to `out_unit`
 }
 \description{
-`convert_units` provides a simple way to convert between common units in air quality / meteorology.
+`convert_units` provides a simple way to convert between units, leveraging the `units` package.
 }
 \examples{
-convert_units(c(-20:20), in_unit = "C", out_unit = "F")
-convert_units(c(0:10), in_unit = "PPM", out_unit = "PPB")
+convert_units(c(-20:20), in_unit = "degC", out_unit = "degF")
+convert_units(c(0:10), in_unit = "ppm", out_unit = "ppb", keep_units = TRUE)
 }
 \concept{Utilities}
