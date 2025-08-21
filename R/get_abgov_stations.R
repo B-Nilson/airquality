@@ -26,7 +26,7 @@
 #' # if spatial object required
 #' get_abgov_stations(use_sf = TRUE)
 #' }
-get_abgov_stations <- function(..., use_sf = FALSE) {
+get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
   # Constants
   api_url <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
   api_endpoint <- "Stations"
@@ -50,7 +50,7 @@ get_abgov_stations <- function(..., use_sf = FALSE) {
   # Get raw station metadata from the AB gov API
   raw_stations <- api_url |>
     paste0(api_endpoint, "?") |>
-    abgov_get_raw_data_request()
+    abgov_get_raw_data_request(quiet = quiet)
 
   # Standardize formatting
   stations <- raw_stations |>

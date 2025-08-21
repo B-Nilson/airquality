@@ -104,7 +104,8 @@ get_abgov_data <- function(
       get_abgov_data_raw(
         date_range_new,
         stations_per_call = stations_per_call,
-        days_per_call = days_per_call
+        days_per_call = days_per_call,
+        quiet = quiet
       ) |>
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }

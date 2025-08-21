@@ -2,7 +2,8 @@ get_abgov_data_raw <- function(
   stations,
   date_range,
   stations_per_call = 1,
-  days_per_call = 90
+  days_per_call = 90,
+  quiet = FALSE
 ) {
   api_url <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
   api_endpoint <- "StationMeasurements"
@@ -17,6 +18,7 @@ get_abgov_data_raw <- function(
     paste0(api_endpoint, "?", api_args) |>
     handyr::for_each(
       abgov_get_raw_data_request,
+      quiet = quiet,
       .bind = TRUE
     ) |>
     tibble::as_tibble() |>
@@ -114,7 +116,10 @@ build_abgov_data_args <- function(
     unname()
 }
 
-abgov_get_raw_data_request <- function(api_request) {
+abgov_get_raw_data_request <- function(api_request, quiet = FALSE) {
+  if (!quiet) {
+    message(api_request)
+  }
   api_request <- api_request |>
     xml2::read_xml() |>
     xml2::as_list() |>
