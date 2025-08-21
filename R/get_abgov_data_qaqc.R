@@ -19,6 +19,7 @@ get_abgov_data_qaqc <- function(
   # Handle input variables
   id_cols <- c("site_name", "date_utc", "quality_assured")
   all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  all_variables <- all_variables[all_variables != "Fine Particulate Matter"] # raw API column
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
