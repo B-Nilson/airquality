@@ -30,7 +30,7 @@ get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
   # Constants
   api_url <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
   api_endpoint <- "Stations"
-  header <- c(
+  desired_cols <- c(
     site_id = "Abbreviation",
     site_name = "Name",
     type = "Type",
@@ -54,19 +54,19 @@ get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
 
   # Standardize formatting
   stations <- raw_stations |>
-    dplyr::select(dplyr::any_of(header)) |>
+    dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = placeholders) |>
     dplyr::mutate(
       dplyr::across(
         dplyr::any_of(numeric_cols),
         as.numeric
       ),
-      tz_local = handyr::get_timezone(
-        lng = .data$lng,
-        lat = .data$lat
-      )
+      tz_local = .data$lng |>
+        handyr::get_timezone(lat = .data$lat)
     ) |>
-    dplyr::arrange(.data$site_id)
+    dplyr::arrange(.data$site_id) |>
+    dplyr::distinct(site_id, .keep_all = TRUE) |>
+    dplyr::filter(complete.cases(.data$site_id, .data$lat, .data$lng))
 
   # Convert to spatial if desired
   if (use_sf) {
