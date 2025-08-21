@@ -76,7 +76,7 @@ get_abgov_data_qaqc <- function(
               station_details <- names(request_tokens[[i]])[j] |>
                 stringr::str_split(pattern = "\\|", simplify = TRUE)
               token |>
-                abgov_get_qaqc_data_request(max_tries = max_tries) |>
+                abgov_get_qaqc_data_request(max_tries = max_tries, quiet = quiet) |>
                 abgov_parse_qaqc_data(station_details = station_details) |>
                 handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
             }
@@ -355,7 +355,7 @@ abgov_get_qaqc_keys <- function(stations, parameters) {
     dplyr::cross_join(parameter_keys)
 }
 
-abgov_get_qaqc_data_request <- function(data_request_token, max_tries = 25) {
+abgov_get_qaqc_data_request <- function(data_request_token, max_tries = 25, quiet = FALSE) {
   api_url <- "https://datamanagementplatform.alberta.ca/"
   endpoint_status <- "Home/GetRequestStatus"
   endpoint_download <- "Home/ProcessDownload"
@@ -391,7 +391,7 @@ abgov_get_qaqc_data_request <- function(data_request_token, max_tries = 25) {
     paste0(endpoint_download, "?token=", data_request_token) |>
     httr::GET() |>
     httr::content(as = "text", encoding = "UTF-8") |>
-    data.table::fread(fill = TRUE, encoding = "UTF-8")
+    data.table::fread(fill = TRUE, encoding = "UTF-8", verbose = FALSE, showProgress = !quiet)
 }
 
 abgov_parse_qaqc_data <- function(data_stream, station_details) {
