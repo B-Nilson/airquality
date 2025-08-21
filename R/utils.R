@@ -54,6 +54,13 @@ handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
   }
   # Handle character inputs
   if (is.character(date_range)) {
+    if ("now" %in% date_range) {
+      date_range <- date_range |>
+        handyr::swap("now", with = lubridate::now(tz = tz) |>
+          lubridate::floor_date("hours") |>
+          lubridate::with_tz("UTC") |>
+          format("%F %H"))
+    }
     date_range <- date_range |>
       lubridate::ymd_h(tz = "UTC") |>
       handyr::silence(output = FALSE)

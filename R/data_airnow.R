@@ -79,7 +79,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' @param stations (Optional) Either "all" or a character vector specifying AQS IDs for stations to filter data to.
 #' If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
 #' but only data for desired stations is returned. Default is "all".
-#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format) with either 1 or 2 values.
+#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times.
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
@@ -128,7 +128,7 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 #' date_range <- lubridate::ymd_h(c("2019-01-01 01", "2019-01-01 03"), tz = "Etc/GMT+8")
 #' get_airnow_data("all", date_range, raw = TRUE)
 #' }
-get_airnow_data <- function(stations = "all", date_range, raw = FALSE, fast = FALSE, quiet = FALSE) {
+get_airnow_data <- function(stations = "all", date_range = "now", raw = FALSE, fast = FALSE, quiet = FALSE) {
   # Output citation message to user
   if (!quiet) data_citation("AirNow")
 
