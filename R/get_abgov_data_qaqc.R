@@ -15,11 +15,13 @@ get_abgov_data_qaqc <- function(
   # Handle date_range inputs
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
-  
+
   # Handle input variables
   id_cols <- c("site_name", "date_utc", "quality_assured")
-  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
-  all_variables <- all_variables[all_variables != "Fine Particulate Matter"] # raw API column
+  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
+  value_cols <- value_cols[value_cols != "Fine Particulate Matter"] # raw API column
+  all_variables <- names(value_cols) |>
+    stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
@@ -36,8 +38,11 @@ get_abgov_data_qaqc <- function(
   }
 
   # Get API keys for our stations/parameters
+  desired_var_cols <- value_cols[
+    stringr::str_remove(names(value_cols), "_1hr") %in% variables
+  ]
   keys <- stations |>
-    abgov_get_qaqc_keys(parameters = variables)
+    abgov_get_qaqc_keys(parameters = desired_var_cols)
 
   # Initiate data request(s) and get token(s) for tracking progress
   request_tokens <- date_range |>

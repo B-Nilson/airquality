@@ -163,10 +163,10 @@ abgov_col_names <- c(
   # Nitrogen Pollutants
   no_1hr = "Nitric Oxide",
   no2_1hr = "Nitrogen Dioxide",
-  nox_1hr = "Total Oxides of ", # TODO: check this
-  nh3_1hr = "", # TODO: check this
+  nox_1hr = "Total Oxides of Nitrogen", # TODO: check this
+  nh3_1hr = "Ammonia", # TODO: check this
   # Sulfur Pollutants
-  so2_1hr = "Sulphur ",
+  so2_1hr = "Sulphur Dioxide",
   trs_1hr = "Total Reduced Sulphur",
   h2s_1hr = "Hydrogen Sulphide",
   # # Carbon Monoxide
@@ -180,8 +180,10 @@ abgov_col_names <- c(
   rh_1hr = "Relative Humidity",
   t_1hr = "Outdoor Air Temperature",
   wd_1hr = "Wind Direction",
+  wd_sd_1hr = "Std. Dev. of Wind Direction",
   ws_1hr = "Wind Speed",
-  solar_1hr = "Solar Radiation"
+  solar_1hr = "Solar Radiation",
+  pressure_1hr = "Barometric Pressure (non-adjusted)"
 )
 
 # TODO: check these are right (compare raw with qaqc since qaqc units are provided)
