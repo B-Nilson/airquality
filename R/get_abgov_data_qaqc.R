@@ -224,7 +224,7 @@ abgov_init_data_request <- function(
 
   if (!is.null(result$error)) {
     if (result$error != FALSE) {
-      stop(result$error)
+      stop(result$message)
     }
   }
   result$token
