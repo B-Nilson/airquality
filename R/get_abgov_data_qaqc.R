@@ -294,6 +294,12 @@ abgov_get_keys <- function(
     dplyr::mutate(value = as.numeric(value)) |>
     tidyr::pivot_wider() |>
     unlist()
+  names(keys) <- stringr::str_split(
+    names(keys),
+    " / ",
+    simplify = TRUE
+  )[, 1]
+
   # Filter to desired keys
   if (!"all" %in% select_keys) {
     is_selected <- (names(keys) %in% select_keys) |
