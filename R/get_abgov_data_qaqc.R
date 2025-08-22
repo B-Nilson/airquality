@@ -31,6 +31,8 @@ get_abgov_data_qaqc <- function(
     median(na.rm = TRUE)
   if (max_duration > 3650) {
     max_duration <- "3650 days"
+  } else if (max_duration < 30) {
+    max_duration <- "30 days"
   }
 
   # Get API keys for our stations/parameters
