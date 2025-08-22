@@ -112,11 +112,7 @@ get_abgov_data_qaqc <- function(
   obs |>
     dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
     dplyr::mutate(
-      Unit = dplyr::case_when(
-        Unit == "deg" ~ "degrees",
-        Unit == "deg c" ~ "degC",
-        TRUE ~ Unit
-      ),
+      Unit = standardize_units(Unit),
       date_utc = (`Interval Start` + lubridate::hours(1)) |>
         lubridate::with_tz("UTC"),
       quality_assured = TRUE

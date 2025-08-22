@@ -145,7 +145,7 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
               as.numeric() |>
               suppressWarnings() |> # NAs introduced by coercion
               units::set_units(
-                bcgov_fix_units(.data[[unit_cols[i]]][1]),
+                standardize_units(.data[[unit_cols[i]]][1]),
                 mode = "standard"
               ) |>
               units::set_units(default_unit, mode = "standard")

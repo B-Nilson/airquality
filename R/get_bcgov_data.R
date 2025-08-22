@@ -348,11 +348,13 @@ bcgov_get_annual_data <- function(
     dplyr::mutate(quality_assured = is_qaqc_year)
 }
 
-bcgov_fix_units <- function(units) {
+standardize_units <- function(units) {
   dplyr::case_when(
     units == "% RH" ~ "%",
     units == "\xb0C" ~ "degC",
     units == "Deg." ~ "degrees",
+    units == "deg" ~ "degrees",
+    units == "deg c" ~ "degC",
     TRUE ~ units
   )
 }
