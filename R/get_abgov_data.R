@@ -78,7 +78,9 @@ get_abgov_data <- function(
     handle_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
+  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
+  all_variables <- names(value_cols) |>
+    stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
 
@@ -96,7 +98,7 @@ get_abgov_data <- function(
   qaqc_data <- stations |>
     get_abgov_data_qaqc(
       date_range = date_range,
-      parameters = "all",
+      variables = variables,
       fast = fast,
       quiet = quiet
     ) |>
@@ -121,7 +123,8 @@ get_abgov_data <- function(
   if (!is.null(date_range_new)) {
     raw_data <- stations |>
       get_abgov_data_raw(
-        date_range_new,
+        date_range = date_range_new,
+        variables = variables,
         stations_per_call = stations_per_call,
         days_per_call = days_per_call,
         quiet = quiet
@@ -179,7 +182,7 @@ abgov_col_names <- c(
   ch4_1hr = "Methane",
   # Hydrocarbons
   hc_1hr = "Total Hydrocarbons",
-  hcnm_1hr = "Non-methane Hydrocarbons",
+  hc_nm_1hr = "Non-methane Hydrocarbons",
   # Met data
   rh_1hr = "Relative Humidity",
   t_1hr = "Outdoor Air Temperature",
