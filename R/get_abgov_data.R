@@ -133,6 +133,10 @@ get_abgov_data <- function(
         days_per_call = days_per_call,
         quiet = quiet
       ) |>
+      format_abgov_raw_data(
+        date_range = date_range_new,
+        desired_cols = abgov_col_names
+      ) |>
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }
 

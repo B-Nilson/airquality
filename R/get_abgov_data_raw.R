@@ -33,9 +33,19 @@ get_abgov_data_raw <- function(
       abgov_get_raw_data_request,
       quiet = quiet,
       .bind = TRUE
-    ) |>
-    tibble::as_tibble() |>
-    # Convert dates, add QA/QC placeholder, and filter to desired range
+    )
+  
+  if (length(variables) == 1) {
+    raw_data$ParameterName <- value_cols[1]
+  }
+  return(raw_data)
+}
+
+format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
+  pivot_cols <- c("ParameterName", "Value")
+
+  raw_data |> 
+    # Convert dates, mark not quality assured, and filter to desired range
     dplyr::mutate(
       date_utc = .data$ReadingDate |>
         lubridate::ymd_hms(tz = tzone) |>
