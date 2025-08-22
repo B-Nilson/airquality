@@ -168,7 +168,8 @@ abgov_col_names <- c(
   site_name = "site_name", # qaqc
   site_name = "StationName", # raw
   quality_assured = "quality_assured",
-  date_utc = "date_utc", #
+  date_utc = "date_utc", # qaqc
+  date_utc = "ReadingDate", # raw
   # Particulate Matter
   pm25_1hr = "PM2.5 Mass", # qaqc
   pm25_1hr = "Fine Particulate Matter", # raw

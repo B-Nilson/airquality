@@ -47,14 +47,13 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
   raw_data |> 
     # Convert dates, mark not quality assured, and filter to desired range
     dplyr::mutate(
-      date_utc = .data$ReadingDate |>
+      ReadingDate = .data$ReadingDate |>
         lubridate::ymd_hms(tz = tzone) |>
         lubridate::with_tz("UTC"),
       quality_assured = FALSE
     ) |>
-    dplyr::select(-dplyr::any_of(drop_cols)) |>
     dplyr::filter(
-      .data$date_utc |>
+      .data$ReadingDate |>
         dplyr::between(date_range[1], date_range[2])
     ) |>
     # Long -> wide, fix column names
