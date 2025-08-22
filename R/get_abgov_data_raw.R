@@ -122,7 +122,7 @@ build_abgov_data_args <- function(
             param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
           } else {
             param_filter <- paste0("indexof('", variables, "', ParameterName) ge 1") |> 
-              paste(collapse = " and ")
+              paste(collapse = " or ")
           }
           filter_query <- station_filter |>
             paste(date_filter, param_filter, sep = " and ")
