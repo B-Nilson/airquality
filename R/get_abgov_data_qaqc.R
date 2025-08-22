@@ -101,8 +101,7 @@ get_abgov_data_qaqc <- function(
             }
           )
       }
-    ) |>
-    dplyr::distinct(`Interval End`, Flags, Parameter, Unit, .keep_all = TRUE)
+    )
 
   if (nrow(obs) == 0) {
     stop("No data available for provided request")
@@ -113,19 +112,30 @@ get_abgov_data_qaqc <- function(
       dplyr::left_join(abgov_qaqc_flags[, 1:2], by = c("Flags" = "flag"))
   }
 
-  if (raw) {
-    return(obs)
-  }
+  return(obs)
+}
 
-  obs |>
+abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
+  qaqc_data |>
+    # Remove duplicates and any missing or flagged data
+    dplyr::distinct(
+      site_name,
+      `Interval End`,
+      Flags,
+      Parameter,
+      Unit,
+      .keep_all = TRUE
+    ) |>
     dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
+    # Fix units, set obs date, and mark quality assured
     dplyr::mutate(
       Unit = standardize_units(Unit),
       date_utc = (`Interval Start` + lubridate::hours(1)) |>
         lubridate::with_tz("UTC"),
-      quality_assured = TRUE
+      quality_assured = is.na(Flags)
     ) |>
     dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
+    # Set units and widen
     dplyr::group_by(Unit) |>
     dplyr::group_split() |>
     handyr::for_each(
@@ -143,19 +153,25 @@ get_abgov_data_qaqc <- function(
           )
       }
     ) |>
-    # TODO: remove by once join_luist made flexible
-    handyr::join_list(by = c("date_utc", "quality_assured", "site_name")) |>
-    dplyr::select(dplyr::any_of(abgov_col_names)) |>
-    dplyr::filter(rowSums(!is.na(dplyr::across(-c(1:4)))) > 0) |> 
+    handyr::join_list() |>
+    # Select and rename/reorder columns
+    dplyr::select(dplyr::any_of(desired_cols)) |>
+    # Drop empty obs rows
+    dplyr::filter(
+      rowSums(!is.na(dplyr::across(-dplyr::any_of(id_cols)))) > 0
+    ) |>
     # standardize units
     dplyr::mutate(
       dplyr::across(
-        dplyr::any_of(names(default_units)), 
+        dplyr::any_of(names(default_units)),
         \(x) {
-          x |> convert_units( 
-            in_unit = units::units(x),
-            out_unit = default_units[names(default_units) == dplyr::cur_column()]
-          )
+          x |>
+            convert_units(
+              in_unit = units::deparse_unit(x),
+              out_unit = default_units[
+                names(default_units) == dplyr::cur_column()
+              ]
+            )
         }
       )
     )

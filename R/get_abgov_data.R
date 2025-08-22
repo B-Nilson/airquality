@@ -99,7 +99,8 @@ get_abgov_data <- function(
       parameters = "all",
       fast = fast,
       quiet = quiet
-    ) |>
+    ) |> 
+    abgov_format_qaqc_data(date_range = date_range, desired_cols = abgov_col_names) |>
     handyr::on_error(.return = data.frame(), .message = TRUE)
 
   # Alter date_range to account for retrieved QAQC data
