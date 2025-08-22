@@ -78,7 +78,7 @@ get_abgov_data <- function(
     handle_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols] 
+  all_variables <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
   variables <- variables |>
     standardize_input_vars(all_variables)
 
@@ -99,8 +99,11 @@ get_abgov_data <- function(
       parameters = "all",
       fast = fast,
       quiet = quiet
-    ) |> 
-    abgov_format_qaqc_data(date_range = date_range, desired_cols = abgov_col_names) |>
+    ) |>
+    abgov_format_qaqc_data(
+      date_range = date_range,
+      desired_cols = abgov_col_names
+    ) |>
     handyr::on_error(.return = data.frame(), .message = TRUE)
 
   # Alter date_range to account for retrieved QAQC data

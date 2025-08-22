@@ -1,8 +1,7 @@
 get_abgov_data_qaqc <- function(
   stations = "all",
   variables = "all",
-  date_range = Sys.time() |>
-    lubridate::floor_date("hours"),
+  date_range = "now",
   max_tries = 100,
   raw = FALSE,
   fast = FALSE,
@@ -66,7 +65,7 @@ get_abgov_data_qaqc <- function(
                 date_range = d_range
               ) |>
               stats::setNames(this_stations_keys$station_name[1]) |>
-              handyr::on_error(.return = NULL, .message = TRUE)
+              handyr::on_error(.return = NULL)
           })
       }
     ) |>
@@ -97,7 +96,7 @@ get_abgov_data_qaqc <- function(
                   quiet = quiet
                 ) |>
                 abgov_parse_qaqc_data(station_details = station_details) |>
-                handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
+                handyr::on_error(.return = NULL)
             }
           )
       }
@@ -107,9 +106,12 @@ get_abgov_data_qaqc <- function(
     stop("No data available for provided request")
   }
 
-  if (!fast) {
+  if (!fast & !raw) {
     obs <- obs |>
-      dplyr::left_join(abgov_qaqc_flags[, 1:2], by = c("Flags" = "flag"))
+      dplyr::left_join(
+        abgov_qaqc_flags[, c("flag", "flag_name")],
+        by = c("Flags" = "flag")
+      )
   }
 
   return(obs)
@@ -247,9 +249,8 @@ abgov_get_qaqc_operators <- function(select_operators = "all") {
     setNames(operator_names)
   # Filter to desired operators
   if (!"all" %in% select_operators) {
-    is_selected <- operators %in%
-      select_operators |
-      names(operators) %in% select_operators
+    is_selected <-
+      operators %in% select_operators | names(operators) %in% select_operators
     operators <- operators[is_selected]
   }
   return(operators)
@@ -273,6 +274,7 @@ abgov_get_keys <- function(
     )
   is_continuous <- continuous |>
     ifelse("Continuous", "Non Continuous")
+
   # Build request
   key_args <- c(
     if (type %in% c("stations", "parameters")) {
@@ -284,6 +286,7 @@ abgov_get_keys <- function(
   )
   request_body <- list(CollectionType = is_continuous) |>
     c(key_args)
+
   # Get key names and values
   keys <- api_url |>
     paste0(endpoint) |>
@@ -324,15 +327,18 @@ abgov_get_qaqc_station_params <- function(
 ) {
   api_url <- "https://datamanagementplatform.alberta.ca/"
   endpoint <- "Ambient/GetAOParametersForStations"
+
   # Build request
   key_args <- c(
     operator_keys |> abgov_make_key_args("AreaOperatorKeys"),
     station_keys |> abgov_make_key_args("StationKeys")
   )
   request_body <- list(
-    CollectionType = ifelse(continuous, "Continuous", "Non Continuous")
+    CollectionType = continuous |>
+      ifelse("Continuous", "Non Continuous")
   ) |>
     c(key_args)
+
   # Get parameter names and keys
   params <- api_url |>
     paste0(endpoint) |>
@@ -345,6 +351,7 @@ abgov_get_qaqc_station_params <- function(
     dplyr::select(name = text, value) |>
     dplyr::mutate(value = as.numeric(value)) |>
     tidyr::pivot_wider()
+
   # Filter to desired parameters
   if (!"all" %in% select_params) {
     is_selected <- names(params) %in% select_params | params %in% select_params
@@ -355,17 +362,20 @@ abgov_get_qaqc_station_params <- function(
 
 abgov_get_qaqc_keys <- function(stations, parameters) {
   operator_keys <- abgov_get_qaqc_operators()
+
   # Get keys for selected stations by operator
   station_keys <- operator_keys |>
     lapply(\(key) {
       list(operators = key) |>
         abgov_get_keys(select_keys = stations, type = "stations")
     })
+
   # Drop keys for non-selected operators
   station_keys <- station_keys[sapply(station_keys, length) > 0]
   operator_keys <- operator_keys[
     names(operator_keys) %in% names(station_keys)
   ]
+
   # Get keys for selected parameters
   parameter_keys <- list(
     operators = operator_keys,
@@ -376,6 +386,7 @@ abgov_get_qaqc_keys <- function(stations, parameters) {
       type = "parameters",
       continuous = TRUE
     )
+
   # Combine keys for making requests
   operator_keys <- data.frame(
     operator_name = names(operator_keys),
@@ -409,6 +420,7 @@ abgov_get_qaqc_data_request <- function(
   api_url <- "https://datamanagementplatform.alberta.ca/"
   endpoint_status <- "Home/GetRequestStatus"
   endpoint_download <- "Home/ProcessDownload"
+
   # Initialize
   request_not_ready <- TRUE
   total_tries <- 0
@@ -436,6 +448,7 @@ abgov_get_qaqc_data_request <- function(
       total_tries <- total_tries + 1
     }
   }
+
   # Download data
   api_url |>
     paste0(endpoint_download, "?token=", data_request_token) |>
