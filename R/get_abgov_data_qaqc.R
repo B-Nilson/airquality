@@ -89,7 +89,7 @@ get_abgov_data_qaqc <- function(
               if (is.null(token)) {
                 return(NULL)
               }
-              station_details <- names(request_tokens[[i]])[j] |>
+              station_details <- names(tokens[[j]]) |>
                 stringr::str_split(pattern = "\\|", simplify = TRUE)
               token |>
                 abgov_get_qaqc_data_request(
