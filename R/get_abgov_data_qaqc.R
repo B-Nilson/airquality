@@ -69,7 +69,8 @@ get_abgov_data_qaqc <- function(
               handyr::on_error(.return = NULL, .message = TRUE)
           })
       }
-    )
+    ) |>
+    lapply(\(x) x[!sapply(x, is.null)])
   # Download data as it becomes available
   obs <- request_tokens |>
     handyr::for_each(
