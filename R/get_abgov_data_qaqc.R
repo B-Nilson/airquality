@@ -446,6 +446,9 @@ abgov_get_qaqc_data_request <- function(
 abgov_parse_qaqc_data <- function(data_stream, station_details) {
   # Remove metadata header
   header_row <- which(data_stream[, 1] == "Data Origin: ")
+  if (length(header_row) == 0) {
+    stop("No data found")
+  }
   meta_rows <- data_stream |>
     head(header_row - 1)
   data_rows <- data_stream |>
