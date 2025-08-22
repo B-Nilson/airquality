@@ -165,7 +165,8 @@ abgov_init_data_request <- function(
   is_continuous <- continuous |>
     ifelse("Continuous", "Non Continuous")
   session_token <- api_url |>
-    get_session_token(endpoint = endpoint)
+    simulate_session(endpoint = endpoint) |>
+    get_session_token()
   # Build request
   key_args <- c(
     operator_key |> abgov_make_key_args("AreaOperatorKeys"),
@@ -211,10 +212,7 @@ abgov_get_qaqc_operators <- function(select_operators = "all") {
 
   # Simulate session and extract operator options
   operator_options <- api_url |>
-    paste0(endpoint) |>
-    httr::GET() |>
-    httr::content(as = "text", encoding = "UTF-8") |>
-    rvest::read_html() |>
+    simulate_session(endpoint = endpoint) |>
     rvest::html_nodes("select[name='AreaOperatorKeys'] option")
   # Extract operator names and keys from options
   operator_names <- operator_options |>
@@ -480,12 +478,16 @@ abgov_parse_qaqc_param_data <- function(param_data) {
 }
 
 # TODO: move to handyr
-get_session_token <- function(site, endpoint) {
+get_session_token <- function(session) {
+  session |>
+    rvest::html_node("input[name='__RequestVerificationToken']") |>
+    rvest::html_attr("value")
+}
+
+simulate_session <- function(site, endpoint) {
   site |>
     paste0(endpoint) |>
     httr::GET() |>
     httr::content(as = "text", encoding = "UTF-8") |>
-    rvest::read_html() |>
-    rvest::html_node("input[name='__RequestVerificationToken']") |>
-    rvest::html_attr("value")
+    rvest::read_html()
 }
