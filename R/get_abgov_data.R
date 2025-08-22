@@ -65,7 +65,11 @@ get_abgov_data <- function(
 
   # Constants
   tzone <- "America/Edmonton" # TODO: confirm this
-  allowed_date_range <- c("1970-01-01 00", "now") # TODO: confirm this
+  allowed_date_range <- c("1970-01-01 00") # TODO: confirm this
+  allowed_date_range[2] <- lubridate::now(tz = tzone) |>
+    lubridate::floor_date("months") |>
+    lubridate::with_tz("UTC") |> 
+    format("%Y-%m-%d %H")
   id_cols <- c("site_name", "date_utc", "quality_assured")
   pivot_cols <- c("ParameterName", "Value")
   drop_cols <- c("Id", "ReadingDate", "DeterminantParameterName")
