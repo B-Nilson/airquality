@@ -17,7 +17,7 @@ get_abgov_data_qaqc <- function(
 
   # Decide which api endpoint to use
   mode <- dplyr::case_when(
-    any(stations == "all") ~ "parameters", 
+    any(stations == "all") ~ "parameters",
     any(parameters == "all") & length(stations) < 8 ~ "stations",
     length(stations) > length(parameters) ~ "parameters",
     TRUE ~ "stations"
@@ -147,7 +147,9 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
         lubridate::with_tz("UTC"),
       quality_assured = is.na(Flags)
     ) |>
-    dplyr::filter(ReadingDate |> dplyr::between(date_range[1], date_range[2])) |>
+    dplyr::filter(
+      ReadingDate |> dplyr::between(date_range[1], date_range[2])
+    ) |>
     # Set units and widen
     dplyr::group_by(Unit) |>
     dplyr::group_split() |>

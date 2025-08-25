@@ -158,9 +158,9 @@ get_abgov_data <- function(
 
 .abgov_columns <- list(
   meta = c(
-    site_name = "StationName", 
+    site_name = "StationName",
     quality_assured = "quality_assured",
-    date_utc = "ReadingDate" 
+    date_utc = "ReadingDate"
   ),
   values = c(
     # Particulate Matter

@@ -20,7 +20,7 @@ get_abgov_data_raw <- function(
   # Make request(s) as needed to load all desired data
   api_args <- stations |>
     build_abgov_data_args(
-      date_range,
+      date_range = date_range,
       variables = variables,
       stations_per_call = stations_per_call,
       days_per_call = days_per_call
@@ -157,10 +157,11 @@ build_abgov_data_args <- function(
   args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
   args_template |>
     sprintf(filters, selected_cols, time_out) |>
-    utils::URLencode(reserved = TRUE) |>
+    utils::URLencode(reserved = TRUE) |> # TODO: reevaluate encoding here
     stringr::str_replace_all("%3D", "=") |>
     stringr::str_replace_all("%2C", ",") |>
-    stringr::str_replace_all("%26", "&")
+    stringr::str_replace_all("%26", "&") |>
+    stringr::str_replace_all("%24", "$")
 }
 
 abgov_get_raw_data_request <- function(api_request, quiet = FALSE) {
