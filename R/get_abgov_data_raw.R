@@ -76,7 +76,7 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
 }
 
 build_abgov_data_args <- function(
-  stations,
+  stations = "all",
   date_range,
   variables = "all",
   stations_per_call = 3,
@@ -93,20 +93,25 @@ build_abgov_data_args <- function(
   get_all_vars <- all(all_variables %in% variables)
 
   # Build station filter(s)
-  station_filters <- seq(1, length(stations), stations_per_call) |>
-    sapply(\(s) {
-      is_past_n <- (s + stations_per_call) > length(stations)
-      end <- !is_past_n |>
-        ifelse(
-          s + stations_per_call,
-          length(stations)
-        )
-      prefix <- "(indexof('"
-      seperator <- "', StationName) ge 0 or indexof('"
-      suffix <- "', StationName) ge 0)"
-      s_query <- stations[s:end] |> paste0(collapse = seperator)
-      paste0(prefix, s_query, suffix)
-    })
+  if (stations == "all") {
+    station_filters <- "(indexof('test', StationName) ge -1)"
+  } else {
+    station_filters <- seq(1, length(stations), stations_per_call) |>
+      sapply(\(s) {
+        is_past_n <- (s + stations_per_call) > length(stations)
+        end <- !is_past_n |>
+          ifelse(
+            s + stations_per_call,
+            length(stations)
+          )
+        prefix <- "(indexof('"
+        seperator <- "', StationName) ge 0 or indexof('"
+        suffix <- "', StationName) ge 0)"
+        s_query <- stations[s:end] |> paste0(collapse = seperator)
+        paste0(prefix, s_query, suffix)
+      })
+  }
+  
   # Build date filter(s)
   steps <- paste(days_per_call, "days")
   starts <- (date_range[1] - lubridate::hours(1)) |>
