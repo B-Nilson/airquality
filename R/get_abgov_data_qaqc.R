@@ -16,14 +16,13 @@ get_abgov_data_qaqc <- function(
     handle_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  id_cols <- c("site_name", "date_utc", "quality_assured")
-  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
-  value_cols <- value_cols[value_cols != "Fine Particulate Matter"] # raw API column
+  value_cols <- .abgov_columns$values[
+    .abgov_columns$values != "Fine Particulate Matter" # raw API column
+  ] 
   all_variables <- names(value_cols) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
-  get_all_vars <- all(all_variables %in% variables)
 
   # Break up date range into smaller chunks depending on duration
   max_duration <- date_range |>

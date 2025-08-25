@@ -81,8 +81,7 @@ get_abgov_data <- function(
     handle_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
-  all_variables <- names(value_cols) |>
+  all_variables <- names(abgov_columns$values) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
@@ -108,7 +107,7 @@ get_abgov_data <- function(
     ) |>
     abgov_format_qaqc_data(
       date_range = date_range,
-      desired_cols = abgov_col_names
+      desired_cols = unlist(unname(.abgov_columns))
     ) |>
     handyr::on_error(.return = data.frame())
 
@@ -135,7 +134,7 @@ get_abgov_data <- function(
       ) |>
       format_abgov_raw_data(
         date_range = date_range_new,
-        desired_cols = abgov_col_names
+        desired_cols = unlist(unname(.abgov_columns))
       ) |>
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }
@@ -163,43 +162,46 @@ get_abgov_data <- function(
 
 ## AB MoE Helpers ---------------------------------------------------------
 
-abgov_col_names <- c(
-  # Meta
-  site_name = "site_name", # qaqc
-  site_name = "StationName", # raw
-  quality_assured = "quality_assured",
-  date_utc = "date_utc", # qaqc
-  date_utc = "ReadingDate", # raw
-  # Particulate Matter
-  pm25_1hr = "PM2.5 Mass", # qaqc
-  pm25_1hr = "Fine Particulate Matter", # raw
-  # pm10_1hr_ugm3 = "PM10", # TODO: check this
-  # Ozone
-  o3_1hr = "Ozone",
-  # Nitrogen Pollutants
-  no_1hr = "Nitric Oxide",
-  no2_1hr = "Nitrogen Dioxide",
-  nox_1hr = "Total Oxides of Nitrogen", # TODO: check this
-  nh3_1hr = "Ammonia", # TODO: check this
-  # Sulfur Pollutants
-  so2_1hr = "Sulphur Dioxide",
-  trs_1hr = "Total Reduced Sulphur",
-  h2s_1hr = "Hydrogen Sulphide",
-  # # Carbon Monoxide
-  co_1hr = "Carbon Monoxide",
-  # Methane
-  ch4_1hr = "Methane",
-  # Hydrocarbons
-  hc_1hr = "Total Hydrocarbons",
-  hc_nm_1hr = "Non-methane Hydrocarbons",
-  # Met data
-  rh_1hr = "Relative Humidity",
-  t_1hr = "Outdoor Air Temperature",
-  wd_1hr = "Wind Direction",
-  wd_sd_1hr = "Std. Dev. of Wind Direction",
-  ws_1hr = "Wind Speed",
-  solar_1hr = "Solar Radiation",
-  pressure_1hr = "Barometric Pressure (non-adjusted)"
+.abgov_columns <- list(
+  meta = c(
+    site_name = "site_name", # qaqc
+    site_name = "StationName", # raw
+    quality_assured = "quality_assured",
+    date_utc = "date_utc", # qaqc
+    date_utc = "ReadingDate" # raw
+  ),
+  values = c(
+    # Particulate Matter
+    pm25_1hr = "PM2.5 Mass", # qaqc
+    pm25_1hr = "Fine Particulate Matter", # raw
+    # pm10_1hr_ugm3 = "PM10", # TODO: check this
+    # Ozone
+    o3_1hr = "Ozone",
+    # Nitrogen Pollutants
+    no_1hr = "Nitric Oxide",
+    no2_1hr = "Nitrogen Dioxide",
+    nox_1hr = "Total Oxides of Nitrogen", # TODO: check this
+    nh3_1hr = "Ammonia", # TODO: check this
+    # Sulfur Pollutants
+    so2_1hr = "Sulphur Dioxide",
+    trs_1hr = "Total Reduced Sulphur",
+    h2s_1hr = "Hydrogen Sulphide",
+    # # Carbon Monoxide
+    co_1hr = "Carbon Monoxide",
+    # Methane
+    ch4_1hr = "Methane",
+    # Hydrocarbons
+    hc_1hr = "Total Hydrocarbons",
+    hc_nm_1hr = "Non-methane Hydrocarbons",
+    # Met data
+    rh_1hr = "Relative Humidity",
+    t_1hr = "Outdoor Air Temperature",
+    wd_1hr = "Wind Direction",
+    wd_sd_1hr = "Std. Dev. of Wind Direction",
+    ws_1hr = "Wind Speed",
+    solar_1hr = "Solar Radiation",
+    pressure_1hr = "Barometric Pressure (non-adjusted)"
+  )
 )
 
 # TODO: check these are right (compare raw with qaqc since qaqc units are provided)

@@ -10,14 +10,11 @@ get_abgov_data_raw <- function(
   api_endpoint <- "StationMeasurements"
   
   # Handle input variables
-  id_cols <- c("site_name", "date_utc", "quality_assured")
-  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
-  value_cols <- value_cols[value_cols !=  "PM2.5 Mass"] # qaqc API column
+  value_cols <- .abgov_columns$values[.abgov_columns$values != "PM2.5 Mass"] # qaqc API column
   all_variables <- names(value_cols) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
-  get_all_vars <- all(all_variables %in% variables)
   value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
 
   # Make request(s) as needed to load all desired data
@@ -85,9 +82,7 @@ build_abgov_data_args <- function(
   time_out = 36000
 ) {
   # Handle input variables
-  id_cols <- c("site_name", "date_utc", "quality_assured")
-  value_cols <- abgov_col_names[!names(abgov_col_names) %in% id_cols]
-  value_cols <- value_cols[value_cols != "PM2.5 Mass"] # qaqc API column
+  value_cols <- .abgov_columns$values[.abgov_columns$values != "PM2.5 Mass"] # qaqc API column
   all_variables <- names(value_cols) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
