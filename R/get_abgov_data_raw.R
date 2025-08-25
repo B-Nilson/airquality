@@ -136,19 +136,23 @@ build_abgov_data_args <- function(
         sprintf(desired_range[1], desired_range[2])
     })
   
+  # Build parameter filter
+  param_filter_template <- "indexof('%s', ParameterName) ge %s"
+  if (get_all_vars) {
+    param_filter <- param_filter_template |>
+      sprintf("t", -1)
+  } else {
+    param_filter <- param_filter_template |>
+      sprintf(value_cols, 0) |>
+      paste(collapse = " or ")
+    param_filter <- paste0("(", param_filter, ")")
+  }
   
   # Combine filters
   filters <- station_filters |>
     sapply(\(station_filter) {
       date_filters |>
         sapply(\(date_filter) {
-          if (get_all_vars) {
-            # Parameter filter is required, so do a dummy one that allows for any parameter
-            param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
-          } else {
-            param_filter <- paste0("indexof('", value_cols, "', ParameterName) ge 0") |> 
-              paste(collapse = " or ")
-          }
           station_filter |>
             paste(date_filter, param_filter, sep = " and ") |> 
             paste("and Value ne null")
