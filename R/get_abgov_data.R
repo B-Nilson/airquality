@@ -51,8 +51,8 @@ get_abgov_data <- function(
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE,
-  stations_per_call = 1,
-  days_per_call = 90
+  stations_per_call = 2,
+  days_per_call = 10
 ) {
   stopifnot(is.character(stations))
   stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
@@ -68,16 +68,15 @@ get_abgov_data <- function(
   allowed_date_range <- c("1970-01-01 00") # TODO: confirm this
   allowed_date_range[2] <- lubridate::now(tz = tzone) |>
     lubridate::floor_date("months") |>
-    lubridate::with_tz("UTC") |> 
+    lubridate::with_tz("UTC") |>
     format("%Y-%m-%d %H")
   id_cols <- c("site_name", "date_utc", "quality_assured")
-  pivot_cols <- c("ParameterName", "Value")
-  drop_cols <- c("Id", "ReadingDate", "DeterminantParameterName")
 
   # Output citation message to user
   data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
+  # TODO: warning message says "beyond current hour" which is invalid
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
 
@@ -89,7 +88,7 @@ get_abgov_data <- function(
     standardize_input_vars(all_variables)
 
   # Only get data for stations that exist on the APIs
-  if (!fast) {
+  if (!fast & ! "all" %in% stations) {
     known_stations <- get_abgov_stations()
     stations <- stations |>
       check_stations_exist(
@@ -99,6 +98,7 @@ get_abgov_data <- function(
   }
 
   # Get QAQC'ed data if any
+  # TODO: why no data for "all" stations?
   qaqc_data <- stations |>
     get_abgov_data_qaqc(
       date_range = date_range,
@@ -110,7 +110,7 @@ get_abgov_data <- function(
       date_range = date_range,
       desired_cols = abgov_col_names
     ) |>
-    handyr::on_error(.return = data.frame(), .message = TRUE)
+    handyr::on_error(.return = data.frame())
 
   # Alter date_range to account for retrieved QAQC data
   date_range_new <- date_range
@@ -140,7 +140,7 @@ get_abgov_data <- function(
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }
 
-  # Format and combine
+  # Combine, sort, remove any overlap
   stations_data <- list(qaqc_data, raw_data) |>
     dplyr::bind_rows() |>
     dplyr::arrange(.data$site_name, .data$date_utc, !.data$quality_assured) |>

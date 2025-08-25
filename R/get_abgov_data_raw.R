@@ -18,6 +18,7 @@ get_abgov_data_raw <- function(
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
+  value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
 
   # Make request(s) as needed to load all desired data
   api_args <- stations |>
@@ -63,7 +64,7 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
       names_from = pivot_cols[1],
       values_from = pivot_cols[2]
     ) |>
-    dplyr::select(dplyr::any_of(abgov_col_names)) |>
+    dplyr::select(dplyr::any_of(desired_cols)) |>
     # Insert units and standardize if needed
     dplyr::mutate(
       dplyr::across(
@@ -139,8 +140,9 @@ build_abgov_data_args <- function(
       suffix <- "')"
       paste0(prefix, s, seperator, e, suffix)
     })
-  # Combine arguments
-  station_filters |>
+  
+  # Combine filters
+  filters <- station_filters |>
     sapply(\(station_filter) {
       date_filters |>
         sapply(\(date_filter) {

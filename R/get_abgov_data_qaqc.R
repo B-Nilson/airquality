@@ -120,15 +120,14 @@ get_abgov_data_qaqc <- function(
 abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
   qaqc_data |>
     # Remove duplicates and any missing or flagged data
+    dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
     dplyr::distinct(
       site_name,
       `Interval End`,
-      Flags,
       Parameter,
       Unit,
       .keep_all = TRUE
     ) |>
-    dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
     # Fix units, set obs date, and mark quality assured
     dplyr::mutate(
       Unit = standardize_units(Unit),
@@ -142,6 +141,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     dplyr::group_split() |>
     handyr::for_each(
       .parallel = fast,
+      future.seed = TRUE,
       \(dat) {
         dat |>
           dplyr::mutate(
@@ -160,7 +160,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     dplyr::select(dplyr::any_of(desired_cols)) |>
     # Drop empty obs rows
     dplyr::filter(
-      rowSums(!is.na(dplyr::across(-dplyr::any_of(id_cols)))) > 0
+      rowSums(!is.na(dplyr::across(dplyr::where(is.numeric)))) > 0
     ) |>
     # standardize units
     dplyr::mutate(
@@ -169,10 +169,11 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
         \(x) {
           x |>
             convert_units(
-              in_unit = units::deparse_unit(x),
+              in_unit = units(x) |> as.character(),
               out_unit = default_units[
                 names(default_units) == dplyr::cur_column()
-              ]
+              ],
+              keep_units = TRUE
             )
         }
       )
