@@ -124,20 +124,18 @@ build_abgov_data_args <- function(
   }
   
   # Build date filter(s)
-  steps <- paste(days_per_call, "days")
-  starts <- (date_range[1] - lubridate::hours(1)) |>
-    seq(date_range[2], steps)
-  ends <- starts + lubridate::days(days_per_call)
-  ends[ends > date_range[2]] <- date_range[2]
-  date_filters <- 1:length(starts) |>
-    sapply(\(i) {
-      s <- starts[i] |> format("%FT%T")
-      e <- ends[i] |> format("%FT%T")
-      prefix <- "(ReadingDate ge datetime'"
-      seperator <- "' and ReadingDate le datetime'"
-      suffix <- "')"
-      paste0(prefix, s, seperator, e, suffix)
+  date_filter_template <- "(ReadingDate ge datetime'%s' and ReadingDate le datetime'%s')"
+  (date_range - lubridate::hours(c(1, 0))) |> # TODO: Check if this is needed
+    lubridate::with_tz("UTC") |> 
+    handyr::split_date_range(max_duration = paste(days_per_call, "days")) |>
+    apply(1, \(desired_range) {
+      desired_range <- desired_range |> 
+        lubridate::as_datetime() |>
+        format("%FT%T")
+      date_filter_template |> 
+        sprintf(desired_range[1], desired_range[2])
     })
+  
   
   # Combine filters
   filters <- station_filters |>
