@@ -91,45 +91,6 @@
       "Maintainer": "Martin Maechler <mmaechler+Matrix@gmail.com>",
       "Repository": "CRAN"
     },
-    "PROJ": {
-      "Package": "PROJ",
-      "Version": "0.6.0",
-      "Source": "Repository",
-      "Title": "Generic Coordinate System Transformations Using 'PROJ'",
-      "Authors@R": "c(person(given = \"Michael D.\", family = \"Sumner\", role = c(\"aut\", \"cre\"), email = \"mdsumner@gmail.com\", comment = c(ORCID = \"0000-0002-2471-7511\")), person(\"Jeroen\", \"Ooms\", role = c(\"ctb\"), comment = \"provided PROJ library support on Windows, and assistance with Windows configuration\"), person(\"Simon\", \"Urbanek\", role = c(\"cph\", \"ctb\"), comment = \"wrote original code versions for PROJ version 6\"), person(\"Dewey\", \"Dunnington\", role = c(\"ctb\"), comment = \"key code contributions\"),  person(\"Anthony\", \"North\", role = c(\"ctb\") ) )",
-      "Description": "A wrapper around the generic coordinate transformation software 'PROJ' that transforms coordinates from one coordinate reference system ('CRS') to another. This includes cartographic projections as well as geodetic transformations.  The intention is for this package to be used by user-packages such as 'reproj', and that the older 'PROJ.4' and version 5 pathways be provided by the 'proj4' package.",
-      "Depends": [
-        "R (>= 3.0.2)"
-      ],
-      "License": "GPL-3",
-      "Encoding": "UTF-8",
-      "LazyData": "true",
-      "Imports": [
-        "lifecycle",
-        "wk"
-      ],
-      "LinkingTo": [
-        "wk"
-      ],
-      "Suggests": [
-        "testthat (>= 3.0.0)",
-        "spelling",
-        "knitr",
-        "rmarkdown",
-        "sf"
-      ],
-      "URL": "https://github.com/hypertidy/PROJ, https://hypertidy.github.io/PROJ/",
-      "BugReports": "https://github.com/hypertidy/PROJ/issues",
-      "Language": "en-US",
-      "VignetteBuilder": "knitr",
-      "SystemRequirements": "PROJ (>= 6.3.1)",
-      "RoxygenNote": "7.3.2",
-      "Config/testthat/edition": "3",
-      "NeedsCompilation": "yes",
-      "Author": "Michael D. Sumner [aut, cre] (<https://orcid.org/0000-0002-2471-7511>), Jeroen Ooms [ctb] (provided PROJ library support on Windows, and assistance with Windows configuration), Simon Urbanek [cph, ctb] (wrote original code versions for PROJ version 6), Dewey Dunnington [ctb] (key code contributions), Anthony North [ctb]",
-      "Maintainer": "Michael D. Sumner <mdsumner@gmail.com>",
-      "Repository": "CRAN"
-    },
     "R6": {
       "Package": "R6",
       "Version": "2.6.1",
@@ -401,35 +362,6 @@
       "NeedsCompilation": "no",
       "Author": "Davis Vaughan [aut, cre] (<https://orcid.org/0000-0003-4777-038X>), Jim Hester [aut] (<https://orcid.org/0000-0002-2739-7082>), Romain François [aut] (<https://orcid.org/0000-0002-2444-4226>), Benjamin Kietzman [ctb], Posit Software, PBC [cph, fnd]",
       "Maintainer": "Davis Vaughan <davis@posit.co>",
-      "Repository": "CRAN"
-    },
-    "crsmeta": {
-      "Package": "crsmeta",
-      "Version": "0.3.0",
-      "Source": "Repository",
-      "Title": "Extract Coordinate System Metadata",
-      "Authors@R": "person(given = \"Michael\", family = \"Sumner\", role = c(\"aut\", \"cre\"), email = \"mdsumner@gmail.com\", comment = c(ORCID = \"0000-0002-2471-7511\"))",
-      "Description": "Obtain coordinate system metadata from various data formats. There  are functions to extract a 'CRS' (coordinate reference system,  <https://en.wikipedia.org/wiki/Spatial_reference_system>) in 'EPSG' (European  Petroleum Survey Group, <http://www.epsg.org/>), 'PROJ4' <https://proj.org/>,  or 'WKT2' (Well-Known Text 2,  <http://docs.opengeospatial.org/is/12-063r5/12-063r5.html>) forms. This is  purely for getting simple metadata from in-memory formats, please use other  tools for out of memory data sources.",
-      "License": "GPL-3",
-      "Encoding": "UTF-8",
-      "LazyData": "true",
-      "RoxygenNote": "7.1.0",
-      "Depends": [
-        "R (>= 3.5.0)"
-      ],
-      "Suggests": [
-        "testthat (>= 2.1.0)",
-        "spelling"
-      ],
-      "Imports": [
-        "methods"
-      ],
-      "URL": "https://github.com/hypertidy/crsmeta",
-      "BugReports": "https://github.com/hypertidy/crsmeta/issues",
-      "Language": "en-US",
-      "NeedsCompilation": "no",
-      "Author": "Michael Sumner [aut, cre] (<https://orcid.org/0000-0002-2471-7511>)",
-      "Maintainer": "Michael Sumner <mdsumner@gmail.com>",
       "Repository": "CRAN"
     },
     "curl": {
@@ -1532,26 +1464,22 @@
     },
     "osmdata": {
       "Package": "osmdata",
-      "Version": "0.2.5",
+      "Version": "0.3.0",
       "Source": "Repository",
       "Title": "Import 'OpenStreetMap' Data as Simple Features or Spatial Objects",
-      "Authors@R": "c( person(\"Mark\", \"Padgham\", , \"mark.padgham@email.com\", role = c(\"aut\", \"cre\")), person(\"Bob\", \"Rudis\", role = \"aut\"), person(\"Robin\", \"Lovelace\", role = \"aut\"), person(\"Maëlle\", \"Salmon\", role = \"aut\"), person(\"Joan\", \"Maspons\", role = \"aut\", comment = c(ORCID=\"0000-0003-2286-8727\")), person(\"Andrew\", \"Smith\", role = \"ctb\"), person(\"James\", \"Smith\", role = \"ctb\"), person(\"Andrea\", \"Gilardi\", role = \"ctb\"), person(\"Enrico\", \"Spinielli\", role = \"ctb\"), person(\"Anthony\", \"North\", role = \"ctb\"), person(\"Martin\", \"Machyna\", role = \"ctb\"), person(\"Marcin\", \"Kalicinski\", role = c(\"ctb\", \"cph\"), comment = \"Author of included RapidXML code\"), person(\"Eli\", \"Pousson\", , \"eli.pousson@gmail.com\", role = c(\"ctb\"), comment = c(ORCID = \"0000-0001-8280-1706\")) )",
-      "Maintainer": "Mark Padgham <mark.padgham@email.com>",
+      "Authors@R": "c( person(\"Joan\", \"Maspons\", , \"joanmaspons@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0003-2286-8727\")), person(\"Mark\", \"Padgham\", , \"mark.padgham@email.com\", role = \"aut\"), person(\"Bob\", \"Rudis\", role = \"aut\"), person(\"Robin\", \"Lovelace\", role = \"aut\"), person(\"Maëlle\", \"Salmon\", role = \"aut\"), person(\"Andrew\", \"Smith\", role = \"ctb\"), person(\"James\", \"Smith\", role = \"ctb\"), person(\"Andrea\", \"Gilardi\", role = \"ctb\"), person(\"Enrico\", \"Spinielli\", role = \"ctb\"), person(\"Anthony\", \"North\", role = \"ctb\"), person(\"Martin\", \"Machyna\", role = \"ctb\"), person(\"Marcin\", \"Kalicinski\", role = c(\"ctb\", \"cph\"), comment = \"Author of included RapidXML code\"), person(\"Eli\", \"Pousson\", , \"eli.pousson@gmail.com\", role = \"ctb\", comment = c(ORCID = \"0000-0001-8280-1706\")) )",
       "Description": "Download and import of 'OpenStreetMap' ('OSM') data as 'sf' or 'sp' objects.  'OSM' data are extracted from the 'Overpass' web server (<https://overpass-api.de/>) and processed with very fast 'C++' routines for return to 'R'.",
       "License": "GPL-3",
-      "URL": "https://docs.ropensci.org/osmdata/ (website) https://github.com/ropensci/osmdata/ (devel)",
+      "URL": "https://docs.ropensci.org/osmdata/, https://github.com/ropensci/osmdata",
       "BugReports": "https://github.com/ropensci/osmdata/issues",
       "Depends": [
-        "R (>= 3.2.4)"
+        "R (>= 4.1)"
       ],
       "Imports": [
         "curl",
         "httr2",
-        "lubridate",
-        "magrittr",
         "methods",
         "Rcpp (>= 0.12.4)",
-        "reproj",
         "rvest",
         "tibble",
         "utils",
@@ -1562,10 +1490,10 @@
         "jsonlite",
         "knitr",
         "markdown",
-        "raster",
         "rmarkdown",
         "sf",
         "sp",
+        "terra",
         "testthat"
       ],
       "LinkingTo": [
@@ -1574,11 +1502,12 @@
       "VignetteBuilder": "knitr",
       "Encoding": "UTF-8",
       "NeedsCompilation": "yes",
-      "RoxygenNote": "7.2.3",
+      "RoxygenNote": "7.3.2",
       "X-schema.org-applicationCategory": "Data Access",
       "X-schema.org-isPartOf": "https://ropensci.org",
       "X-schema.org-keywords": "open0street0map, openstreetmap, overpass0API, OSM",
-      "Author": "Mark Padgham [aut, cre], Bob Rudis [aut], Robin Lovelace [aut], Maëlle Salmon [aut], Joan Maspons [aut] (<https://orcid.org/0000-0003-2286-8727>), Andrew Smith [ctb], James Smith [ctb], Andrea Gilardi [ctb], Enrico Spinielli [ctb], Anthony North [ctb], Martin Machyna [ctb], Marcin Kalicinski [ctb, cph] (Author of included RapidXML code), Eli Pousson [ctb] (<https://orcid.org/0000-0001-8280-1706>)",
+      "Author": "Joan Maspons [aut, cre] (ORCID: <https://orcid.org/0000-0003-2286-8727>), Mark Padgham [aut], Bob Rudis [aut], Robin Lovelace [aut], Maëlle Salmon [aut], Andrew Smith [ctb], James Smith [ctb], Andrea Gilardi [ctb], Enrico Spinielli [ctb], Anthony North [ctb], Martin Machyna [ctb], Marcin Kalicinski [ctb, cph] (Author of included RapidXML code), Eli Pousson [ctb] (ORCID: <https://orcid.org/0000-0001-8280-1706>)",
+      "Maintainer": "Joan Maspons <joanmaspons@gmail.com>",
       "Repository": "CRAN"
     },
     "pillar": {
@@ -1699,26 +1628,6 @@
       "Note": "built from Clipper C++ version 6.4.0",
       "NeedsCompilation": "yes",
       "Author": "Angus Johnson [aut] (C++ original, http://www.angusj.com/delphi/clipper.php), Adrian Baddeley [aut, trl, cre], Kurt Hornik [ctb], Brian D. Ripley [ctb], Elliott Sales de Andrade [ctb], Paul Murrell [ctb], Ege Rubak [ctb], Mark Padgham [ctb]",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
-    "proj4": {
-      "Package": "proj4",
-      "Version": "1.0-15",
-      "Source": "Repository",
-      "Title": "A simple interface to the PROJ.4 cartographic projections library",
-      "Depends": [
-        "R (>= 2.0.0)"
-      ],
-      "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.org, <https://orcid.org/0000-0003-2297-1732>)",
-      "Authors@R": "person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"simon.urbanek@r-project.org\", comment=c(\"https://urbanek.org\", ORCID=\"0000-0003-2297-1732\"))",
-      "Maintainer": "Simon Urbanek <simon.urbanek@r-project.org>",
-      "Description": "A simple interface to lat/long projection and datum transformation of the PROJ.4 cartographic projections library. It allows transformation of geographic coordinates from one projection and/or datum to another.",
-      "SystemRequirements": "proj 4.4.6 or higher (https://proj.org/)",
-      "License": "GPL-2",
-      "URL": "https://www.rforge.net/proj4/",
-      "BugReports": "https://github.com/s-u/proj4/issues",
-      "NeedsCompilation": "yes",
       "Repository": "CRAN",
       "Encoding": "UTF-8"
     },
@@ -1852,37 +1761,6 @@
       "NeedsCompilation": "no",
       "Author": "Kevin Ushey [aut, cre] (ORCID: <https://orcid.org/0000-0003-2880-7407>), Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
-      "Repository": "CRAN"
-    },
-    "reproj": {
-      "Package": "reproj",
-      "Version": "0.7.0",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Coordinate System Transformations for Generic Map Data",
-      "Authors@R": "person(\"Michael D.\",\"Sumner\", role = c(\"aut\", \"cre\"), email = \"mdsumner@gmail.com\", comment=c(ORCID = \"0000-0002-2471-7511\"))",
-      "Description": "Transform coordinates from a specified source to a specified  target map projection. This uses the 'PROJ' library directly, by wrapping the  'PROJ' package which leverages 'libproj', otherwise the 'proj4' package. The 'reproj()'  function is generic, methods may be added to remove the need for an explicit  source definition. If 'proj4' is in use 'reproj()' handles the requirement for  conversion of angular units where necessary. This is for use primarily to  transform generic data formats and direct leverage of the underlying 'PROJ' library. (There are transformations that aren't possible with 'PROJ' and that are provided by the 'GDAL' library, a limitation which users of this  package should be aware of.) The 'PROJ' library is available at  <https://proj.org/>.",
-      "License": "GPL-3",
-      "Depends": [
-        "R (>= 3.2.5)"
-      ],
-      "Imports": [
-        "proj4",
-        "crsmeta (>= 0.3.0)",
-        "PROJ (>= 0.4.5)"
-      ],
-      "Suggests": [
-        "testthat",
-        "covr"
-      ],
-      "RoxygenNote": "7.3.1",
-      "Encoding": "UTF-8",
-      "SystemRequirements": "PROJ (>= 4.4.6)",
-      "BugReports": "https://github.com/hypertidy/reproj/issues",
-      "URL": "https://github.com/hypertidy/reproj, https://hypertidy.github.io/reproj/",
-      "NeedsCompilation": "no",
-      "Author": "Michael D. Sumner [aut, cre] (<https://orcid.org/0000-0002-2471-7511>)",
-      "Maintainer": "Michael D. Sumner <mdsumner@gmail.com>",
       "Repository": "CRAN"
     },
     "rlang": {
@@ -2585,35 +2463,6 @@
       "Maintainer": "Lionel Henry <lionel@posit.co>",
       "Repository": "CRAN"
     },
-    "wk": {
-      "Package": "wk",
-      "Version": "0.9.4",
-      "Source": "Repository",
-      "Title": "Lightweight Well-Known Geometry Parsing",
-      "Authors@R": "c( person(given = \"Dewey\", family = \"Dunnington\", role = c(\"aut\", \"cre\"), email = \"dewey@fishandwhistle.net\", comment = c(ORCID = \"0000-0002-9415-4582\")), person(given = \"Edzer\", family = \"Pebesma\", role = c(\"aut\"), email = \"edzer.pebesma@uni-muenster.de\", comment = c(ORCID = \"0000-0001-8049-7069\")), person(given = \"Anthony\", family = \"North\", email = \"anthony.jl.north@gmail.com\", role = c(\"ctb\")) )",
-      "Maintainer": "Dewey Dunnington <dewey@fishandwhistle.net>",
-      "Description": "Provides a minimal R and C++ API for parsing well-known binary and well-known text representation of geometries to and from R-native formats. Well-known binary is compact and fast to parse; well-known text is human-readable and is useful for writing tests. These formats are useful in R only if the information they contain can be accessed in R, for which high-performance functions are provided here.",
-      "License": "MIT + file LICENSE",
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.3",
-      "Suggests": [
-        "testthat (>= 3.0.0)",
-        "vctrs (>= 0.3.0)",
-        "sf",
-        "tibble",
-        "readr"
-      ],
-      "URL": "https://paleolimbot.github.io/wk/, https://github.com/paleolimbot/wk",
-      "BugReports": "https://github.com/paleolimbot/wk/issues",
-      "Config/testthat/edition": "3",
-      "Depends": [
-        "R (>= 2.10)"
-      ],
-      "LazyData": "true",
-      "NeedsCompilation": "yes",
-      "Author": "Dewey Dunnington [aut, cre] (<https://orcid.org/0000-0002-9415-4582>), Edzer Pebesma [aut] (<https://orcid.org/0000-0001-8049-7069>), Anthony North [ctb]",
-      "Repository": "CRAN"
-    },
     "xfun": {
       "Package": "xfun",
       "Version": "0.53",
@@ -2664,7 +2513,7 @@
     },
     "xml2": {
       "Package": "xml2",
-      "Version": "1.3.8",
+      "Version": "1.4.0",
       "Source": "Repository",
       "Title": "Parse XML",
       "Authors@R": "c( person(\"Hadley\", \"Wickham\", role = \"aut\"), person(\"Jim\", \"Hester\", role = \"aut\"), person(\"Jeroen\", \"Ooms\", email = \"jeroenooms@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\")), person(\"R Foundation\", role = \"ctb\", comment = \"Copy of R-project homepage cached as example\") )",
@@ -2694,7 +2543,7 @@
       "VignetteBuilder": "knitr",
       "Config/Needs/website": "tidyverse/tidytemplate",
       "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.3",
+      "RoxygenNote": "7.3.2",
       "SystemRequirements": "libxml2: libxml2-dev (deb), libxml2-devel (rpm)",
       "Collate": "'S4.R' 'as_list.R' 'xml_parse.R' 'as_xml_document.R' 'classes.R' 'format.R' 'import-standalone-obj-type.R' 'import-standalone-purrr.R' 'import-standalone-types-check.R' 'init.R' 'nodeset_apply.R' 'paths.R' 'utils.R' 'xml2-package.R' 'xml_attr.R' 'xml_children.R' 'xml_document.R' 'xml_find.R' 'xml_missing.R' 'xml_modify.R' 'xml_name.R' 'xml_namespaces.R' 'xml_node.R' 'xml_nodeset.R' 'xml_path.R' 'xml_schema.R' 'xml_serialize.R' 'xml_structure.R' 'xml_text.R' 'xml_type.R' 'xml_url.R' 'xml_write.R' 'zzz.R'",
       "Config/testthat/edition": "3",
