@@ -81,7 +81,8 @@ build_abgov_data_args <- function(
   date_range,
   variables = "all",
   stations_per_call = 3,
-  days_per_call = 3
+  days_per_call = 3,
+  time_out = 36000
 ) {
   # Handle input variables
   id_cols <- c("site_name", "date_utc", "quality_assured")
@@ -94,10 +95,7 @@ build_abgov_data_args <- function(
   get_all_vars <- all(all_variables %in% variables)
   value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
 
-  time_out <- 36000
-  args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
-
-  # Only select cols we need
+  # Build column selector
   selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |> 
     paste(collapse = ",")
   if (length(variables) == 1) {
@@ -105,7 +103,7 @@ build_abgov_data_args <- function(
       stringr::str_remove(",ParameterName")
   }
 
-  # Build station filter(s)
+  # Build station(s) filter
   station_filter_template <- "indexof('%s', StationName) ge %s" # site_name, -1|0
   if (stations == "all") {
     station_filters <- station_filter_template |>
@@ -124,8 +122,8 @@ build_abgov_data_args <- function(
   }
   
   # Build date filter(s)
-  date_filter_template <- "(ReadingDate ge datetime'%s' and ReadingDate le datetime'%s')"
-  (date_range - lubridate::hours(c(1, 0))) |> # TODO: Check if this is needed
+  date_filter_template <- "ReadingDate ge datetime'%s' and ReadingDate le datetime'%s'"
+  date_filters <- (date_range - lubridate::hours(c(1, 0))) |> # TODO: Check if this is needed
     lubridate::with_tz("UTC") |> 
     handyr::split_date_range(max_duration = paste(days_per_call, "days")) |>
     apply(1, \(desired_range) {
@@ -152,16 +150,14 @@ build_abgov_data_args <- function(
   filters <- station_filters |>
     sapply(\(station_filter) {
       date_filters |>
-        sapply(\(date_filter) {
-          station_filter |>
-            paste(date_filter, param_filter, sep = " and ") |> 
-            paste("and Value ne null")
-        })
+        sapply(\(date_filter) paste(station_filter, date_filter, param_filter, sep = " and "))
     }) |>
     unlist() |>
-    unname()
+    unname() |> 
+    paste("and Value ne null")
   
   # Insert into template, cleanup symbols for url
+  args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
   args_template |>
     sprintf(filters, selected_cols, time_out) |>
     utils::URLencode(reserved = TRUE) |>
