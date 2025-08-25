@@ -289,13 +289,7 @@ abgov_get_keys <- function(
 
   # Get key names and values
   keys <- api_url |>
-    paste0(endpoint) |>
-    httr::POST(body = request_body, encode = "form") |>
-    httr::content(as = "parsed", encoding = "UTF-8") |>
-    dplyr::bind_rows() |>
-    dplyr::select(name = text, value) |>
-    dplyr::mutate(value = as.numeric(value)) |>
-    tidyr::pivot_wider() |>
+    abgov_post_request(endpoint = endpoint, request_body = request_body) |>
     unlist()
   names(keys) <- stringr::str_split(
     names(keys),
@@ -317,6 +311,18 @@ abgov_get_keys <- function(
     keys <- keys[is_selected]
   }
   return(keys)
+}
+
+# TODO: use in other sources?
+abgov_post_request <- function(api_url, endpoint, request_body) {
+  api_url |>
+    paste0(endpoint) |>
+    httr::POST(body = request_body, encode = "form") |>
+    httr::content(as = "parsed", encoding = "UTF-8") |>
+    dplyr::bind_rows() |>
+    dplyr::select(name = text, value) |>
+    dplyr::mutate(value = as.numeric(value)) |>
+    tidyr::pivot_wider()
 }
 
 abgov_get_qaqc_station_params <- function(
@@ -341,16 +347,7 @@ abgov_get_qaqc_station_params <- function(
 
   # Get parameter names and keys
   params <- api_url |>
-    paste0(endpoint) |>
-    httr::POST(
-      body = request_body,
-      encode = "form"
-    ) |>
-    httr::content(as = "parsed", encoding = "UTF-8") |>
-    dplyr::bind_rows() |>
-    dplyr::select(name = text, value) |>
-    dplyr::mutate(value = as.numeric(value)) |>
-    tidyr::pivot_wider()
+    abgov_post_request(endpoint = endpoint, request_body = request_body)
 
   # Filter to desired parameters
   if (!"all" %in% select_params) {
