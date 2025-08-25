@@ -57,7 +57,8 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
       .data$ReadingDate |>
         dplyr::between(date_range[1], date_range[2])
     ) |>
-    # Long -> wide, fix column names
+    dplyr::distinct() |>
+    # Long -> wide, standardize column names
     tidyr::pivot_wider(
       names_from = pivot_cols[1],
       values_from = pivot_cols[2]
