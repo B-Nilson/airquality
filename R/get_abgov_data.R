@@ -81,7 +81,7 @@ get_abgov_data <- function(
     handle_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  all_variables <- names(abgov_columns$values) |>
+  all_variables <- names(.abgov_columns$values) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
