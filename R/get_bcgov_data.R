@@ -84,7 +84,10 @@ get_bcgov_data <- function(
   original_date_range <- date_range # copy for later
 
   # Handle variables input
-  all_variables <- names(bcgov_col_names)[endsWith(bcgov_col_names, "_INSTRUMENT")] |>
+  all_variables <- names(bcgov_col_names)[endsWith(
+    bcgov_col_names,
+    "_INSTRUMENT"
+  )] |>
     stringr::str_remove("_1hr_instrument")
   variables <- variables |>
     standardize_input_vars(all_variables)

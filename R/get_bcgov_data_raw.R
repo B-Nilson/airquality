@@ -177,10 +177,10 @@ standardize_input_vars <- function(variables, all_variables = NULL) {
   if (!is.null(all_variables)) {
     variables <- variables[variables %in% all_variables]
   }
-  
+
   if (length(variables) == 0) {
     stop("No valid variables specified.")
   }
-  
+
   return(variables)
 }

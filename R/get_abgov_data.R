@@ -87,7 +87,7 @@ get_abgov_data <- function(
     standardize_input_vars(all_variables)
 
   # Only get data for stations that exist on the APIs
-  if (!fast & ! "all" %in% stations) {
+  if (!fast & !"all" %in% stations) {
     known_stations <- get_abgov_stations()
     stations <- stations |>
       check_stations_exist(

@@ -18,7 +18,7 @@ get_abgov_data_qaqc <- function(
   # Handle input variables
   value_cols <- .abgov_columns$values[
     .abgov_columns$values != "Fine Particulate Matter" # raw API column
-  ] 
+  ]
   all_variables <- names(value_cols) |>
     stringr::str_remove("_1hr")
   variables <- variables |>

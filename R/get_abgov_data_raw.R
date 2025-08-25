@@ -8,7 +8,7 @@ get_abgov_data_raw <- function(
 ) {
   api_url <- "https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/"
   api_endpoint <- "StationMeasurements"
-  
+
   # Handle input variables
   value_cols <- .abgov_columns$values[.abgov_columns$values != "PM2.5 Mass"] # qaqc API column
   all_variables <- names(value_cols) |>
@@ -32,7 +32,7 @@ get_abgov_data_raw <- function(
       quiet = quiet,
       .bind = TRUE
     )
-  
+
   if (length(variables) == 1) {
     raw_data$ParameterName <- value_cols[1]
   }
@@ -42,7 +42,7 @@ get_abgov_data_raw <- function(
 format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
   pivot_cols <- c("ParameterName", "Value")
 
-  raw_data |> 
+  raw_data |>
     # Convert dates, mark not quality assured, and filter to desired range
     dplyr::mutate(
       ReadingDate = .data$ReadingDate |>
@@ -65,7 +65,7 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
     # Insert units and standardize if needed
     dplyr::mutate(
       dplyr::across(
-        dplyr::any_of(names(abgov_units)), 
+        dplyr::any_of(names(abgov_units)),
         convert_units,
         in_unit = abgov_units[names(abgov_units) == dplyr::cur_column()],
         out_unit = default_units[names(default_units) == dplyr::cur_column()]
@@ -91,7 +91,7 @@ build_abgov_data_args <- function(
   value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
 
   # Build column selector
-  selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |> 
+  selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |>
     paste(collapse = ",")
   if (length(variables) == 1) {
     selected_cols <- selected_cols |>
@@ -115,20 +115,20 @@ build_abgov_data_args <- function(
         paste0("(", filter, ")")
       })
   }
-  
+
   # Build date filter(s)
   date_filter_template <- "ReadingDate ge datetime'%s' and ReadingDate le datetime'%s'"
   date_filters <- (date_range - lubridate::hours(c(1, 0))) |> # TODO: Check if this is needed
-    lubridate::with_tz("UTC") |> 
+    lubridate::with_tz("UTC") |>
     handyr::split_date_range(max_duration = paste(days_per_call, "days")) |>
     apply(1, \(desired_range) {
-      desired_range <- desired_range |> 
+      desired_range <- desired_range |>
         lubridate::as_datetime() |>
         format("%FT%T")
-      date_filter_template |> 
+      date_filter_template |>
         sprintf(desired_range[1], desired_range[2])
     })
-  
+
   # Build parameter filter
   param_filter_template <- "indexof('%s', ParameterName) ge %s"
   if (get_all_vars) {
@@ -140,17 +140,19 @@ build_abgov_data_args <- function(
       paste(collapse = " or ")
     param_filter <- paste0("(", param_filter, ")")
   }
-  
+
   # Combine filters
   filters <- station_filters |>
     sapply(\(station_filter) {
       date_filters |>
-        sapply(\(date_filter) paste(station_filter, date_filter, param_filter, sep = " and "))
+        sapply(\(date_filter) {
+          paste(station_filter, date_filter, param_filter, sep = " and ")
+        })
     }) |>
     unlist() |>
-    unname() |> 
+    unname() |>
     paste("and Value ne null")
-  
+
   # Insert into template, cleanup symbols for url
   args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
   args_template |>
