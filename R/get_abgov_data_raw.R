@@ -106,22 +106,20 @@ build_abgov_data_args <- function(
   }
 
   # Build station filter(s)
+  station_filter_template <- "indexof('%s', StationName) ge %s" # site_name, -1|0
   if (stations == "all") {
-    station_filters <- "(indexof('test', StationName) ge -1)"
+    station_filters <- station_filter_template |>
+      sprintf("t", 0)
   } else {
     station_filters <- seq(1, length(stations), stations_per_call) |>
-      sapply(\(s) {
-        is_past_n <- (s + stations_per_call) > length(stations)
-        end <- !is_past_n |>
-          ifelse(
-            s + stations_per_call,
-            length(stations)
-          )
-        prefix <- "(indexof('"
-        seperator <- "', StationName) ge 0 or indexof('"
-        suffix <- "', StationName) ge 0)"
-        s_query <- stations[s:end] |> paste0(collapse = seperator)
-        paste0(prefix, s_query, suffix)
+      sapply(\(start) {
+        end <- start + stations_per_call
+        end <- (end > length(stations)) |>
+          ifelse(length(stations), end)
+        filter <- station_filter_template |>
+          sprintf(stations[start:end], 0) |>
+          paste(collapse = " or ")
+        paste0("(", filter, ")")
       })
   }
   
