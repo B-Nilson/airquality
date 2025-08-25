@@ -91,6 +91,16 @@ build_abgov_data_args <- function(
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
+  time_out <- 36000
+  args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
+
+  # Only select cols we need
+  selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |> 
+    paste(collapse = ",")
+  if (length(variables) == 1) {
+    selected_cols <- selected_cols |>
+      stringr::str_remove(",ParameterName")
+  }
 
   # Build station filter(s)
   if (stations == "all") {
@@ -132,11 +142,6 @@ build_abgov_data_args <- function(
     sapply(\(station_filter) {
       date_filters |>
         sapply(\(date_filter) {
-          column_filter <- "select=" |>
-            paste0(
-              c("Value", "StationName", "ParameterName", "ReadingDate") |>
-                paste0(collapse = ",")
-            )
           if (get_all_vars) {
             # Parameter filter is required, so do a dummy one that allows for any parameter
             param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
@@ -144,19 +149,20 @@ build_abgov_data_args <- function(
             param_filter <- paste0("indexof('", variables, "', ParameterName) ge 1") |> 
               paste(collapse = " or ")
           }
-          filter_query <- station_filter |>
+          station_filter |>
             paste(date_filter, param_filter, sep = " and ")
-          column_filter |>
-            paste0("&", "$filter=" |> paste0(filter_query)) |>
-            paste0("&Connection Timeout=3600")
         })
     }) |>
     unlist() |>
+    unname()
+  
+  # Insert into template, cleanup symbols for url
+  args_template |>
+    sprintf(filters, selected_cols, time_out) |>
     utils::URLencode(reserved = TRUE) |>
     stringr::str_replace_all("%3D", "=") |>
     stringr::str_replace_all("%2C", ",") |>
-    stringr::str_replace_all("%26", "&") |>
-    unname()
+    stringr::str_replace_all("%26", "&")
 }
 
 abgov_get_raw_data_request <- function(api_request, quiet = FALSE) {
