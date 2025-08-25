@@ -91,6 +91,8 @@ build_abgov_data_args <- function(
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
+  value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
+
   time_out <- 36000
   args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
 
@@ -146,7 +148,7 @@ build_abgov_data_args <- function(
             # Parameter filter is required, so do a dummy one that allows for any parameter
             param_filter <- "indexof('Fine Particulate Matter', ParameterName) ge -1"
           } else {
-            param_filter <- paste0("indexof('", variables, "', ParameterName) ge 1") |> 
+            param_filter <- paste0("indexof('", value_cols, "', ParameterName) ge 0") |> 
               paste(collapse = " or ")
           }
           station_filter |>
