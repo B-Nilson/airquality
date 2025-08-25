@@ -68,7 +68,8 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
         dplyr::any_of(names(abgov_units)),
         convert_units,
         in_unit = abgov_units[names(abgov_units) == dplyr::cur_column()],
-        out_unit = default_units[names(default_units) == dplyr::cur_column()]
+        out_unit = default_units[names(default_units) == dplyr::cur_column()],
+        keep_units = TRUE
       )
     )
 }
