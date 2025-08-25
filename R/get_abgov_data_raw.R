@@ -152,7 +152,8 @@ build_abgov_data_args <- function(
               paste(collapse = " or ")
           }
           station_filter |>
-            paste(date_filter, param_filter, sep = " and ")
+            paste(date_filter, param_filter, sep = " and ") |> 
+            paste("and Value ne null")
         })
     }) |>
     unlist() |>
