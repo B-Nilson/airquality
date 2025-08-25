@@ -102,7 +102,7 @@ build_abgov_data_args <- function(
   station_filter_template <- "indexof('%s', StationName) ge %s" # site_name, -1|0
   if (stations == "all") {
     station_filters <- station_filter_template |>
-      sprintf("t", 0)
+      sprintf("t", -1)
   } else {
     station_filters <- seq(1, length(stations), stations_per_call) |>
       sapply(\(start) {
