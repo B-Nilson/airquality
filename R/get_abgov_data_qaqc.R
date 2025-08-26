@@ -150,30 +150,45 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     dplyr::filter(
       ReadingDate |> dplyr::between(date_range[1], date_range[2])
     ) |>
-    # Set units and widen
-    dplyr::group_by(Unit) |>
+    # Cleanup
+    widen_with_units(
+      unit_col = "Unit",
+      value_col = "Measurement Value",
+      name_col = "Parameter",
+      desired_cols = desired_cols
+    ) |>
+    drop_missing_obs_rows() |>
+    standardize_obs_units(default_units = default_units)
+}
+
+widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
+  obs |> 
+    dplyr::group_by(.unit = get(unit_col)) |>
+    dplyr::select(-dplyr::all_of(unit_col)) |>
     dplyr::group_split() |>
     handyr::for_each(
       \(dat) {
         dat |>
           dplyr::mutate(
-            `Measurement Value` = `Measurement Value` |>
-              units::set_units(Unit[1], mode = "standard")
+            dplyr::across(
+              dplyr::any_of(value_col),
+              \(val) val |> 
+                as.numeric() |>
+                units::set_units(.unit[1], mode = "standard")
+            )
           ) |>
-          dplyr::select(-Unit) |>
+          dplyr::select(-.unit) |>
           tidyr::pivot_wider(
-            names_from = "Parameter",
-            values_from = "Measurement Value"
-          )
+            names_from = name_col,
+            values_from = value_col
+          ) |>
+          dplyr::select(dplyr::any_of(desired_cols)) |> 
+          dplyr::distinct()
       }
     ) |>
     handyr::join_list() |>
-    # Cleanup
-    dplyr::select(dplyr::any_of(desired_cols)) |>
-    drop_missing_obs_rows() |>
-    standardize_obs_units(default_units = default_units)
+    dplyr::select(dplyr::any_of(desired_cols))
 }
-
 
 drop_missing_obs_rows <- function(obs, where = is.numeric) {
   obs |>

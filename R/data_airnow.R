@@ -267,20 +267,12 @@ get_airnow_data <- function(
         handyr::swap("c", "degC"),
       quality_assured = FALSE
     ) |>
-    dplyr::group_by(unit) |>
-    dplyr::group_split() |>
-    handyr::for_each(\(unit_data) {
-      unit_data |>
-        dplyr::mutate(
-          value = as.numeric(.data$value) |>
-            units::set_units(.data$unit[1], mode = "standard")
-        ) |>
-        tidyr::pivot_wider(names_from = "param", values_from = "value") |>
-        dplyr::select(dplyr::any_of(airnow_col_names)) |>
-        dplyr::distinct()
-    }) |>
-    join_list() |>
-    dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
+    widen_with_units(
+      unit_col = "unit", 
+      value_col = "value", 
+      name_col = "param",
+      desired_cols = names(airnow_col_names)
+    )
 
   if (!fast) {
     # Get meta for stations within date_range
