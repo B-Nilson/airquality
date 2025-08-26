@@ -89,15 +89,11 @@ get_bcgov_data <- function(
   variables <- variables |>
     standardize_input_vars(all_variables)
 
-  # Get all years in desired date range and drop all but the first in qaqc_years
-  years_to_get <- date_range[1] |>
-    seq(date_range[2], by = "1 days") |>
-    lubridate::with_tz(bcgov_tzone) |>
-    lubridate::year() |>
-    bcgov_determine_years_to_get(qaqc_years)
-
   # Filter to existing stations only
-  if (!fast) {
+  if (!fast) { # TODO: what if "all" in stations?
+    years_to_get <- date_range |>
+      bcgov_determine_years_to_get(qaqc_years)
+    
     known_stations <- years_to_get |>
       get_bcgov_stations(use_sf = FALSE, quiet = quiet)
 
@@ -149,11 +145,7 @@ get_bcgov_data <- function(
 
   # Get raw/qaqc data as needed
   if (!is_all_realtime) {
-    # Update years to get in case realtime covers all of last year (rare)
-    years_to_get <- date_range[1] |>
-      seq(date_range[2], by = "1 days") |>
-      lubridate::with_tz(bcgov_tzone) |>
-      lubridate::year() |>
+    years_to_get <- date_range |>
       bcgov_determine_years_to_get(qaqc_years)
     # Get data for each year for all desired stations
     archived_data <- years_to_get |>
@@ -273,11 +265,16 @@ bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_
 # BCgov Helpers ---------------------------------------------------------
 
 # Drop all raw years except the first
-bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
+bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
+  years <- date_range[1] |>
+    seq(date_range[2], by = "1 days") |>
+    lubridate::with_tz(bcgov_tzone) |>
+    lubridate::year() |> 
+    unique() |> 
+    sort()
   if (is.null(qaqc_years)) {
     qaqc_years <- bcgov_get_qaqc_years()
   }
-  years <- sort(unique(years))
   is_qaqc_year <- years %in% qaqc_years
   years_to_get <- years[is_qaqc_year] |> # keep all years that are qaqced
     c(years[!is_qaqc_year][1]) # only keep first non-qaqc year

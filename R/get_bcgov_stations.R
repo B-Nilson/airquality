@@ -50,6 +50,9 @@ get_bcgov_stations <- function(
   # Determine years to get (raw data covers 1+ year(s))
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- years |>
+    range() |>
+    paste("06") |> 
+    lubridate::ym(tz = bcgov_tzone) |> 
     bcgov_determine_years_to_get(qaqc_years)
   if (any(years_to_get < 1998)) {
     warning(
