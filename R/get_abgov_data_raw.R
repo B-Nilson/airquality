@@ -65,16 +65,8 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
       values_from = pivot_cols[2]
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
-    # Insert units and standardize if needed
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::any_of(names(abgov_units)),
-        convert_units,
-        in_unit = abgov_units[names(abgov_units) == dplyr::cur_column()],
-        out_unit = default_units[names(default_units) == dplyr::cur_column()],
-        keep_units = TRUE
-      )
-    )
+    # Insert units and standardize if needed 
+    standardize_obs_units(default_units = default_units, input_units = abgov_units)
 }
 
 build_abgov_data_args <- function(

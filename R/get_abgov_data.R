@@ -133,25 +133,52 @@ get_abgov_data <- function(
       handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
   }
 
-  # Combine, sort, remove any overlap
+  # Combine and standardize formatting
   stations_data <- list(qaqc_data, raw_data) |>
     dplyr::bind_rows() |>
-    dplyr::arrange(.data$site_name, .data$date_utc, !.data$quality_assured) |>
-    dplyr::distinct(.data$site_name, .data$date_utc, .keep_all = TRUE)
+    standardize_data_format(
+      date_range = date_range,
+      known_stations = known_stations,
+      fast = fast,
+      raw = raw
+    )
 
-  # Handle no data or raw return
-  if (nrow(stations_data) == 0) {
-    stop("No data available for provided stations and date_range")
-  } else if (raw) {
-    return(stations_data) # TODO: not really raw...
+  return(stations_data)
+}
+
+standardize_data_format <- function(
+  obs_data,
+  date_range,
+  known_stations = NULL,
+  fast = FALSE,
+  raw = FALSE
+) {
+  if (raw) {
+    return(obs_data)
+  }
+  formatted <- obs_data |>
+    dplyr::arrange(
+      dplyr::any_of(c("site_name", "site_id")),
+      .data$date_utc,
+      !.data$quality_assured
+    ) |>
+    dplyr::distinct(
+      dplyr::any_of(c("site_name", "site_id")),
+      .data$date_utc,
+      .keep_all = TRUE
+    ) |>
+    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2]))
+
+  if (nrow(formatted) == 0) {
+    stop("No data available after reformatting.")
   }
 
   # Insert local time (slow-ish for many stations)
   if (!fast) {
-    stations_data <- stations_data |>
+    formatted <- formatted |>
       insert_date_local(stations_meta = known_stations)
   }
-  return(stations_data)
+  return(formatted)
 }
 
 ## AB MoE Helpers ---------------------------------------------------------

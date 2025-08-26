@@ -175,13 +175,28 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
       rowSums(!is.na(dplyr::across(dplyr::where(is.numeric)))) > 0
     ) |>
     # standardize units
+    standardize_obs_units(default_units = default_units)
+}
+
+standardize_obs_units <- function(obs, default_units, input_units = NULL) {
+  cols_to_convert <- is.null(input_units) |>
+    ifelse(
+      yes = names(default_units),
+      no = names(input_units)
+    )
+  obs |>
     dplyr::mutate(
       dplyr::across(
-        dplyr::any_of(names(default_units)),
+        dplyr::any_of(cols_to_convert),
         \(x) {
+          in_unit <- is.null(input_units) |> 
+            ifelse(
+              yes = units(x)|> as.character(), 
+              no = input_units[names(input_units) == dplyr::cur_column()]
+            )
           x |>
             convert_units(
-              in_unit = units(x) |> as.character(),
+              in_unit = in_unit,
               out_unit = default_units[
                 names(default_units) == dplyr::cur_column()
               ],
