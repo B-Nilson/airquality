@@ -9,7 +9,7 @@ bcgov_get_qaqc_data <- function(
     paste0("/AnnualSummary/")
 
   # Handle input variables
-  all_variables <- names(.bcgov_columns$values) |> 
+  all_variables <- names(.bcgov_columns$values) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)

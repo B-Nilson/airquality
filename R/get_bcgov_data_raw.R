@@ -95,10 +95,9 @@ bcgov_get_raw_data <- function(
             handyr::on_error(.return = NULL)
         )
       }
-    ) |> 
+    ) |>
     format_bcgov_raw_data(
       desired_cols = unlist(unname(.bcgov_columns)),
       mode = mode
     )
 }
-

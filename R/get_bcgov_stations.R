@@ -51,8 +51,8 @@ get_bcgov_stations <- function(
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- years |>
     range() |>
-    paste("06") |> 
-    lubridate::ym(tz = bcgov_tzone) |> 
+    paste("06") |>
+    lubridate::ym(tz = bcgov_tzone) |>
     bcgov_determine_years_to_get(qaqc_years)
   if (any(years_to_get < 1998)) {
     warning(
