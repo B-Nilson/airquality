@@ -168,15 +168,20 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
       }
     ) |>
     handyr::join_list() |>
-    # Select and rename/reorder columns
+    # Cleanup
     dplyr::select(dplyr::any_of(desired_cols)) |>
-    # Drop empty obs rows
-    dplyr::filter(
-      rowSums(!is.na(dplyr::across(dplyr::where(is.numeric)))) > 0
-    ) |>
-    # standardize units
+    drop_missing_obs_rows() |>
     standardize_obs_units(default_units = default_units)
 }
+
+
+drop_missing_obs_rows <- function(obs, where = is.numeric) {
+  obs |>
+    dplyr::filter(
+      rowSums(!is.na(dplyr::across(dplyr::where(where)))) > 0
+    )
+}
+
 
 standardize_obs_units <- function(obs, default_units, input_units = NULL) {
   cols_to_convert <- is.null(input_units) |>
