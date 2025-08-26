@@ -92,7 +92,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::select(-dplyr::any_of(erroneous_cols)) |>
     # Set units of value column
     dplyr::mutate(
-      UNIT = standardize_units(UNIT),
+      UNIT = fix_units(UNIT),
       dplyr::across(dplyr::all_of(value_col), \(x) {
         x |>
           units::set_units(.data$UNIT[1], mode = "standard") |>

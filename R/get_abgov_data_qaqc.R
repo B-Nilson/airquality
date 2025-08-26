@@ -143,7 +143,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     ) |>
     # Fix units, set obs date, and mark quality assured
     dplyr::mutate(
-      Unit = standardize_units(Unit),
+      Unit = fix_units(Unit),
       ReadingDate = (`Interval Start` + lubridate::hours(1)) |>
         lubridate::with_tz("UTC"),
       quality_assured = is.na(Flags)

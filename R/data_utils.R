@@ -366,9 +366,10 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
             dplyr::across(
               dplyr::any_of(value_col),
               \(val) {
+                unit <- fix_units(.unit[1])
                 val |>
                   as.numeric() |>
-                  units::set_units(.unit[1], mode = "standard")
+                  units::set_units(unit, mode = "standard")
               }
             )
           ) |>
@@ -474,4 +475,13 @@ standardize_input_vars <- function(variables, all_variables = NULL) {
   }
 
   return(variables)
+}
+
+fix_units <- function(units) {
+  dplyr::case_when(
+    units %in% c("% RH", "percent") ~ "%",
+    units %in% c("\xb0C", "deg c", "c") ~ "degC",
+    units %in% c("Deg.", "deg") ~ "degrees",
+    TRUE ~ units
+  )
 }

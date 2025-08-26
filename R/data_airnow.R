@@ -263,8 +263,7 @@ get_airnow_data <- function(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
         lubridate::hours(1), # from forward -> backward looking averages
-      unit = stringr::str_to_lower(.data$unit) |>
-        handyr::swap("c", "degC"),
+      unit = stringr::str_to_lower(.data$unit) |> fix_units(),
       quality_assured = FALSE
     ) |>
     widen_with_units(

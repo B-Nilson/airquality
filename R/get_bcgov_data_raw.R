@@ -141,14 +141,10 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
         dplyr::across(
           dplyr::all_of(value_cols[i]),
           \(x) {
-            x |>
-              as.numeric() |>
+            unit <- fix_units(.data[[unit_cols[i]]][1])
+            as.numeric(x) |>
               suppressWarnings() |> # NAs introduced by coercion
-              units::set_units(
-                standardize_units(.data[[unit_cols[i]]][1]),
-                mode = "standard"
-              ) |>
-              units::set_units(default_unit, mode = "standard")
+              convert_units(in_unit = unit, out_unit = default_unit)
           }
         )
       )
