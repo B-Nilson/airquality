@@ -146,42 +146,6 @@ get_abgov_data <- function(
   return(stations_data)
 }
 
-standardize_data_format <- function(
-  obs_data,
-  date_range,
-  known_stations = NULL,
-  fast = FALSE,
-  raw = FALSE
-) {
-  if (raw) {
-    return(obs_data)
-  }
-  formatted <- obs_data |>
-    dplyr::arrange(
-      dplyr::any_of(c("site_name", "site_id")),
-      .data$date_utc,
-      !.data$quality_assured
-    ) |>
-    dplyr::distinct(
-      dplyr::any_of(c("site_name", "site_id")),
-      .data$date_utc,
-      .keep_all = TRUE
-    ) |>
-    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |> 
-    drop_missing_obs_rows(where = is.numeric)
-
-  if (nrow(formatted) == 0) {
-    stop("No data available after reformatting.")
-  }
-
-  # Insert local time (slow-ish for many stations)
-  if (!fast) {
-    formatted <- formatted |>
-      insert_date_local(stations_meta = known_stations)
-  }
-  return(formatted)
-}
-
 ## AB MoE Helpers ---------------------------------------------------------
 
 .abgov_columns <- list(

@@ -159,28 +159,3 @@ bcgov_format_raw_data <- function(raw_data, mode = "stations") {
     dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols))) |>
     dplyr::mutate(quality_assured = FALSE)
 }
-
-# TODO: implement for all sources
-standardize_input_vars <- function(variables, all_variables = NULL) {
-  variables <- tolower(variables)
-
-  if ("all" %in% variables & !is.null(all_variables)) {
-    return(all_variables)
-  }
-
-  variables[variables == "pm2.5"] <- "pm25"
-  variables[variables == "humidity"] <- "rh"
-  variables[variables == "temperature"] <- "temp"
-  variables[variables == "wdir"] <- "wd"
-  variables[variables == "wspd"] <- "ws"
-
-  if (!is.null(all_variables)) {
-    variables <- variables[variables %in% all_variables]
-  }
-
-  if (length(variables) == 0) {
-    stop("No valid variables specified.")
-  }
-
-  return(variables)
-}

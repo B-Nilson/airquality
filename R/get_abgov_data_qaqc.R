@@ -161,72 +161,6 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     standardize_obs_units(default_units = default_units)
 }
 
-widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
-  obs |> 
-    dplyr::group_by(.unit = get(unit_col)) |>
-    dplyr::select(-dplyr::all_of(unit_col)) |>
-    dplyr::group_split() |>
-    handyr::for_each(
-      \(dat) {
-        dat |>
-          dplyr::mutate(
-            dplyr::across(
-              dplyr::any_of(value_col),
-              \(val) val |> 
-                as.numeric() |>
-                units::set_units(.unit[1], mode = "standard")
-            )
-          ) |>
-          dplyr::select(-.unit) |>
-          tidyr::pivot_wider(
-            names_from = name_col,
-            values_from = value_col
-          ) |>
-          dplyr::select(dplyr::any_of(desired_cols)) |> 
-          dplyr::distinct()
-      }
-    ) |>
-    handyr::join_list() |>
-    dplyr::select(dplyr::any_of(desired_cols))
-}
-
-drop_missing_obs_rows <- function(obs, where = is.numeric) {
-  obs |>
-    dplyr::filter(
-      rowSums(!is.na(dplyr::across(dplyr::where(where)))) > 0
-    )
-}
-
-
-standardize_obs_units <- function(obs, default_units, input_units = NULL) {
-  cols_to_convert <- is.null(input_units) |>
-    ifelse(
-      yes = names(default_units),
-      no = names(input_units)
-    )
-  obs |>
-    dplyr::mutate(
-      dplyr::across(
-        dplyr::any_of(cols_to_convert),
-        \(x) {
-          in_unit <- is.null(input_units) |> 
-            ifelse(
-              yes = units(x)|> as.character(), 
-              no = input_units[names(input_units) == dplyr::cur_column()]
-            )
-          x |>
-            convert_units(
-              in_unit = in_unit,
-              out_unit = default_units[
-                names(default_units) == dplyr::cur_column()
-              ],
-              keep_units = TRUE
-            )
-        }
-      )
-    )
-}
-
 abgov_init_data_request <- function(
   operator_keys,
   station_keys,
@@ -349,21 +283,6 @@ abgov_get_qaqc_parameters <- function() {
     simplify = TRUE
   )[, 1]
   return(parameters)
-}
-
-extract_options <- function(session, html_id) {
-  options <- session |>
-    rvest::html_nodes(paste0("select[name='", html_id, "'] option"))
-  # Extract operator names and keys from options
-  option_names <- options |>
-    rvest::html_text()
-  options <- options |>
-    rvest::html_attr("value") |>
-    as.numeric() |>
-    suppressWarnings() |>
-    setNames(option_names)
-  is_place_holder <- option_names == "--- SELECT ---"
-  options[!is_place_holder]
 }
 
 abgov_make_key_args <- function(keys, key_name) {
@@ -693,19 +612,4 @@ abgov_parse_qaqc_station_data <- function(station_data) {
       Parameter = meta$Parameter,
       Unit = meta$Unit
     )
-}
-
-# TODO: move to handyr
-get_session_token <- function(session) {
-  session |>
-    rvest::html_node("input[name='__RequestVerificationToken']") |>
-    rvest::html_attr("value")
-}
-
-simulate_session <- function(site, endpoint) {
-  site |>
-    paste0(endpoint) |>
-    httr::GET() |>
-    httr::content(as = "text", encoding = "UTF-8") |>
-    rvest::read_html()
 }
