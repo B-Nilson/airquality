@@ -95,67 +95,10 @@ bcgov_get_raw_data <- function(
             handyr::on_error(.return = NULL)
         )
       }
-    ) |>
-    bcgov_format_raw_data(mode = mode) |>
-    dplyr::select(-dplyr::any_of(cols_to_drop))
-}
-
-bcgov_format_raw_data <- function(raw_data, mode = "stations") {
-  if (nrow(raw_data) == 0) {
-    return(raw_data)
-  }
-  if (mode == "variables") {
-    return(
-      bcgov_format_qaqc_data(raw_data, use_rounded_value = TRUE)
+    ) |> 
+    format_bcgov_raw_data(
+      desired_cols = unlist(unname(.bcgov_columns)),
+      mode = mode
     )
-  }
-
-  # Get column names and insert unit columns if needed
-  meta_cols <- c("EMS_ID", "DATE_PST")
-  value_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$values
-  ]
-  unit_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$units
-  ]
-  if (mode == "stations") {
-    instrument_cols <- names(raw_data)[
-      names(raw_data) %in% .bcgov_columns$instruments
-    ]
-  } else {
-    instrument_cols <- character(0)
-    # Insert default units as unit columns as no units provided
-    # TODO: confirm units are correct here
-    for (i in 1:length(unit_cols)) {
-      is_value_col <- .bcgov_columns$values %in% value_cols[i]
-      raw_data[[unit_cols[i]]] <- default_units[
-        names(.bcgov_columns$values)[is_value_col]
-      ]
-    }
-  }
-  # Assign units to value columns
-  for (i in 1:length(unit_cols)) {
-    default_unit <- default_units[
-      names(.bcgov_columns$values[
-        .bcgov_columns$values %in% c(value_cols[i], names(value_cols[i])) # TODO: is this needed?
-      ])
-    ]
-    raw_data <- raw_data |>
-      dplyr::mutate(
-        dplyr::across(
-          dplyr::all_of(value_cols[i]),
-          \(x) {
-            unit <- fix_units(.data[[unit_cols[i]]][1])
-            as.numeric(x) |>
-              suppressWarnings() |> # NAs introduced by coercion
-              convert_units(in_unit = unit, out_unit = default_unit)
-          }
-        )
-      )
-  }
-  # Drop unnecessary columns for memory-saving
-  # TODO: see if they will do in source? files are quite bloated...
-  raw_data |>
-    dplyr::select(dplyr::all_of(c(meta_cols, value_cols, instrument_cols))) |>
-    dplyr::mutate(quality_assured = FALSE)
 }
+

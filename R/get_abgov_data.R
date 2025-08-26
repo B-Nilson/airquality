@@ -63,11 +63,9 @@ get_abgov_data <- function(
   stopifnot(is.numeric(stations_per_call))
   stopifnot(is.numeric(days_per_call))
 
-  # Constants
+  # Constants/setup
   tzone <- "America/Edmonton" # TODO: confirm this
   allowed_date_range <- c("1980-01-01 00", "now") # TODO: confirm this
-
-  # Output citation message to user
   data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
@@ -80,7 +78,7 @@ get_abgov_data <- function(
   variables <- variables |>
     standardize_input_vars(all_variables)
 
-  # Only get data for stations that exist on the APIs
+  # Filter to existing stations only
   if (!fast & !"all" %in% stations) {
     known_stations <- get_abgov_stations()
     stations <- stations |>
@@ -133,7 +131,7 @@ get_abgov_data <- function(
   }
 
   # Combine and standardize formatting
-  stations_data <- list(qaqc_data, raw_data) |>
+  list(qaqc_data, raw_data) |>
     dplyr::bind_rows() |>
     standardize_data_format(
       date_range = date_range,
@@ -141,8 +139,6 @@ get_abgov_data <- function(
       fast = fast,
       raw = raw
     )
-
-  return(stations_data)
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
