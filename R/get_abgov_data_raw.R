@@ -40,7 +40,7 @@ get_abgov_data_raw <- function(
 }
 
 format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
-  if(nrow(raw_data) == 0) {
+  if (nrow(raw_data) == 0) {
     return(NULL)
   }
   pivot_cols <- c("ParameterName", "Value")
@@ -65,8 +65,11 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
       values_from = pivot_cols[2]
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
-    # Insert units and standardize if needed 
-    standardize_obs_units(default_units = default_units, input_units = abgov_units)
+    # Insert units and standardize if needed
+    standardize_obs_units(
+      default_units = default_units,
+      input_units = abgov_units
+    )
 }
 
 build_abgov_data_args <- function(

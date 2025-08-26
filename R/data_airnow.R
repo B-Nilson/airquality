@@ -268,8 +268,8 @@ get_airnow_data <- function(
       quality_assured = FALSE
     ) |>
     widen_with_units(
-      unit_col = "unit", 
-      value_col = "value", 
+      unit_col = "unit",
+      value_col = "value",
       name_col = "param",
       desired_cols = names(airnow_col_names)
     )

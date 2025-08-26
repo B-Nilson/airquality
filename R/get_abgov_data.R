@@ -71,7 +71,6 @@ get_abgov_data <- function(
   data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
-  # TODO: warning message says "beyond current hour" which is invalid
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
 
@@ -130,7 +129,7 @@ get_abgov_data <- function(
         date_range = date_range_new,
         desired_cols = unlist(unname(.abgov_columns))
       ) |>
-      handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
+      handyr::on_error(.return = NULL)
   }
 
   # Combine and standardize formatting

@@ -339,7 +339,7 @@ standardize_data_format <- function(
       .data$date_utc,
       .keep_all = TRUE
     ) |>
-    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |> 
+    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
     drop_missing_obs_rows(where = is.numeric)
 
   if (nrow(formatted) == 0) {
@@ -355,7 +355,7 @@ standardize_data_format <- function(
 }
 
 widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
-  obs |> 
+  obs |>
     dplyr::group_by(.unit = get(unit_col)) |>
     dplyr::select(-dplyr::all_of(unit_col)) |>
     dplyr::group_split() |>
@@ -365,9 +365,11 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
           dplyr::mutate(
             dplyr::across(
               dplyr::any_of(value_col),
-              \(val) val |> 
-                as.numeric() |>
-                units::set_units(.unit[1], mode = "standard")
+              \(val) {
+                val |>
+                  as.numeric() |>
+                  units::set_units(.unit[1], mode = "standard")
+              }
             )
           ) |>
           dplyr::select(-.unit) |>
@@ -375,7 +377,7 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
             names_from = name_col,
             values_from = value_col
           ) |>
-          dplyr::select(dplyr::any_of(desired_cols)) |> 
+          dplyr::select(dplyr::any_of(desired_cols)) |>
           dplyr::distinct()
       }
     ) |>
@@ -401,9 +403,9 @@ standardize_obs_units <- function(obs, default_units, input_units = NULL) {
       dplyr::across(
         dplyr::any_of(cols_to_convert),
         \(x) {
-          in_unit <- is.null(input_units) |> 
+          in_unit <- is.null(input_units) |>
             ifelse(
-              yes = units(x)|> as.character(), 
+              yes = units(x) |> as.character(),
               no = input_units[names(input_units) == dplyr::cur_column()]
             )
           x |>

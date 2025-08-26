@@ -24,6 +24,7 @@ get_abgov_data_qaqc <- function(
   )
 
   # Handle date_range inputs
+  # TODO: warning message says "beyond current hour" which is invalid
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
 
