@@ -7,6 +7,7 @@
 get_airnow_data(
   stations = "all",
   date_range = "now",
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
