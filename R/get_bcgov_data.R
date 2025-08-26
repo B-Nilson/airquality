@@ -84,11 +84,8 @@ get_bcgov_data <- function(
   original_date_range <- date_range # copy for later
 
   # Handle variables input
-  all_variables <- names(bcgov_col_names)[endsWith(
-    bcgov_col_names,
-    "_INSTRUMENT"
-  )] |>
-    stringr::str_remove("_1hr_instrument")
+  all_variables <- names(.bcgov_columns$values) |>
+    stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
 
@@ -116,10 +113,6 @@ get_bcgov_data <- function(
     lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
-    is_value_or_instrument <- names(bcgov_col_names) |>
-      stringr::str_starts(variables |> paste0(collapse = "|"))
-    is_instrument <- names(bcgov_col_names) |> endsWith("_instrument")
-    variable_cols <- bcgov_col_names[is_value_or_instrument & !is_instrument]
     realtime_data <- stations |>
       bcgov_get_raw_data(
         variables = variables,
@@ -127,18 +120,14 @@ get_bcgov_data <- function(
         mode = "realtime"
       ) |>
       dplyr::filter(
-        !dplyr::if_all(dplyr::any_of(variable_cols), is.na),
         lubridate::ymd_hm(.data$DATE_PST, tz = bcgov_tzone) > realtime_start
       ) |>
-      handyr::on_error(.return = NULL)
+      drop_missing_obs_rows(where = is.numeric) |>
+      handyr::on_error(.return = data.frame())
     if (nrow(realtime_data) == 0) {
+      realtime_data <- NULL
       warning(
         "No realtime data available for provided variables, stations and date_range."
-      )
-      realtime_data <- NULL
-    } else if (is.null(realtime_data)) {
-      warning(
-        "No realtime data available for provided stations and date_range."
       )
     } else {
       first_realtime_date <- realtime_data |>
@@ -202,7 +191,7 @@ get_bcgov_data <- function(
         }) |>
         lubridate::with_tz("UTC")
     ) |>
-    dplyr::select(dplyr::any_of(bcgov_col_names)) |>
+    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns)))) |>
     standardize_data_format(
       date_range = original_date_range,
       known_stations = all_stations,
@@ -217,57 +206,68 @@ get_bcgov_data <- function(
 
 bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
 bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
-bcgov_col_names <- c(
-  # Meta
-  date_utc = "date_utc", # Added by bcgov_get_annual_data()
-  site_id = "EMS_ID",
-  quality_assured = "quality_assured", # Added by bcgov_get_annual_data()
-  # Particulate Matter
-  pm25_1hr = "PM25",
-  pm25_1hr_instrument = "PM25_INSTRUMENT",
-  pm10_1hr = "PM10",
-  pm10_1hr_instrument = "PM10_INSTRUMENT",
-  # Ozone
-  o3_1hr = "O3",
-  o3_1hr_instrument = "O3_INSTRUMENT",
-  # Nitrogen Pollutants
-  no_1hr = "NO",
-  no_1hr_instrument = "NO_INSTRUMENT",
-  no2_1hr = "NO2",
-  no2_1hr_instrument = "NO2_INSTRUMENT",
-  nox_1hr = "NOx",
-  nox_1hr_instrument = "NOx_INSTRUMENT",
-  # Sulfur Pollutants
-  so2_1hr = "SO2",
-  so2_1hr_instrument = "SO2_INSTRUMENT",
-  trs_1hr = "TRS",
-  trs_1hr_instrument = "TRS_INSTRUMENT",
-  h2s_1hr = "H2S",
-  h2s_1hr_instrument = "H2S_INSTRUMENT",
-  # Carbon Monoxide
-  co_1hr = "CO",
-  co_1hr_instrument = "CO_INSTRUMENT",
-  # Met data
-  rh_1hr = "HUMIDITY",
-  rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
-  temp_1hr = "TEMP_MEAN",
-  temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
-  wd_1hr = "WDIR_VECT",
-  wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
-  wd_unitvector_1hr = "WDIR_UVEC",
-  wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
-  ws_1hr = "WSPD_SCLR",
-  ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
-  ws_vector_1hr = "WSPD_VECT",
-  ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
-  precip_1hr = "PRECIP",
-  precip_1hr_instrument = "PRECIP_INSTRUMENT",
-  snow_1hr = "SNOW",
-  snow_1hr_instrument = "SNOW_INSTRUMENT",
-  pressure_1hr = "PRESSURE",
-  pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
-  vapour_pressure_1hr = "VAPOUR",
-  vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
+.bcgov_columns <- list(
+  meta = c(
+    date_utc = "date_utc", # Added by bcgov_get_annual_data()
+    site_id = "EMS_ID",
+    quality_assured = "quality_assured" # Added by bcgov_get_annual_data()
+  ),
+  values = c(
+    # Particulate Matter
+    pm25_1hr = "PM25",
+    pm10_1hr = "PM10",
+    # Ozone
+    o3_1hr = "O3",
+    # Nitrogen Pollutants
+    no_1hr = "NO",
+    no2_1hr = "NO2",
+    nox_1hr = "NOx",
+    # Sulfur Pollutants
+    so2_1hr = "SO2",
+    trs_1hr = "TRS",
+    h2s_1hr = "H2S",
+    # Carbon Monoxide
+    co_1hr = "CO",
+    # Met data
+    rh_1hr = "HUMIDITY",
+    temp_1hr = "TEMP_MEAN",
+    wd_1hr = "WDIR_VECT",
+    wd_unitvector_1hr = "WDIR_UVEC",
+    ws_1hr = "WSPD_SCLR",
+    ws_vector_1hr = "WSPD_VECT",
+    precip_1hr = "PRECIP",
+    snow_1hr = "SNOW",
+    pressure_1hr = "PRESSURE",
+    vapour_pressure_1hr = "VAPOUR"
+  ),
+  instruments = c(
+    # Particulate Matter
+    pm25_1hr_instrument = "PM25_INSTRUMENT",
+    pm10_1hr_instrument = "PM10_INSTRUMENT",
+    # Ozone
+    o3_1hr_instrument = "O3_INSTRUMENT",
+    # Nitrogen Pollutants
+    no_1hr_instrument = "NO_INSTRUMENT",
+    no2_1hr_instrument = "NO2_INSTRUMENT",
+    nox_1hr_instrument = "NOx_INSTRUMENT",
+    # Sulfur Pollutants
+    so2_1hr_instrument = "SO2_INSTRUMENT",
+    trs_1hr_instrument = "TRS_INSTRUMENT",
+    h2s_1hr_instrument = "H2S_INSTRUMENT",
+    # Carbon Monoxide
+    co_1hr_instrument = "CO_INSTRUMENT",
+    # Met data
+    rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
+    temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
+    wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
+    wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
+    ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
+    ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
+    precip_1hr_instrument = "PRECIP_INSTRUMENT",
+    snow_1hr_instrument = "SNOW_INSTRUMENT",
+    pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
+    vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
+  )
 )
 
 # BCgov Helpers ---------------------------------------------------------

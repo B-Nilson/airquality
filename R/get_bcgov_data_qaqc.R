@@ -9,9 +9,8 @@ bcgov_get_qaqc_data <- function(
     paste0("/AnnualSummary/")
 
   # Handle input variables
-  is_instrument_col <- bcgov_col_names |> endsWith("_INSTRUMENT")
-  all_variables <- names(bcgov_col_names)[is_instrument_col] |>
-    stringr::str_remove("_1hr_instrument")
+  all_variables <- names(.bcgov_columns$values) |> 
+    stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
 
@@ -85,7 +84,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 
   parameter <- qaqc_data$PARAMETER[1]
   default_unit <- default_units[
-    names(bcgov_col_names[bcgov_col_names %in% parameter])
+    names(.bcgov_columns$values)[.bcgov_columns$values %in% parameter]
   ]
   qaqc_data |>
     # Set units of value column
