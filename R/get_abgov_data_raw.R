@@ -33,13 +33,16 @@ get_abgov_data_raw <- function(
       .bind = TRUE
     )
 
-  if (length(variables) == 1) {
+  if (length(variables) == 1 & nrow(raw_data)) {
     raw_data$ParameterName <- value_cols[1]
   }
   return(raw_data)
 }
 
 format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
+  if(nrow(raw_data) == 0) {
+    return(NULL)
+  }
   pivot_cols <- c("ParameterName", "Value")
 
   raw_data |>
