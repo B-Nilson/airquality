@@ -192,7 +192,7 @@ get_bcgov_data <- function(
   }
 
   # Standardize formatting
-  stations_data <- stations_data |>
+  stations_data |>
     dplyr::mutate(
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
@@ -203,26 +203,14 @@ get_bcgov_data <- function(
         lubridate::with_tz("UTC")
     ) |>
     dplyr::select(dplyr::any_of(bcgov_col_names)) |>
-    dplyr::filter(
-      .data$date_utc |>
-        dplyr::between(original_date_range[1], original_date_range[2])
+    standardize_data_format(
+      date_range = original_date_range,
+      known_stations = all_stations,
+      fast = fast,
+      raw = raw
     ) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    dplyr::select_if(~ !all(is.na(.))) |>
-    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
-    dplyr::arrange(.data$site_id, .data$date_utc) |>
-    dplyr::distinct(.data$site_id, .data$date_utc, .keep_all = TRUE)
-
-  if (nrow(stations_data) == 0) {
-    stop("No data available for provided stations and date_range")
-  }
-
-  if (!fast) {
-    stations_data <- stations_data |>
-      insert_date_local(stations_meta = known_stations, by = "site_id")
-  }
-
-  return(stations_data)
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor))
 }
 
 # BCgov Constants ---------------------------------------------------------

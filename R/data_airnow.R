@@ -253,9 +253,17 @@ get_airnow_data <- function(
   if (raw) {
     return(airnow_data)
   }
+  
+  # Get meta for stations within date_range for adding date_local
+  if (!fast) {
+    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
+      get_airnow_stations()
+  }else {
+    known_stations <- NULL
+  }
 
   if (nrow(airnow_data) == 0) {
-    stop("No data available for desired stations during speciifed date range.")
+    stop("No data available for desired stations during specified date range.")
   }
   # Standardize formatting
   airnow_data <- airnow_data |>
@@ -263,7 +271,7 @@ get_airnow_data <- function(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
         lubridate::hours(1), # from forward -> backward looking averages
-      unit = stringr::str_to_lower(.data$unit) |> fix_units(),
+      unit = stringr::str_to_lower(.data$unit),
       quality_assured = FALSE
     ) |>
     widen_with_units(
@@ -271,16 +279,13 @@ get_airnow_data <- function(
       value_col = "value",
       name_col = "param",
       desired_cols = names(airnow_col_names)
+    ) |> 
+    standardize_data_format(
+      date_range = date_range,
+      known_stations = known_stations,
+      fast = fast,
+      raw = raw
     )
-
-  if (!fast) {
-    # Get meta for stations within date_range
-    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
-      get_airnow_stations()
-    # Insert date_local based on local_tz column in metadata
-    airnow_data <- airnow_data |>
-      insert_date_local(stations_meta = known_stations)
-  }
 
   return(airnow_data)
 }

@@ -79,6 +79,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     "REGION",
     "DATE",
     "TIME",
+    "UNIT",
     value_cols[(!use_rounded_value) + 1]
   )
 
@@ -87,19 +88,20 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     names(bcgov_col_names[bcgov_col_names %in% parameter])
   ]
   qaqc_data |>
+    # Set units of value column
+    dplyr::mutate(
+      dplyr::across(dplyr::all_of(value_col), \(x) {
+        x |>
+          convert_units(
+            in_unit = .data$UNIT[1],
+            out_unit = default_unit,
+            keep_units = TRUE
+          )
+      })
+    ) |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::filter(!is.na(.data[[value_col]])) |>
     dplyr::select(-dplyr::any_of(erroneous_cols)) |>
-    # Set units of value column
-    dplyr::mutate(
-      UNIT = fix_units(UNIT),
-      dplyr::across(dplyr::all_of(value_col), \(x) {
-        x |>
-          units::set_units(.data$UNIT[1], mode = "standard") |>
-          units::set_units(default_unit, mode = "standard")
-      })
-    ) |>
-    dplyr::select(-UNIT) |>
     # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
     tidyr::pivot_wider(
       names_from = "PARAMETER",

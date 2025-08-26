@@ -16,7 +16,11 @@ bcgov_get_raw_data <- function(
   )
 
   # Standardize common var names
-  variables <- standardize_input_vars(variables)
+  all_variables <- names(bcgov_col_names) |>
+    stringr::str_subset("_instrument") |> 
+    stringr::str_remove("_1hr_instrument")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
 
   # Handle "all" in stations
   all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
