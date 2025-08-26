@@ -121,9 +121,10 @@ build_abgov_data_args <- function(
   }
 
   # Build date filter(s)
+  tzone <- "America/Edmonton"
   date_filter_template <- "ReadingDate ge datetime'%s' and ReadingDate le datetime'%s'"
   date_filters <- (date_range - lubridate::hours(c(1, 0))) |> # TODO: Check if this is needed
-    lubridate::with_tz("UTC") |>
+    lubridate::with_tz(tzone) |>
     handyr::split_date_range(max_duration = paste(days_per_call, "days")) |>
     apply(1, \(desired_range) {
       desired_range <- desired_range |>
