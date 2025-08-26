@@ -4,7 +4,7 @@
 \alias{get_abgov_stations}
 \title{Download air quality station metadata from the Alberta (Canada) Government}
 \usage{
-get_abgov_stations(..., use_sf = FALSE)
+get_abgov_stations(..., use_sf = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{...}{Not used. For compatibility with other metadata functions and future expansion.}

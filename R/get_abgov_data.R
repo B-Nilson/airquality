@@ -5,6 +5,7 @@
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times.
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @param variables (Optional) A character vector of one or more variables to try and get data desired.
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
