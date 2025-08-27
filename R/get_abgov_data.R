@@ -80,8 +80,12 @@ get_abgov_data <- function(
     standardize_input_vars(all_variables)
 
   # Filter to existing stations only
-  if (!fast & !"all" %in% stations) {
+  if (!fast) {
     known_stations <- get_abgov_stations()
+  } else {
+    known_stations <- NULL
+  }
+  if (!fast & !"all" %in% stations) {
     stations <- stations |>
       check_stations_exist(
         known_stations = known_stations$site_name, # (error if no stations in known_stations)

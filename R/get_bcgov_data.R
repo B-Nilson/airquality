@@ -243,7 +243,7 @@ format_bcgov_raw_data <- function(
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    drop_missing_obs_rows(where = \(x) x %in% names(.bcgov_columns$values))
+    drop_missing_obs_rows(where_fn = \(x) x %in% names(.bcgov_columns$values))
 
   if (nrow(formatted) == 0) {
     stop("No data available after reformatting.")

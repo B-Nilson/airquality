@@ -18,8 +18,8 @@ get_abgov_data_qaqc <- function(
   # Decide which api endpoint to use
   mode <- dplyr::case_when(
     any(stations == "all") ~ "parameters",
-    any(parameters == "all") & length(stations) < 8 ~ "stations",
-    length(stations) > length(parameters) ~ "parameters",
+    any(variables == "all") & length(stations) < 8 ~ "stations",
+    length(stations) > length(variables) ~ "parameters",
     TRUE ~ "stations"
   )
 

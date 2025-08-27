@@ -328,19 +328,22 @@ standardize_data_format <- function(
   if (raw) {
     return(obs_data)
   }
+  if (nrow(obs_data) == 0) {
+    stop("No data available before reformatting.")
+  }
   formatted <- obs_data |>
     dplyr::arrange(
-      dplyr::any_of(c("site_name", "site_id")),
+      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
       .data$date_utc,
       !.data$quality_assured
     ) |>
     dplyr::distinct(
-      dplyr::any_of(c("site_name", "site_id")),
+      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
       .data$date_utc,
       .keep_all = TRUE
     ) |>
     dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
-    drop_missing_obs_rows(where = is.numeric)
+    drop_missing_obs_rows(where_fn = is.numeric)
 
   if (nrow(formatted) == 0) {
     stop("No data available after reformatting.")
@@ -386,10 +389,10 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
     dplyr::select(dplyr::any_of(desired_cols))
 }
 
-drop_missing_obs_rows <- function(obs, where = is.numeric) {
+drop_missing_obs_rows <- function(obs, where_fn = is.numeric) {
   obs |>
     dplyr::filter(
-      rowSums(!is.na(dplyr::across(dplyr::where(where)))) > 0
+      rowSums(!is.na(dplyr::across(dplyr::where(!!where_fn)))) > 0
     )
 }
 

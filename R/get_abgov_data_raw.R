@@ -43,7 +43,7 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
   if (nrow(raw_data) == 0) {
     return(NULL)
   }
-  pivot_cols <- c("ParameterName", "Value")
+  tzone <- "MST" # TODO: confirm this?
 
   raw_data |>
     # Convert dates, mark not quality assured, and filter to desired range
@@ -61,8 +61,8 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
     dplyr::distinct() |>
     # Long -> wide, standardize column names
     tidyr::pivot_wider(
-      names_from = pivot_cols[1],
-      values_from = pivot_cols[2]
+      names_from = "ParameterName",
+      values_from = "Value"
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
     # Insert units and standardize if needed
