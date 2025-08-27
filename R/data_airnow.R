@@ -269,17 +269,19 @@ get_airnow_data <- function(
     ) |>
     dplyr::group_by(unit) |>
     dplyr::group_split() |>
-    handyr::for_each(\(unit_data) {
-      unit_data |>
-        dplyr::mutate(
-          value = as.numeric(.data$value) |>
-            units::set_units(.data$unit[1], mode = "standard")
-        ) |>
-        tidyr::pivot_wider(names_from = "param", values_from = "value") |>
-        dplyr::select(dplyr::any_of(airnow_col_names)) |>
-        dplyr::distinct()
-    }) |>
-    handyr::join_list() |>
+    handyr::for_each(
+      .join = TRUE,
+      \(unit_data) {
+        unit_data |>
+          dplyr::mutate(
+            value = as.numeric(.data$value) |>
+              units::set_units(.data$unit[1], mode = "standard")
+          ) |>
+          tidyr::pivot_wider(names_from = "param", values_from = "value") |>
+          dplyr::select(dplyr::any_of(airnow_col_names)) |>
+          dplyr::distinct()
+      }
+    ) |>
     dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
 
   if (!fast) {

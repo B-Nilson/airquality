@@ -154,6 +154,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
     dplyr::group_by(Unit) |>
     dplyr::group_split() |>
     handyr::for_each(
+      .join = TRUE,
       \(dat) {
         dat |>
           dplyr::mutate(
@@ -167,7 +168,6 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
           )
       }
     ) |>
-    handyr::join_list() |>
     # Select and rename/reorder columns
     dplyr::select(dplyr::any_of(desired_cols)) |>
     # Drop empty obs rows
