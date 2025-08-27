@@ -1,15 +1,28 @@
 test_that("basic case works", {
-  date_range <- c(
-    Sys.time() - lubridate::days(365 * 2),
-    Sys.time() |>
-      lubridate::floor_date("hours")
-  ) |>
-    lubridate::with_tz("UTC") |>
-    format("%Y-%m-%d %H")
-  stations <- c("Calgary Southeast", "Edmonton East")
-  test <- stations |>
-    get_abgov_data(date_range = date_range)
-  expect_snapshot(test)
+  obs <- get_abgov_data(variables = "pm25", quiet = TRUE)
+
+  # Case: All expected columns
+  expect_equal(
+    c(
+      "site_name",
+      "quality_assured",
+      "date_utc",
+      "date_local",
+    ),
+    names(obs)[1:4]
+  )
+
+  # Case: All date_utc non-NA
+  expect_true(all(!is.na(obs$date_utc)))
+  # Case: All date_local non-NA
+  expect_true(all(!is.na(obs$date_local)))
+  # Case: All date_utc within requested date range
+  expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
+  expect_true(all(unique(obs$site_id) %in% station))
+
+  # Case: date_utc the same as converting date_local to UTC
+  obs_2 <- obs |> convert_date_utc_to_local()
+  expect_equal(obs_2$date_utc, obs_2$date_utc_from_local)
 })
 
 test_that("able to get stations", {
