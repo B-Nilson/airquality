@@ -279,7 +279,7 @@ get_airnow_data <- function(
         dplyr::select(dplyr::any_of(airnow_col_names)) |>
         dplyr::distinct()
     }) |>
-    join_list() |>
+    handyr::join_list() |>
     dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
 
   if (!fast) {

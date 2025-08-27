@@ -51,7 +51,7 @@ bcgov_get_qaqc_data <- function(
         )
       }
     ) |>
-    join_list() # TODO: use .join when implemented in for_each
+    handyr::join_list() # TODO: use .join when implemented in for_each
 
   if (is.null(qaqc_data)) {
     stop("No data available for provided stations / date_range / parameters.")
