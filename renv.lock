@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.4.1",
+    "Version": "4.5.0",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -43,8 +43,7 @@
       "NeedsCompilation": "yes",
       "Author": "Brian Ripley [aut, cre, cph], Bill Venables [aut, cph], Douglas M. Bates [ctb], Kurt Hornik [trl] (partial port ca 1998), Albrecht Gebhardt [trl] (partial port ca 1998), David Firth [ctb] (support functions for polr)",
       "Maintainer": "Brian Ripley <Brian.Ripley@R-project.org>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
+      "Repository": "CRAN"
     },
     "Matrix": {
       "Package": "Matrix",
@@ -190,16 +189,14 @@
         "testthat (>= 3.0.0)"
       ],
       "Config/testthat/edition": "3",
-      "Remotes": "github::B-Nilson/handyr",
       "URL": "https://github.com/B-Nilson/aqhi",
       "BugReports": "https://github.com/B-Nilson/aqhi/issues",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "aqhi",
       "RemoteUsername": "B-Nilson",
-      "RemoteRef": "HEAD",
+      "RemoteRepo": "aqhi",
       "RemoteSha": "e68fe2ddf97aae3ad19ecdda57f19f5ddc3f20e8",
-      "NeedsCompilation": "no"
+      "RemoteHost": "api.github.com",
+      "Remotes": "github::B-Nilson/handyr"
     },
     "askpass": {
       "Package": "askpass",
@@ -904,15 +901,14 @@
       "Config/testthat/edition": "3",
       "URL": "https://github.com/B-Nilson/handyr",
       "BugReports": "https://github.com/B-Nilson/handyr/issues",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "handyr",
-      "RemoteUsername": "B-Nilson",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "e1b3ebf2c61abf124c9fc16b88a7d29684a17e6d",
-      "NeedsCompilation": "no",
       "Author": "Brayden Nilson [aut, cre]",
-      "Maintainer": "Brayden Nilson <nilson.brayden@gmail.com>"
+      "Maintainer": "Brayden Nilson <nilson.brayden@gmail.com>",
+      "RemoteType": "github",
+      "RemoteUsername": "B-Nilson",
+      "RemoteRepo": "handyr",
+      "RemoteRef": "main",
+      "RemoteSha": "fc2fc5c8a20f43af21abed54aa8a9deb2826b3e3",
+      "RemoteHost": "api.github.com"
     },
     "httr": {
       "Package": "httr",

@@ -30,8 +30,8 @@ bcgov_get_qaqc_data <- function(
   # Download, format, and join data
   qaqc_data <- qaqc_paths |>
     handyr::for_each(
-      .as_list = TRUE,
       .enumerate = TRUE,
+      .join = TRUE,
       # .parallel = fast, # TODO: test if works
       \(path, i) {
         if (!quiet) {
@@ -49,8 +49,7 @@ bcgov_get_qaqc_data <- function(
             handyr::on_error(.return = NULL)
         )
       }
-    ) |>
-    join_list() # TODO: use .join when implemented in for_each
+    )
 
   if (is.null(qaqc_data)) {
     stop("No data available for provided stations / date_range / parameters.")

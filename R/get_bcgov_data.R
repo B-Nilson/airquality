@@ -338,27 +338,6 @@ bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
   years_to_get[!is.na(years_to_get)]
 }
 
-# TODO: Combine with duplicate of this made for ABgov once push
-join_list <- function(df_list, by = NULL) {
-  df_list <- df_list[which(!sapply(df_list, is.null))]
-  if (length(df_list) == 1) {
-    return(df_list[[1]])
-  } else if (length(df_list) == 0) {
-    return(NULL)
-  }
-
-  df_list |>
-    Reduce(f = \(...) {
-      dplyr::full_join(..., by = by)
-    }) |>
-    # Prevent the message when joining by matching columns
-    handyr::silence(
-      output = FALSE,
-      warnings = FALSE,
-      errors = FALSE
-    )
-}
-
 # BCgov Observations ------------------------------------------------------
 
 bcgov_get_annual_data <- function(
