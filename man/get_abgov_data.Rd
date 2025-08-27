@@ -5,13 +5,14 @@
 \title{Download air quality station observations from the Alberta (Canada) Government}
 \usage{
 get_abgov_data(
-  stations,
+  stations = "all",
   date_range = "now",
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE,
-  stations_per_call = 1,
-  days_per_call = 90
+  stations_per_call = 2,
+  days_per_call = 10
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ get_abgov_data(
 Providing a single value will return data for that hour only,
 whereas two values will return data between (and including) those times.
 Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
+
+\item{variables}{(Optional) A character vector of one or more variables to try and get data desired.}
 
 \item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
 if raw data files desired (i.e. without a standardized format). Default is FALSE.}

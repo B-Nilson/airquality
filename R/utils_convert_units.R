@@ -24,7 +24,7 @@ convert_units <- function(x, in_unit, out_unit, keep_units = FALSE) {
 
   if (!keep_units) {
     converted <- as.numeric(converted)
-  } 
+  }
   return(converted)
 }
 

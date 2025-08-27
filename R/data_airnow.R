@@ -160,26 +160,29 @@ get_airnow_stations <- function(dates = Sys.time(), use_sf = FALSE) {
 get_airnow_data <- function(
   stations = "all",
   date_range = "now",
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
 ) {
-  # Output citation message to user
-  if (!quiet) {
-    data_citation("AirNow")
-  }
+  stopifnot(is.character(stations))
+  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
+  stopifnot(is.character(variables))
+  stopifnot(is.logical(raw))
+  stopifnot(is.logical(fast))
+  stopifnot(is.logical(quiet))
 
-  ## Handle date_range inputs
-  min_date <- "2014-01-01 01" |> lubridate::ymd_h(tz = "UTC")
-  max_date <- Sys.time() |> lubridate::floor_date("hours")
+  # Constants/setup
+  allowed_date_range <- c("2014-01-01 01", "now") # TODO: confirm this
+  data_citation("AirNow", quiet = quiet)
+
+  # Handle date_range inputs
   date_range <- date_range |>
-    handle_date_range(within = c(min_date, max_date))
+    handle_date_range(within = allowed_date_range)
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
-  if (max(date_range) - max_date > lubridate::hours(-48)) {
-    # if date_range in past 48 hours
-    if (max(date_range) - max_date > lubridate::minutes(-55)) {
-      # if date_range in past 55 minutes
+  if (max(date_range) - allowed_date_range[2] > lubridate::hours(-48)) {
+    if (max(date_range) - allowed_date_range > lubridate::minutes(-55)) {
       if (!quiet) {
         warning(paste(
           "The current hour AirNow files is updated twice per hour",
@@ -201,11 +204,17 @@ get_airnow_data <- function(
     }
   }
 
+  # Handle input variables
+  all_variables <- names(.abgov_columns$values) |>
+    stringr::str_remove("_1hr")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+  get_all_vars <- all(all_variables %in% variables)
+  value_cols_to_drop <- all_variables[
+    !names(all_variables) %in% paste0(variables, "_1hr")
+  ]
+
   # Get hourly data files for desired date range
-  # Make hourly file paths
-  date_range <- sort(date_range) # Ensure date_range is correct order
-  dates <- seq(date_range[1], date_range[2], "1 hours") +
-    lubridate::hours(-1) # files are forward looking averages
   file_header <- c(
     "date",
     "time",
@@ -217,15 +226,15 @@ get_airnow_data <- function(
     "value",
     "operator"
   )
-  airnow_data <- dates |>
+  airnow_data <- date_range |>
     make_airnow_filepaths() |>
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
       .parallel = fast,
-      \(pth) {
+      \(airnow_file_path) {
         data.table::fread(
-          file = pth,
+          file = airnow_file_path,
           showProgress = !quiet
         ) |>
           handyr::on_error(.return = NULL)
@@ -233,9 +242,7 @@ get_airnow_data <- function(
     ) |>
     stats::setNames(file_header)
 
-  # If no data (should not happen unless AirNow is offline and requesting current data)
   if (nrow(airnow_data) == 0) {
-    # Error and quit here
     stop(paste(
       "No data available for provided date range.",
       "Ensure `date_range` is valid and AirNow is not offline",
@@ -249,13 +256,27 @@ get_airnow_data <- function(
       dplyr::filter(.data$siteID %in% stations)
   }
 
+  # Drop non-desired variables if "all" not supplied
+  if (!get_all_vars) {
+    airnow_data <- airnow_data |>
+      dplyr::select(-dplyr::any_of(value_cols_to_drop))
+  }
+
   # If raw data desired, end function and return data
   if (raw) {
     return(airnow_data)
   }
 
+  # Get meta for stations within date_range for adding date_local
+  if (!fast) {
+    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
+      get_airnow_stations()
+  } else {
+    known_stations <- NULL
+  }
+
   if (nrow(airnow_data) == 0) {
-    stop("No data available for desired stations during speciifed date range.")
+    stop("No data available for desired stations during specified date range.")
   }
   # Standardize formatting
   airnow_data <- airnow_data |>
@@ -263,77 +284,71 @@ get_airnow_data <- function(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
         lubridate::hours(1), # from forward -> backward looking averages
-      unit = stringr::str_to_lower(.data$unit) |>
-        handyr::swap("c", "degC"),
+      unit = stringr::str_to_lower(.data$unit),
       quality_assured = FALSE
     ) |>
-    dplyr::group_by(unit) |>
-    dplyr::group_split() |>
-    handyr::for_each(\(unit_data) {
-      unit_data |>
-        dplyr::mutate(
-          value = as.numeric(.data$value) |>
-            units::set_units(.data$unit[1], mode = "standard")
-        ) |>
-        tidyr::pivot_wider(names_from = "param", values_from = "value") |>
-        dplyr::select(dplyr::any_of(airnow_col_names)) |>
-        dplyr::distinct()
-    }) |>
-    join_list() |>
-    dplyr::select(dplyr::any_of(names(airnow_col_names))) # Reorder columns after joining
-
-  if (!fast) {
-    # Get meta for stations within date_range
-    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
-      get_airnow_stations()
-    # Insert date_local based on local_tz column in metadata
-    airnow_data <- airnow_data |>
-      insert_date_local(stations_meta = known_stations)
-  }
+    widen_with_units(
+      unit_col = "unit",
+      value_col = "value",
+      name_col = "param",
+      desired_cols = names(unlist(unname(.airnow_columns)))
+    ) |>
+    standardize_data_format(
+      date_range = date_range,
+      known_stations = known_stations,
+      fast = fast,
+      raw = raw
+    )
 
   return(airnow_data)
 }
 
 ## AirNow Helpers ----------------------------------------------------------
 
-airnow_col_names <- c(
+.airnow_columns <- list(
   # Meta
-  date_utc = "date_utc", # Added by get_airnow_data()
-  site_id = "siteID",
-  site_name = "site",
-  quality_assured = "quality_assured", # Added by get_airnow_data()
-  # Particulate Matter
-  pm25_1hr = "PM2.5",
-  pm10_1hr = "PM10",
-  bc_1hr = "BC",
-  # Ozone
-  o3_1hr = "OZONE",
-  # Nitrogen Pollutants
-  no_1hr = "NO",
-  no2t_1hr = "NO2T", # t == "true measure"
-  no2_1hr = "NO2",
-  no2y_1hr = "NO2Y", # y == "reactive"
-  nox_1hr = "NOX",
-  noy_1hr = "NOY", # y == "reactive"
-  no3_1hr = "NO3",
-  # Sulfur Pollutants
-  so4_1hr = "SO4",
-  so2_1hr = "SO2",
-  so2t_1hr = "SO2T", # t == "trace"
-  # Carbon Monoxide
-  co_1hr = "CO",
-  cot_1hr = "COT", # t == "trace"
-  # Met data
-  rh_1hr = "RHUM",
-  t_1hr = "TEMP",
-  wd_1hr = "WD",
-  ws_1hr = "WS",
-  precip_1hr = "PRECIP",
-  pressure_1hr = "BARPR",
-  solar_1hr = "SRAD"
+  meta = c(
+    date_utc = "date_utc", # Added by get_airnow_data()
+    site_id = "siteID",
+    site_name = "site",
+    quality_assured = "quality_assured" # Added by get_airnow_data()
+  ),
+  values = c(
+    # Particulate Matter
+    pm25_1hr = "PM2.5",
+    pm10_1hr = "PM10",
+    bc_1hr = "BC",
+    # Ozone
+    o3_1hr = "OZONE",
+    # Nitrogen Pollutants
+    no_1hr = "NO",
+    no2t_1hr = "NO2T", # t == "true measure"
+    no2_1hr = "NO2",
+    no2y_1hr = "NO2Y", # y == "reactive"
+    nox_1hr = "NOX",
+    noy_1hr = "NOY", # y == "reactive"
+    no3_1hr = "NO3",
+    # Sulfur Pollutants
+    so4_1hr = "SO4",
+    so2_1hr = "SO2",
+    so2t_1hr = "SO2T", # t == "trace"
+    # Carbon Monoxide
+    co_1hr = "CO",
+    cot_1hr = "COT", # t == "trace"
+    # Met data
+    rh_1hr = "RHUM",
+    t_1hr = "TEMP",
+    wd_1hr = "WD",
+    ws_1hr = "WS",
+    precip_1hr = "PRECIP",
+    pressure_1hr = "BARPR",
+    solar_1hr = "SRAD"
+  )
 )
 
-make_airnow_filepaths <- function(dates) {
+make_airnow_filepaths <- function(date_range) {
+  dates <- seq(date_range[1], date_range[2], "1 hours") -
+    lubridate::hours(1) # files are forward looking averages
   dates <- dates |> lubridate::with_tz("UTC")
   airnow_site <- "https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow"
   file_names <- paste0("HourlyData_", dates |> format("%Y%m%d%H"), ".dat")

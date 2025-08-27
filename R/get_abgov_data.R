@@ -5,6 +5,7 @@
 #' Providing a single value will return data for that hour only,
 #' whereas two values will return data between (and including) those times.
 #' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @param variables (Optional) A character vector of one or more variables to try and get data desired.
 #' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
 #' if raw data files desired (i.e. without a standardized format). Default is FALSE.
 #' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
@@ -45,31 +46,46 @@
 #' )
 #' }
 get_abgov_data <- function(
-  stations,
+  stations = "all",
   date_range = "now",
+  variables = "all",
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE,
-  stations_per_call = 1,
-  days_per_call = 90
+  stations_per_call = 2,
+  days_per_call = 10
 ) {
-  # Constants
-  tzone <- "America/Edmonton" # TODO: confirm this
-  allowed_date_range <- c("1970-01-01 00", "now") # TODO: confirm this
-  id_cols <- c("site_name", "date_utc", "quality_assured")
-  pivot_cols <- c("ParameterName", "Value")
-  drop_cols <- c("Id", "ReadingDate", "DeterminantParameterName")
+  stopifnot(is.character(stations))
+  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
+  stopifnot(is.character(variables))
+  stopifnot(is.logical(raw))
+  stopifnot(is.logical(fast))
+  stopifnot(is.logical(quiet))
+  stopifnot(is.numeric(stations_per_call))
+  stopifnot(is.numeric(days_per_call))
 
-  # Output citation message to user
+  # Constants/setup
+  tzone <- "America/Edmonton" # TODO: confirm this
+  allowed_date_range <- c("1980-01-01 00", "now") # TODO: confirm this
   data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
 
-  # Only get data for stations that exist on the APIs
+  # Handle input variables
+  all_variables <- names(.abgov_columns$values) |>
+    stringr::str_remove("_1hr")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+
+  # Filter to existing stations only
   if (!fast) {
-    known_stations <- get_abgov_stations()
+    known_stations <- get_abgov_stations(quiet = quiet)
+  } else {
+    known_stations <- NULL
+  }
+  if (!fast & !"all" %in% stations) {
     stations <- stations |>
       check_stations_exist(
         known_stations = known_stations$site_name, # (error if no stations in known_stations)
@@ -81,11 +97,15 @@ get_abgov_data <- function(
   qaqc_data <- stations |>
     get_abgov_data_qaqc(
       date_range = date_range,
-      parameters = "all",
+      variables = variables,
       fast = fast,
       quiet = quiet
     ) |>
-    handyr::on_error(.return = data.frame(), .message = TRUE)
+    abgov_format_qaqc_data(
+      date_range = date_range,
+      desired_cols = unlist(unname(.abgov_columns))
+    ) |>
+    handyr::on_error(.return = data.frame())
 
   # Alter date_range to account for retrieved QAQC data
   date_range_new <- date_range
@@ -102,70 +122,70 @@ get_abgov_data <- function(
   if (!is.null(date_range_new)) {
     raw_data <- stations |>
       get_abgov_data_raw(
-        date_range_new,
+        date_range = date_range_new,
+        variables = variables,
         stations_per_call = stations_per_call,
-        days_per_call = days_per_call
+        days_per_call = days_per_call,
+        quiet = quiet
       ) |>
-      handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
+      format_abgov_raw_data(
+        date_range = date_range_new,
+        desired_cols = unlist(unname(.abgov_columns))
+      ) |>
+      handyr::on_error(.return = NULL)
   }
 
-  # Format and combine
-  stations_data <- list(qaqc_data, raw_data) |>
+  # Combine and standardize formatting
+  list(qaqc_data, raw_data) |>
     dplyr::bind_rows() |>
-    dplyr::arrange(.data$site_name, .data$date_utc, !.data$quality_assured) |>
-    dplyr::distinct(.data$site_name, .data$date_utc, .keep_all = TRUE)
-
-  # Handle no data or raw return
-  if (nrow(stations_data) == 0) {
-    stop("No data available for provided stations and date_range")
-  } else if (raw) {
-    return(stations_data) # TODO: not really raw...
-  }
-
-  # Insert local time (slow-ish for many stations)
-  if (!fast) {
-    stations_data <- stations_data |>
-      insert_date_local(stations_meta = known_stations)
-  }
-  return(stations_data)
+    standardize_data_format(
+      date_range = date_range,
+      known_stations = known_stations,
+      fast = fast,
+      raw = raw
+    )
 }
 
 ## AB MoE Helpers ---------------------------------------------------------
 
-abgov_col_names <- c(
-  # Meta
-  site_name = "site_name", # qaqc
-  site_name = "StationName", # raw
-  quality_assured = "quality_assured",
-  date_utc = "date_utc", #
-  # Particulate Matter
-  pm25_1hr = "PM2.5 Mass", # qaqc
-  pm25_1hr = "Fine Particulate Matter", # raw
-  # pm10_1hr_ugm3 = "PM10",
-  # Ozone
-  o3_1hr = "Ozone",
-  # Nitrogen Pollutants
-  no_1hr = "Nitric Oxide",
-  no2_1hr = "Nitrogen Dioxide",
-  nox_1hr = "Total Oxides of ",
-  nh3_1hr = "",
-  # Sulfur Pollutants
-  so2_1hr = "Sulphur ",
-  trs_1hr = "Total Reduced Sulphur",
-  h2s_1hr = "Hydrogen Sulphide",
-  # # Carbon Monoxide
-  co_1hr = "Carbon Monoxide",
-  # Methane
-  ch4_1hr = "Methane",
-  # Hydrocarbons
-  hc_1hr = "Total Hydrocarbons",
-  hcnm_1hr = "Non-methane Hydrocarbons",
-  # Met data
-  rh_1hr = "Relative Humidity",
-  t_1hr = "Outdoor Air Temperature",
-  wd_1hr = "Wind Direction",
-  ws_1hr = "Wind Speed",
-  solar_1hr = "Solar Radiation"
+.abgov_columns <- list(
+  meta = c(
+    site_name = "StationName",
+    quality_assured = "quality_assured",
+    date_utc = "ReadingDate"
+  ),
+  values = c(
+    # Particulate Matter
+    pm25_1hr = "PM2.5 Mass", # qaqc
+    pm25_1hr = "Fine Particulate Matter", # raw
+    # pm10_1hr_ugm3 = "PM10", # TODO: check this
+    # Ozone
+    o3_1hr = "Ozone",
+    # Nitrogen Pollutants
+    no_1hr = "Nitric Oxide",
+    no2_1hr = "Nitrogen Dioxide",
+    nox_1hr = "Total Oxides of Nitrogen", # TODO: check this
+    nh3_1hr = "Ammonia", # TODO: check this
+    # Sulfur Pollutants
+    so2_1hr = "Sulphur Dioxide",
+    trs_1hr = "Total Reduced Sulphur",
+    h2s_1hr = "Hydrogen Sulphide",
+    # # Carbon Monoxide
+    co_1hr = "Carbon Monoxide",
+    # Methane
+    ch4_1hr = "Methane",
+    # Hydrocarbons
+    hc_1hr = "Total Hydrocarbons",
+    hc_nm_1hr = "Non-methane Hydrocarbons",
+    # Met data
+    rh_1hr = "Relative Humidity",
+    t_1hr = "Outdoor Air Temperature",
+    wd_1hr = "Wind Direction",
+    wd_sd_1hr = "Std. Dev. of Wind Direction",
+    ws_1hr = "Wind Speed",
+    solar_1hr = "Solar Radiation",
+    pressure_1hr = "Barometric Pressure (non-adjusted)"
+  )
 )
 
 # TODO: check these are right (compare raw with qaqc since qaqc units are provided)

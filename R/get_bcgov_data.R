@@ -69,49 +69,33 @@ get_bcgov_data <- function(
   stopifnot(is.logical(fast))
   stopifnot(is.logical(quiet))
 
-  # Output citation message to user
-  if (!quiet) {
-    data_citation("BCgov")
-  }
-
-  # Handle date_range inputs
+  # Constants/setup
   qaqc_years <- bcgov_get_qaqc_years()
-  min_date <- min(qaqc_years) |>
+  allowed_date_range <- min(qaqc_years) |>
     paste("01-01 01") |>
     lubridate::ymd_h(tz = bcgov_tzone)
-  max_date <- Sys.time() |> lubridate::floor_date("hours")
-  date_range <- date_range |> handle_date_range(within = c(min_date, max_date))
-  original_date_range <- date_range # copy for later
+  allowed_date_range[2] <- lubridate::now(tz = bcgov_tzone) |>
+    lubridate::floor_date("hours")
+  realtime_start <- lubridate::now(tz = bcgov_tzone) -
+    lubridate::days(30)
+  data_citation("BCgov", quiet = quiet)
+
+  # Handle date_range inputs
+  date_range <- date_range |>
+    handle_date_range(within = c(min_date, max_date))
 
   # Handle variables input
-  variables <- standardize_input_vars(variables)
-  all_variables <- bcgov_col_names[endsWith(
-    names(bcgov_col_names),
-    "_instrument"
-  )] |>
-    names() |>
-    stringr::str_remove("_1hr_instrument")
-  if ("all" %in% variables) {
-    variables <- all_variables
-  } else {
-    variables <- variables[variables %in% all_variables]
-  }
-  if (length(variables) == 0) {
-    stop("No valid variables specified.")
-  }
-
-  # Get all years in desired date range and drop all but the first in qaqc_years
-  years_to_get <- date_range[1] |>
-    seq(date_range[2], by = "1 days") |>
-    lubridate::with_tz(bcgov_tzone) |>
-    lubridate::year() |>
-    bcgov_determine_years_to_get(qaqc_years)
+  all_variables <- names(.bcgov_columns$values) |>
+    stringr::str_remove("_1hr")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
 
   # Filter to existing stations only
+  # TODO: what if "all" in stations?
   if (!fast) {
-    known_stations <- years_to_get |>
+    known_stations <- date_range |>
+      bcgov_determine_years_to_get(qaqc_years) |>
       get_bcgov_stations(use_sf = FALSE, quiet = quiet)
-
     stations <- stations |>
       check_stations_exist(
         known_stations = known_stations$site_id,
@@ -120,62 +104,37 @@ get_bcgov_data <- function(
   }
 
   # Get realtime data if needed
-  realtime_start <- lubridate::now(tz = bcgov_tzone) -
-    lubridate::days(30)
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
-    is_value_or_instrument <- names(bcgov_col_names) |>
-      stringr::str_starts(variables |> paste0(collapse = "|"))
-    is_instrument <- names(bcgov_col_names) |> endsWith("_instrument")
-    variable_cols <- bcgov_col_names[is_value_or_instrument & !is_instrument]
     realtime_data <- stations |>
+      # TODO: remove old files before loading in
       bcgov_get_raw_data(
         variables = variables,
         quiet = quiet,
         mode = "realtime"
       ) |>
-      dplyr::filter(
-        !dplyr::if_all(dplyr::any_of(variable_cols), is.na),
-        lubridate::ymd_hm(.data$DATE_PST, tz = bcgov_tzone) > realtime_start
-      ) |>
       handyr::on_error(.return = NULL)
-    if (nrow(realtime_data) == 0) {
-      warning(
-        "No realtime data available for provided variables, stations and date_range."
-      )
-      realtime_data <- NULL
-    } else if (is.null(realtime_data)) {
-      warning(
-        "No realtime data available for provided stations and date_range."
-      )
-    } else {
-      first_realtime_date <- realtime_data |>
-        dplyr::group_by(EMS_ID) |>
-        dplyr::summarise(
-          first_realtime_date = DATE_PST |>
-            lubridate::ymd_hm(tz = bcgov_tzone) |>
-            min()
-        ) |>
-        dplyr::pull(first_realtime_date) |>
-        max()
-      date_range <- c(original_date_range[1], first_realtime_date)
-      is_all_realtime <- date_range[1] >= date_range[2]
-    }
   } else {
     realtime_data <- NULL
     is_all_realtime <- FALSE
   }
 
+  # Alter date_range to account for retrieved realtime data
+  date_range_new <- date_range
+  if (!is.null(realtime_data)) {
+    first_realtime_date <- realtime_data |>
+      dplyr::group_by(site_id) |>
+      dplyr::summarise(min_date = min(date_utc)) |>
+      dplyr::pull(min_date) |>
+      max()
+    date_range_new[2] <- first_realtime_date
+    is_all_realtime <- date_range_new[1] >= date_range_new[2]
+  }
+
   # Get raw/qaqc data as needed
   if (!is_all_realtime) {
-    # Update years to get in case realtime covers all of last year (rare)
-    years_to_get <- date_range[1] |>
-      seq(date_range[2], by = "1 days") |>
-      lubridate::with_tz(bcgov_tzone) |>
-      lubridate::year() |>
-      bcgov_determine_years_to_get(qaqc_years)
-    # Get data for each year for all desired stations
-    archived_data <- years_to_get |>
+    archived_data <- date_range_new |>
+      bcgov_determine_years_to_get(qaqc_years) |>
       handyr::for_each(
         .bind = TRUE,
         .parallel = fast,
@@ -189,19 +148,91 @@ get_bcgov_data <- function(
     archived_data <- NULL
   }
 
-  # Combine raw/qaqc data with realtime
-  stations_data <- archived_data |>
-    dplyr::bind_rows(realtime_data)
-  if (nrow(stations_data) == 0) {
-    stop("No data available for provided stations and date_range")
-  }
-  if (raw) {
-    return(stations_data)
+  # Combine and standardize formatting
+  list(archived_data, realtime_data) |>
+    dplyr::bind_rows() |>
+    standardize_data_format(
+      date_range = date_range,
+      known_stations = all_stations,
+      fast = fast,
+      raw = raw
+    ) |>
+    dplyr::mutate(dplyr::across(
+      dplyr::any_of(names(.bcgov_columns$instruments)),
+      factor
+    ))
+}
+
+format_bcgov_raw_data <- function(
+  raw_data,
+  desired_cols,
+  mode = "stations"
+) {
+  if (nrow(raw_data) == 0) {
+    stop("No data available before reformatting.")
   }
 
-  # Standardize formatting
-  stations_data <- stations_data |>
+  if (nrow(raw_data) == 0) {
+    return(raw_data)
+  }
+  if (mode == "variables") {
+    return(
+      bcgov_format_qaqc_data(raw_data, use_rounded_value = TRUE)
+    )
+  }
+
+  # Get column names and insert unit columns if needed
+  meta_cols <- .bcgov_columns$meta[
+    names(.bcgov_columns$meta) != "quality_assured"
+  ]
+  value_cols <- names(raw_data)[
+    names(raw_data) %in% .bcgov_columns$values
+  ]
+  unit_cols <- names(raw_data)[
+    names(raw_data) %in% .bcgov_columns$units
+  ]
+  if (mode == "stations") {
+    instrument_cols <- names(raw_data)[
+      names(raw_data) %in% .bcgov_columns$instruments
+    ]
+  } else {
+    instrument_cols <- character(0)
+    # Insert default units as unit columns as no units provided
+    # TODO: confirm units are correct here
+    for (i in 1:length(unit_cols)) {
+      is_value_col <- .bcgov_columns$values %in% value_cols[i]
+      raw_data[[unit_cols[i]]] <- default_units[
+        names(.bcgov_columns$values)[is_value_col]
+      ]
+    }
+  }
+
+  # Assign units to value columns
+  for (i in 1:length(unit_cols)) {
+    default_unit <- default_units[
+      names(.bcgov_columns$values[
+        .bcgov_columns$values %in% c(value_cols[i], names(value_cols[i])) # TODO: is this needed?
+      ])
+    ]
+    raw_data <- raw_data |>
+      dplyr::mutate(
+        dplyr::across(
+          dplyr::all_of(value_cols[i]),
+          \(x) {
+            as.numeric(x) |>
+              suppressWarnings() |> # NAs introduced by coercion
+              convert_units(
+                in_unit = .data[[unit_cols[i]]][1],
+                out_unit = default_unit
+              )
+          }
+        )
+      )
+  }
+
+  formatted <- raw_data |>
     dplyr::mutate(
+      quality_assured = FALSE,
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
         # Some files use HMS instead of HM for some reason..
@@ -210,119 +241,101 @@ get_bcgov_data <- function(
         }) |>
         lubridate::with_tz("UTC")
     ) |>
-    dplyr::select(dplyr::any_of(bcgov_col_names)) |>
-    dplyr::filter(
-      .data$date_utc |>
-        dplyr::between(original_date_range[1], original_date_range[2])
-    ) |>
+    dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    dplyr::select_if(~ !all(is.na(.))) |>
-    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
-    dplyr::arrange(.data$site_id, .data$date_utc) |>
-    dplyr::distinct(.data$site_id, .data$date_utc, .keep_all = TRUE)
+    drop_missing_obs_rows(where_fn = \(x) x %in% names(.bcgov_columns$values))
 
-  if (nrow(stations_data) == 0) {
-    stop("No data available for provided stations and date_range")
+  if (nrow(formatted) == 0) {
+    stop("No data available after reformatting.")
   }
-
-  if (!fast) {
-    stations_data <- stations_data |>
-      insert_date_local(stations_meta = known_stations, by = "site_id")
-  }
-
-  return(stations_data)
+  return(formatted)
 }
 
 # BCgov Constants ---------------------------------------------------------
 
 bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
 bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
-bcgov_col_names <- c(
-  # Meta
-  date_utc = "date_utc", # Added by bcgov_get_annual_data()
-  site_id = "EMS_ID",
-  quality_assured = "quality_assured", # Added by bcgov_get_annual_data()
-  # Particulate Matter
-  pm25_1hr = "PM25",
-  pm25_1hr_instrument = "PM25_INSTRUMENT",
-  pm10_1hr = "PM10",
-  pm10_1hr_instrument = "PM10_INSTRUMENT",
-  # Ozone
-  o3_1hr = "O3",
-  o3_1hr_instrument = "O3_INSTRUMENT",
-  # Nitrogen Pollutants
-  no_1hr = "NO",
-  no_1hr_instrument = "NO_INSTRUMENT",
-  no2_1hr = "NO2",
-  no2_1hr_instrument = "NO2_INSTRUMENT",
-  nox_1hr = "NOx",
-  nox_1hr_instrument = "NOx_INSTRUMENT",
-  # Sulfur Pollutants
-  so2_1hr = "SO2",
-  so2_1hr_instrument = "SO2_INSTRUMENT",
-  trs_1hr = "TRS",
-  trs_1hr_instrument = "TRS_INSTRUMENT",
-  h2s_1hr = "H2S",
-  h2s_1hr_instrument = "H2S_INSTRUMENT",
-  # Carbon Monoxide
-  co_1hr = "CO",
-  co_1hr_instrument = "CO_INSTRUMENT",
-  # Met data
-  rh_1hr = "HUMIDITY",
-  rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
-  temp_1hr = "TEMP_MEAN",
-  temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
-  wd_1hr = "WDIR_VECT",
-  wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
-  wd_unitvector_1hr = "WDIR_UVEC",
-  wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
-  ws_1hr = "WSPD_SCLR",
-  ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
-  ws_vector_1hr = "WSPD_VECT",
-  ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
-  precip_1hr = "PRECIP",
-  precip_1hr_instrument = "PRECIP_INSTRUMENT",
-  snow_1hr = "SNOW",
-  snow_1hr_instrument = "SNOW_INSTRUMENT",
-  pressure_1hr = "PRESSURE",
-  pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
-  vapour_pressure_1hr = "VAPOUR",
-  vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
+.bcgov_columns <- list(
+  meta = c(
+    date_utc = "date_utc", # Added by bcgov_get_annual_data()
+    site_id = "EMS_ID",
+    quality_assured = "quality_assured" # Added by bcgov_get_annual_data()
+  ),
+  values = c(
+    # Particulate Matter
+    pm25_1hr = "PM25",
+    pm10_1hr = "PM10",
+    # Ozone
+    o3_1hr = "O3",
+    # Nitrogen Pollutants
+    no_1hr = "NO",
+    no2_1hr = "NO2",
+    nox_1hr = "NOx",
+    # Sulfur Pollutants
+    so2_1hr = "SO2",
+    trs_1hr = "TRS",
+    h2s_1hr = "H2S",
+    # Carbon Monoxide
+    co_1hr = "CO",
+    # Met data
+    rh_1hr = "HUMIDITY",
+    temp_1hr = "TEMP_MEAN",
+    wd_1hr = "WDIR_VECT",
+    wd_unitvector_1hr = "WDIR_UVEC",
+    ws_1hr = "WSPD_SCLR",
+    ws_vector_1hr = "WSPD_VECT",
+    precip_1hr = "PRECIP",
+    snow_1hr = "SNOW",
+    pressure_1hr = "PRESSURE",
+    vapour_pressure_1hr = "VAPOUR"
+  ),
+  instruments = c(
+    # Particulate Matter
+    pm25_1hr_instrument = "PM25_INSTRUMENT",
+    pm10_1hr_instrument = "PM10_INSTRUMENT",
+    # Ozone
+    o3_1hr_instrument = "O3_INSTRUMENT",
+    # Nitrogen Pollutants
+    no_1hr_instrument = "NO_INSTRUMENT",
+    no2_1hr_instrument = "NO2_INSTRUMENT",
+    nox_1hr_instrument = "NOx_INSTRUMENT",
+    # Sulfur Pollutants
+    so2_1hr_instrument = "SO2_INSTRUMENT",
+    trs_1hr_instrument = "TRS_INSTRUMENT",
+    h2s_1hr_instrument = "H2S_INSTRUMENT",
+    # Carbon Monoxide
+    co_1hr_instrument = "CO_INSTRUMENT",
+    # Met data
+    rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
+    temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
+    wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
+    wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
+    ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
+    ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
+    precip_1hr_instrument = "PRECIP_INSTRUMENT",
+    snow_1hr_instrument = "SNOW_INSTRUMENT",
+    pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
+    vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
+  )
 )
 
 # BCgov Helpers ---------------------------------------------------------
 
 # Drop all raw years except the first
-bcgov_determine_years_to_get <- function(years, qaqc_years = NULL) {
+bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
+  years <- date_range[1] |>
+    seq(date_range[2], by = "1 days") |>
+    lubridate::with_tz(bcgov_tzone) |>
+    lubridate::year() |>
+    unique() |>
+    sort()
   if (is.null(qaqc_years)) {
     qaqc_years <- bcgov_get_qaqc_years()
   }
-  years <- sort(unique(years))
   is_qaqc_year <- years %in% qaqc_years
   years_to_get <- years[is_qaqc_year] |> # keep all years that are qaqced
     c(years[!is_qaqc_year][1]) # only keep first non-qaqc year
   years_to_get[!is.na(years_to_get)]
-}
-
-# TODO: Combine with duplicate of this made for ABgov once push
-join_list <- function(df_list, by = NULL) {
-  df_list <- df_list[which(!sapply(df_list, is.null))]
-  if (length(df_list) == 1) {
-    return(df_list[[1]])
-  } else if (length(df_list) == 0) {
-    return(NULL)
-  }
-
-  df_list |>
-    Reduce(f = \(...) {
-      dplyr::full_join(..., by = by)
-    }) |>
-    # Prevent the message when joining by matching columns
-    handyr::silence(
-      output = FALSE,
-      warnings = FALSE,
-      errors = FALSE
-    )
 }
 
 # BCgov Observations ------------------------------------------------------
@@ -357,13 +370,4 @@ bcgov_get_annual_data <- function(
   # Add quality assured flag
   stations_data |>
     dplyr::mutate(quality_assured = is_qaqc_year)
-}
-
-bcgov_fix_units <- function(units) {
-  dplyr::case_when(
-    units == "% RH" ~ "%",
-    units == "\xb0C" ~ "degC",
-    units == "Deg." ~ "degrees",
-    TRUE ~ units
-  )
 }

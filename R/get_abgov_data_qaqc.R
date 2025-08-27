@@ -1,33 +1,59 @@
 get_abgov_data_qaqc <- function(
   stations = "all",
-  parameters = "all",
-  date_range = Sys.time() |>
-    lubridate::floor_date("hours"),
+  variables = "all",
+  date_range = "now",
   max_tries = 100,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
 ) {
   # Constants
-  allowed_date_range <- c("1980-01-01 00", "now") # TODO: confirm this
   tzone <- "MST" # TODO: confirm this?
+  allowed_date_range <- c("1970-01-01 00") # TODO: confirm this
+  allowed_date_range[2] <- lubridate::now(tz = tzone) |>
+    lubridate::floor_date("months") |>
+    lubridate::with_tz("UTC") |>
+    format("%Y-%m-%d %H")
+
+  # Decide which api endpoint to use
+  mode <- dplyr::case_when(
+    any(stations == "all") ~ "parameters",
+    any(variables == "all") & length(stations) < 8 ~ "stations",
+    length(stations) > length(variables) ~ "parameters",
+    TRUE ~ "stations"
+  )
 
   # Handle date_range inputs
+  # TODO: warning message says "beyond current hour" which is invalid
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range, tz = tzone)
 
+  # Handle input variables
+  value_cols <- .abgov_columns$values[
+    .abgov_columns$values != "Fine Particulate Matter" # raw API column
+  ]
+  all_variables <- names(value_cols) |>
+    stringr::str_remove("_1hr")
+  variables <- variables |>
+    standardize_input_vars(all_variables)
+
   # Break up date range into smaller chunks depending on duration
-  max_duration <- date_range |>
-    pretty(n = 5) %>%
-    difftime(., dplyr::lag(.), units = "days") |>
+  date_chunks <- date_range |> pretty(n = 5)
+  max_duration <- date_chunks |>
+    difftime(dplyr::lag(date_chunks), units = "days") |>
     median(na.rm = TRUE)
   if (max_duration > 3650) {
     max_duration <- "3650 days"
+  } else if (max_duration < 30) {
+    max_duration <- "30 days"
   }
 
   # Get API keys for our stations/parameters
+  desired_var_cols <- value_cols[
+    stringr::str_remove(names(value_cols), "_1hr") %in% variables
+  ]
   keys <- stations |>
-    abgov_get_qaqc_keys(parameters = parameters)
+    abgov_get_qaqc_keys(parameters = desired_var_cols, mode = mode)
 
   # Initiate data request(s) and get token(s) for tracking progress
   request_tokens <- date_range |>
@@ -39,22 +65,26 @@ get_abgov_data_qaqc <- function(
           "Requesting data for:" |>
             handyr::log_step(d_range[1], "–", d_range[2])
         }
-        keys$station |>
-          unique() |>
-          sapply(\(station_key) {
-            this_stations_keys <- keys |>
-              dplyr::filter(.data$station == station_key)
-            this_stations_keys$operator[1] |>
+        mode_name <- ifelse(mode == "stations", "station", "parameter")
+        unique(keys[[mode_name]]) |>
+          sapply(\(key) {
+            this <- keys[keys[[mode_name]] == key, ]
+            out_name <- this[[paste0(mode_name, "_name")]][1]
+            station_keys <- if (mode == "stations") key else this$station
+            parameter_keys <- if (mode == "stations") this$parameter else key
+            unique(this$operator) |>
               abgov_init_data_request(
-                station_keys = station_key,
-                parameter_keys = this_stations_keys$parameter,
+                station_keys = station_keys,
+                parameter_keys = parameter_keys,
+                mode = mode,
                 date_range = d_range
               ) |>
-              stats::setNames(this_stations_keys$station_name[1]) |>
-              handyr::on_error(.return = NULL, .message = TRUE)
+              stats::setNames(out_name) |>
+              handyr::on_error(.return = NULL)
           })
       }
-    )
+    ) |>
+    lapply(\(x) x[!sapply(x, is.null)])
   # Download data as it becomes available
   obs <- request_tokens |>
     handyr::for_each(
@@ -73,87 +103,96 @@ get_abgov_data_qaqc <- function(
               if (is.null(token)) {
                 return(NULL)
               }
-              station_details <- names(request_tokens[[i]])[j] |>
-                stringr::str_split(pattern = "\\|", simplify = TRUE)
               token |>
                 abgov_get_qaqc_data_request(
                   max_tries = max_tries,
                   quiet = quiet
                 ) |>
-                abgov_parse_qaqc_data(station_details = station_details) |>
-                handyr::on_error(.return = NULL, .warn = TRUE) # TODO: remove warning?
+                abgov_parse_qaqc_data(mode = mode) |>
+                handyr::on_error(.return = NULL)
             }
           )
       }
-    ) |>
-    dplyr::distinct(`Interval End`, Flags, Parameter, Unit, .keep_all = TRUE)
+    )
 
   if (nrow(obs) == 0) {
     stop("No data available for provided request")
   }
 
-  if (!fast) {
+  if (!fast & !raw) {
     obs <- obs |>
-      dplyr::left_join(abgov_qaqc_flags[, 1:2], by = c("Flags" = "flag"))
+      dplyr::left_join(
+        abgov_qaqc_flags[, c("flag", "flag_name")],
+        by = c("Flags" = "flag")
+      )
   }
 
-  if (raw) {
-    return(obs)
-  }
+  return(obs)
+}
 
-  obs |>
+abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
+  qaqc_data |>
+    # Remove duplicates and any missing or flagged data
     dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
+    dplyr::distinct(
+      StationName,
+      `Interval End`,
+      Parameter,
+      Unit,
+      .keep_all = TRUE
+    ) |>
+    # Fix units, set obs date, and mark quality assured
     dplyr::mutate(
-      Unit = dplyr::case_when(
-        Unit == "deg" ~ "degrees",
-        Unit == "deg c" ~ "degC",
-        TRUE ~ Unit
-      ),
-      date_utc = (`Interval Start` + lubridate::hours(1)) |>
+      Unit = fix_units(Unit),
+      ReadingDate = (`Interval Start` + lubridate::hours(1)) |>
         lubridate::with_tz("UTC"),
-      quality_assured = TRUE
+      quality_assured = is.na(Flags)
     ) |>
-    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
-    dplyr::group_by(Unit) |>
-    dplyr::group_split() |>
-    handyr::for_each(
-      .parallel = fast,
-      \(dat) {
-        dat |>
-          dplyr::mutate(
-            `Measurement Value` = `Measurement Value` |>
-              as.numeric() |>
-              units::set_units(Unit[1], mode = "standard")
-          ) |>
-          dplyr::select(-Unit) |>
-          tidyr::pivot_wider(
-            names_from = "Parameter",
-            values_from = "Measurement Value"
-          )
-      }
+    dplyr::filter(
+      ReadingDate |> dplyr::between(date_range[1], date_range[2])
     ) |>
-    # TODO: remove by once join_luist made flexible
-    handyr::join_list(by = c("date_utc", "quality_assured", "site_name")) |>
-    dplyr::select(dplyr::any_of(abgov_col_names)) |>
-    dplyr::filter(rowSums(!is.na(dplyr::across(-c(1:4)))) > 0)
+    # Cleanup
+    widen_with_units(
+      unit_col = "Unit",
+      value_col = "Measurement Value",
+      name_col = "Parameter",
+      desired_cols = desired_cols
+    ) |>
+    drop_missing_obs_rows() |>
+    standardize_obs_units(default_units = default_units)
 }
 
 abgov_init_data_request <- function(
-  operator_key,
+  operator_keys,
   station_keys,
   parameter_keys,
   date_range,
+  mode = "stations",
   continuous = TRUE
 ) {
-  api_url <- "https://datamanagementplatform.alberta.ca/"
-  endpoint <- "Ambient/AreaOperatorAmbientMultipleParameters"
+  api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
+  endpoints <- list(
+    stations = "AreaOperatorAmbientMultipleParameters",
+    parameters = "AreaOperatorAmbientMultipleStations"
+  )
   is_continuous <- continuous |>
     ifelse("Continuous", "Non Continuous")
+  operator_keys <- unique(operator_keys)
+  operator_keys <- operator_keys[!is.na(operator_keys)]
+  if (length(operator_keys) == 0) {
+    operator_keys <- 1:20
+  }
+  station_keys <- unique(station_keys)
+  station_keys <- station_keys[!is.na(station_keys)]
+  parameter_keys <- unique(parameter_keys)
+  parameter_keys <- parameter_keys[!is.na(parameter_keys)]
+
   session_token <- api_url |>
-    get_session_token(endpoint = endpoint)
+    simulate_session(endpoint = endpoints[[mode]]) |>
+    get_session_token()
   # Build request
   key_args <- c(
-    operator_key |> abgov_make_key_args("AreaOperatorKeys"),
+    operator_keys |> abgov_make_key_args("AreaOperatorKeys"),
     station_keys |> abgov_make_key_args("StationKeys"),
     parameter_keys |> abgov_make_key_args("ParameterKeys")
   )
@@ -163,13 +202,19 @@ abgov_init_data_request <- function(
     AdditionalMetadata = 0,
     IsNoRecordFound = FALSE,
     `__RequestVerificationToken` = session_token,
-    SelectedStationKeys = operator_key |> paste0(";"),
-    SelectedAreaOperatorKeys = station_keys |>
+    SelectedAreaOperatorKeys = operator_keys |>
+      paste(collapse = ";") |>
+      paste0(";"),
+    SelectedAreaOperatorKey = operator_keys |> # TODO: why needed?
+      paste(collapse = ";") |>
+      paste0(";"),
+    SelectedStationKeys = station_keys |>
       paste(collapse = ";") |>
       paste0(";"),
     SelectedParameterKeys = parameter_keys |>
       paste(collapse = ";") |>
       paste0(";"),
+    ParameterKey = parameter_keys[1], # for parameters mode
     CollectionType = is_continuous,
     StartDate = date_range[1],
     `__Invariant` = "StartDate",
@@ -178,44 +223,67 @@ abgov_init_data_request <- function(
   ) |>
     c(key_args)
   result <- api_url |>
-    paste0(endpoint) |>
+    paste0(endpoints[[mode]]) |>
     httr::POST(body = request_body, encode = "form") |>
     httr::content(as = "parsed", encoding = "UTF-8")
 
   if (!is.null(result$error)) {
     if (result$error != FALSE) {
-      stop(result$error)
+      stop(result$message)
     }
   }
   result$token
 }
 
-abgov_get_qaqc_operators <- function(select_operators = "all") {
-  api_url <- "https://datamanagementplatform.alberta.ca/"
-  endpoint <- "Ambient/AreaOperatorAmbientMultipleParameters"
+abgov_get_qaqc_operators <- function(
+  select_operators = "all",
+  select_parameter = NULL,
+  continuous = TRUE
+) {
+  api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
+  endpoint_stations <- "AreaOperatorAmbientMultipleParameters"
+  endpoint_parameters <- "GetAOAreaOperatorsForParameter"
 
-  # Simulate session and extract operator options
-  operator_options <- api_url |>
-    paste0(endpoint) |>
-    httr::GET() |>
-    httr::content(as = "text", encoding = "UTF-8") |>
-    rvest::read_html() |>
-    rvest::html_nodes("select[name='AreaOperatorKeys'] option")
-  # Extract operator names and keys from options
-  operator_names <- operator_options |>
-    rvest::html_text()
-  operators <- operator_options |>
-    rvest::html_attr("value") |>
-    as.numeric() |>
-    setNames(operator_names)
+  if (is.null(select_parameter)) {
+    # Simulate session and extract operator options
+    operator <- api_url |>
+      simulate_session(endpoint = endpoint_stations) |>
+      extract_options(html_id = "AreaOperatorKeys")
+  } else {
+    request_body <- list(
+      ParameterKey = select_parameter, # TODO: convert from variable -> key,
+      CollectionType = continuous |>
+        ifelse("Continuous", "Non Continuous")
+    )
+    operators <- api_url |>
+      abgov_post_request(
+        endpoint = endpoint_parameters,
+        request_body = request_body
+      ) |>
+      unlist()
+  }
   # Filter to desired operators
   if (!"all" %in% select_operators) {
-    is_selected <- operators %in%
-      select_operators |
-      names(operators) %in% select_operators
+    is_selected <-
+      operators %in% select_operators | names(operators) %in% select_operators
     operators <- operators[is_selected]
   }
   return(operators)
+}
+
+abgov_get_qaqc_parameters <- function() {
+  api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
+  endpoint <- "AreaOperatorAmbientMultipleStations"
+  parameters <- api_url |>
+    simulate_session(endpoint = endpoint) |>
+    extract_options(html_id = "ParameterKey")
+
+  names(parameters) <- stringr::str_split(
+    names(parameters),
+    " / ",
+    simplify = TRUE
+  )[, 1]
+  return(parameters)
 }
 
 abgov_make_key_args <- function(keys, key_name) {
@@ -236,6 +304,7 @@ abgov_get_keys <- function(
     )
   is_continuous <- continuous |>
     ifelse("Continuous", "Non Continuous")
+
   # Build request
   key_args <- c(
     if (type %in% c("stations", "parameters")) {
@@ -247,16 +316,17 @@ abgov_get_keys <- function(
   )
   request_body <- list(CollectionType = is_continuous) |>
     c(key_args)
+
   # Get key names and values
   keys <- api_url |>
-    paste0(endpoint) |>
-    httr::POST(body = request_body, encode = "form") |>
-    httr::content(as = "parsed", encoding = "UTF-8") |>
-    dplyr::bind_rows() |>
-    dplyr::select(name = text, value) |>
-    dplyr::mutate(value = as.numeric(value)) |>
-    tidyr::pivot_wider() |>
+    abgov_post_request(endpoint = endpoint, request_body = request_body) |>
     unlist()
+  names(keys) <- stringr::str_split(
+    names(keys),
+    " / ",
+    simplify = TRUE
+  )[, 1]
+
   # Filter to desired keys
   if (!"all" %in% select_keys) {
     is_selected <- (names(keys) %in% select_keys) |
@@ -273,6 +343,18 @@ abgov_get_keys <- function(
   return(keys)
 }
 
+# TODO: use in other sources?
+abgov_post_request <- function(api_url, endpoint, request_body) {
+  api_url |>
+    paste0(endpoint) |>
+    httr::POST(body = request_body, encode = "form") |>
+    httr::content(as = "parsed", encoding = "UTF-8") |>
+    dplyr::bind_rows() |>
+    dplyr::select(name = text, value) |>
+    dplyr::mutate(value = as.numeric(value)) |>
+    tidyr::pivot_wider()
+}
+
 abgov_get_qaqc_station_params <- function(
   operator_keys,
   station_keys,
@@ -281,27 +363,22 @@ abgov_get_qaqc_station_params <- function(
 ) {
   api_url <- "https://datamanagementplatform.alberta.ca/"
   endpoint <- "Ambient/GetAOParametersForStations"
+
   # Build request
   key_args <- c(
     operator_keys |> abgov_make_key_args("AreaOperatorKeys"),
     station_keys |> abgov_make_key_args("StationKeys")
   )
   request_body <- list(
-    CollectionType = ifelse(continuous, "Continuous", "Non Continuous")
+    CollectionType = continuous |>
+      ifelse("Continuous", "Non Continuous")
   ) |>
     c(key_args)
+
   # Get parameter names and keys
   params <- api_url |>
-    paste0(endpoint) |>
-    httr::POST(
-      body = request_body,
-      encode = "form"
-    ) |>
-    httr::content(as = "parsed", encoding = "UTF-8") |>
-    dplyr::bind_rows() |>
-    dplyr::select(name = text, value) |>
-    dplyr::mutate(value = as.numeric(value)) |>
-    tidyr::pivot_wider()
+    abgov_post_request(endpoint = endpoint, request_body = request_body)
+
   # Filter to desired parameters
   if (!"all" %in% select_params) {
     is_selected <- names(params) %in% select_params | params %in% select_params
@@ -310,29 +387,90 @@ abgov_get_qaqc_station_params <- function(
   return(params)
 }
 
-abgov_get_qaqc_keys <- function(stations, parameters) {
-  operator_keys <- abgov_get_qaqc_operators()
-  # Get keys for selected stations by operator
-  station_keys <- operator_keys |>
-    lapply(\(key) {
-      list(operators = key) |>
-        abgov_get_keys(select_keys = stations, type = "stations")
-    })
-  # Drop keys for non-selected operators
-  station_keys <- station_keys[sapply(station_keys, length) > 0]
-  operator_keys <- operator_keys[
-    names(operator_keys) %in% names(station_keys)
-  ]
-  # Get keys for selected parameters
-  parameter_keys <- list(
-    operators = operator_keys,
-    stations = station_keys |> unname() |> unlist()
-  ) |>
-    abgov_get_keys(
-      select_keys = parameters,
-      type = "parameters",
-      continuous = TRUE
+abgov_get_qaqc_stations <- function(operator_keys = NULL, parameter = NULL) {
+  api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
+  endpoint <- "GetAOStationsListForAreaOperators"
+
+  # Get keys for all operators if needed
+  if (is.null(parameter) & is.null(operator_keys)) {
+    operator_keys <- abgov_get_qaqc_operators()
+  } else if (is.null(operator_keys)) {
+    all_parameters <- abgov_get_qaqc_parameters()
+    parameter_key <- all_parameters[names(all_parameters) == parameter]
+    operator_keys <- abgov_get_qaqc_operators(
+      select_parameter = parameter_key,
+      continuous = continuous
     )
+  }
+  # Get stations for all/select parameters
+  if (!is.null(parameter)) {
+    request_body <- list(
+      ParameterKey = unname(parameter_key),
+      AreaOperatorKeys = paste(operator_keys, collapse = ";"),
+      CollectionType = continuous |>
+        ifelse("Continuous", "Non Continuous")
+    )
+    stations <- api_url |>
+      abgov_post_request(endpoint = endpoint, request_body = request_body) |>
+      unlist()
+    stations <- list(all = stations) # match expected output (operator = stations)
+  } else {
+    stations <- operator_keys |>
+      lapply(\(key) {
+        list(operators = key) |>
+          abgov_get_keys(select_keys = "all", type = "stations")
+      })
+  }
+  return(stations)
+}
+
+abgov_get_qaqc_keys <- function(
+  stations,
+  parameters,
+  mode = "stations",
+  continuous = TRUE
+) {
+  # Get keys for all operators
+  if (mode == "stations") {
+    operator_keys <- abgov_get_qaqc_operators()
+  } else if (mode == "parameters") {
+    all_parameters <- abgov_get_qaqc_parameters()
+    parameter_keys <- all_parameters[names(all_parameters) %in% parameters]
+    operator_keys <- abgov_get_qaqc_operators(
+      select_parameter = parameter_keys,
+      continuous = continuous
+    )
+  } else {
+    stop("mode must be one of 'stations' or 'parameters'")
+  }
+
+  # Get keys for selected stations by operator
+  station_keys <- abgov_get_qaqc_stations(
+    operator_keys = operator_keys,
+    parameter = if (mode == "parameters") parameters[1] else NULL
+  )
+
+  # Drop keys for non-selected operators
+  if (mode == "stations") {
+    station_keys <- station_keys[sapply(station_keys, length) > 0]
+    operator_keys <- operator_keys[
+      names(operator_keys) %in% names(station_keys)
+    ]
+  }
+
+  # Get keys for selected parameters if needed
+  if (mode == "stations") {
+    parameter_keys <- list(
+      operators = operator_keys,
+      stations = station_keys |> unname() |> unlist()
+    ) |>
+      abgov_get_keys(
+        select_keys = parameters,
+        type = "parameters",
+        continuous = TRUE
+      )
+  }
+
   # Combine keys for making requests
   operator_keys <- data.frame(
     operator_name = names(operator_keys),
@@ -366,6 +504,7 @@ abgov_get_qaqc_data_request <- function(
   api_url <- "https://datamanagementplatform.alberta.ca/"
   endpoint_status <- "Home/GetRequestStatus"
   endpoint_download <- "Home/ProcessDownload"
+
   # Initialize
   request_not_ready <- TRUE
   total_tries <- 0
@@ -393,6 +532,7 @@ abgov_get_qaqc_data_request <- function(
       total_tries <- total_tries + 1
     }
   }
+
   # Download data
   api_url |>
     paste0(endpoint_download, "?token=", data_request_token) |>
@@ -406,39 +546,47 @@ abgov_get_qaqc_data_request <- function(
     )
 }
 
-abgov_parse_qaqc_data <- function(data_stream, station_details) {
+abgov_parse_qaqc_data <- function(
+  data_stream,
+  mode = "stations"
+) {
   # Remove metadata header
-  header_row <- which(data_stream[, 1] == "Data Origin: ")
+  header_texts <- list(
+    stations = "Data Origin: ",
+    parameters = "Data Origin: "
+  )
+  header_row <- which(data_stream[, 1] == header_texts[[mode]])
+  if (length(header_row) == 0) {
+    stop("No data found")
+  }
   meta_rows <- data_stream |>
     head(header_row - 1)
   data_rows <- data_stream |>
     tail(-(header_row - 1))
 
-  # Parse from groups of columns for each param to a singe data frame
-  param_starts <- which(data_rows[1, ] == "Data Origin: ")
+  # Parse from groups of columns for each param to a single data frame
+  param_starts <- which(data_rows[1, ] == header_texts[[mode]])
   param_ends <- dplyr::lead(param_starts) - 1
   param_ends[length(param_ends)] <- ncol(data_rows)
-  param_starts |>
+  qaqc_data <- param_starts |>
     handyr::for_each(
       .as_list = TRUE,
       .enumerate = TRUE,
       .bind = TRUE,
       \(start, i) {
         data_rows[, start:param_ends[i]] |>
-          abgov_parse_qaqc_param_data()
+          abgov_parse_qaqc_station_data()
       }
     ) |>
-    dplyr::mutate(
-      site_id = station_details[1, 1],
-      site_name = station_details[1, 2]
-    )
+    dplyr::tibble()
+  return(qaqc_data)
 }
 
-abgov_parse_qaqc_param_data <- function(param_data) {
+abgov_parse_qaqc_station_data <- function(station_data) {
   tzone <- "MST" # TODO: confirm this?
   # Split metadata and observations
-  header_row_idx <- which(param_data[, 1] == "Interval Start")
-  meta <- param_data[, 1:2] |>
+  header_row_idx <- which(station_data[, 1] == "Interval Start")
+  meta <- station_data[, 1:2] |>
     head(header_row_idx - 1) |>
     setNames(c("name", "value")) |>
     dplyr::mutate(
@@ -446,7 +594,7 @@ abgov_parse_qaqc_param_data <- function(param_data) {
       value = .data$value |> handyr::swap("", with = NA)
     ) |>
     tidyr::pivot_wider()
-  obs <- param_data |>
+  obs <- station_data |>
     tail(-(header_row_idx - 1))
 
   # Parse observations
@@ -456,21 +604,13 @@ abgov_parse_qaqc_param_data <- function(param_data) {
     dplyr::mutate(
       dplyr::across(
         dplyr::starts_with("Interval"),
-        \(x) lubridate::ymd_hms(x, tz = tzone) # TODO: need to adjust for time ending?
+        \(x) lubridate::ymd_hms(x, tz = tzone)
       ),
-      Flags = .data$Flags |> handyr::swap("", with = NA), # TODO: do this in swap NA placeholders?
+      `Measurement Value` = as.numeric(.data$`Measurement Value`),
+      Flags = .data$Flags |> handyr::swap("", with = NA),
+      StationName = meta$`Station Name`,
+      StationId = meta$`Station Id`,
       Parameter = meta$Parameter,
       Unit = meta$Unit
     )
-}
-
-# TODO: move to handyr
-get_session_token <- function(site, endpoint) {
-  site |>
-    paste0(endpoint) |>
-    httr::GET() |>
-    httr::content(as = "text", encoding = "UTF-8") |>
-    rvest::read_html() |>
-    rvest::html_node("input[name='__RequestVerificationToken']") |>
-    rvest::html_attr("value")
 }

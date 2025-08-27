@@ -317,3 +317,174 @@ default_units <- c(
   pressure_1hr = "kPa",
   vapour_pressure_1hr = "kPa"
 )
+
+standardize_data_format <- function(
+  obs_data,
+  date_range,
+  known_stations = NULL,
+  fast = FALSE,
+  raw = FALSE
+) {
+  if (raw) {
+    return(obs_data)
+  }
+  if (nrow(obs_data) == 0) {
+    stop("No data available before reformatting.")
+  }
+  formatted <- obs_data |>
+    dplyr::arrange(
+      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
+      .data$date_utc,
+      !.data$quality_assured
+    ) |>
+    dplyr::distinct(
+      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
+      .data$date_utc,
+      .keep_all = TRUE
+    ) |>
+    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
+    drop_missing_obs_rows(where_fn = is.numeric)
+
+  if (nrow(formatted) == 0) {
+    stop("No data available after reformatting.")
+  }
+
+  # Insert local time (slow-ish for many stations)
+  if (!fast) {
+    formatted <- formatted |>
+      insert_date_local(stations_meta = known_stations)
+  }
+  return(formatted)
+}
+
+widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
+  obs |>
+    dplyr::group_by(.unit = get(unit_col)) |>
+    dplyr::select(-dplyr::all_of(unit_col)) |>
+    dplyr::group_split() |>
+    handyr::for_each(
+      \(dat) {
+        dat |>
+          dplyr::mutate(
+            dplyr::across(
+              dplyr::any_of(value_col),
+              \(val) {
+                unit <- fix_units(.unit[1])
+                val |>
+                  as.numeric() |>
+                  units::set_units(unit, mode = "standard")
+              }
+            )
+          ) |>
+          dplyr::select(-.unit) |>
+          tidyr::pivot_wider(
+            names_from = name_col,
+            values_from = value_col
+          ) |>
+          dplyr::select(dplyr::any_of(desired_cols)) |>
+          dplyr::distinct()
+      }
+    ) |>
+    handyr::join_list() |>
+    dplyr::select(dplyr::any_of(desired_cols))
+}
+
+drop_missing_obs_rows <- function(obs, where_fn = is.numeric) {
+  obs |>
+    dplyr::filter(
+      rowSums(!is.na(dplyr::across(dplyr::where(!!where_fn)))) > 0
+    )
+}
+
+standardize_obs_units <- function(obs, default_units, input_units = NULL) {
+  cols_to_convert <- is.null(input_units) |>
+    ifelse(
+      yes = names(default_units),
+      no = names(input_units)
+    )
+  obs |>
+    dplyr::mutate(
+      dplyr::across(
+        dplyr::any_of(cols_to_convert),
+        \(x) {
+          in_unit <- is.null(input_units) |>
+            ifelse(
+              yes = units(x) |> as.character(),
+              no = input_units[names(input_units) == dplyr::cur_column()]
+            )
+          x |>
+            convert_units(
+              in_unit = in_unit,
+              out_unit = default_units[
+                names(default_units) == dplyr::cur_column()
+              ],
+              keep_units = TRUE
+            )
+        }
+      )
+    )
+}
+
+extract_options <- function(session, html_id) {
+  options <- session |>
+    rvest::html_nodes(paste0("select[name='", html_id, "'] option"))
+  # Extract operator names and keys from options
+  option_names <- options |>
+    rvest::html_text()
+  options <- options |>
+    rvest::html_attr("value") |>
+    as.numeric() |>
+    suppressWarnings() |>
+    setNames(option_names)
+  is_place_holder <- option_names == "--- SELECT ---"
+  options[!is_place_holder]
+}
+
+# TODO: move to handyr
+get_session_token <- function(session) {
+  session |>
+    rvest::html_node("input[name='__RequestVerificationToken']") |>
+    rvest::html_attr("value")
+}
+
+simulate_session <- function(site, endpoint) {
+  site |>
+    paste0(endpoint) |>
+    httr::GET() |>
+    httr::content(as = "text", encoding = "UTF-8") |>
+    rvest::read_html()
+}
+
+# TODO: implement for all sources
+standardize_input_vars <- function(variables, all_variables = NULL) {
+  variables <- tolower(variables)
+
+  if ("all" %in% variables & !is.null(all_variables)) {
+    return(all_variables)
+  }
+
+  variables[variables == "pm2.5"] <- "pm25"
+  variables[variables == "humidity"] <- "rh"
+  variables[variables == "temperature"] <- "temp"
+  variables[variables == "wdir"] <- "wd"
+  variables[variables == "wspd"] <- "ws"
+
+  if (!is.null(all_variables)) {
+    variables <- variables[variables %in% all_variables]
+  }
+
+  if (length(variables) == 0) {
+    stop("No valid variables specified.")
+  }
+
+  return(variables)
+}
+
+fix_units <- function(units) {
+  dplyr::case_when(
+    units %in% c("% RH", "percent") ~ "%",
+    units %in% c("\xb0C", "deg c", "c") ~ "degC",
+    units %in% c("Deg.", "deg") ~ "degrees",
+    TRUE ~ units
+  )
+}
