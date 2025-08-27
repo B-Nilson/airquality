@@ -81,7 +81,7 @@ get_abgov_data <- function(
 
   # Filter to existing stations only
   if (!fast) {
-    known_stations <- get_abgov_stations()
+    known_stations <- get_abgov_stations(quiet = quiet)
   } else {
     known_stations <- NULL
   }
