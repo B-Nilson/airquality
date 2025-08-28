@@ -206,13 +206,13 @@ get_airnow_data <- function(
   }
 
   # Handle input variables
-  all_variables <- names(.abgov_columns$values) |>
+  all_variables <- names(.airnow_columns$values) |>
     stringr::str_remove("_1hr")
   variables <- variables |>
     standardize_input_vars(all_variables)
   get_all_vars <- all(all_variables %in% variables)
-  value_cols_to_drop <- all_variables[
-    !names(all_variables) %in% paste0(variables, "_1hr")
+  value_cols_to_drop <- .airnow_columns$values[
+    !names(.airnow_columns$values) %in% paste0(variables, "_1hr")
   ]
 
   # Get hourly data files for desired date range
@@ -257,11 +257,9 @@ get_airnow_data <- function(
       dplyr::filter(.data$siteID %in% stations)
   }
 
-  # Drop non-desired variables if "all" not supplied
-  if (!get_all_vars) {
-    airnow_data <- airnow_data |>
-      dplyr::select(-dplyr::any_of(value_cols_to_drop))
-  }
+  # Drop non-desired variables
+  airnow_data <- airnow_data |>
+    dplyr::filter(!param %in% value_cols_to_drop)
 
   # If raw data desired, end function and return data
   if (raw) {
