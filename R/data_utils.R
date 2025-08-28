@@ -322,6 +322,7 @@ standardize_data_format <- function(
   obs_data,
   date_range,
   known_stations = NULL,
+  id_col = "site_id",
   fast = FALSE,
   raw = FALSE
 ) {
@@ -352,7 +353,7 @@ standardize_data_format <- function(
   # Insert local time (slow-ish for many stations)
   if (!fast) {
     formatted <- formatted |>
-      insert_date_local(stations_meta = known_stations)
+      insert_date_local(stations_meta = known_stations, by = id_col)
   }
   return(formatted)
 }
