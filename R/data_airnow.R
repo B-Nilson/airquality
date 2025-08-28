@@ -290,7 +290,7 @@ get_airnow_data <- function(
       unit_col = "unit",
       value_col = "value",
       name_col = "param",
-      desired_cols = names(unlist(unname(.airnow_columns)))
+      desired_cols = unlist(unname(.airnow_columns))
     ) |>
     standardize_data_format(
       date_range = date_range,

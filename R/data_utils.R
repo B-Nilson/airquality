@@ -363,6 +363,7 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
     dplyr::select(-dplyr::all_of(unit_col)) |>
     dplyr::group_split() |>
     handyr::for_each(
+      .join = TRUE,
       \(dat) {
         dat |>
           dplyr::mutate(
@@ -385,8 +386,7 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
           dplyr::distinct()
       }
     ) |>
-    handyr::join_list() |>
-    dplyr::select(dplyr::any_of(desired_cols))
+    dplyr::select(dplyr::any_of(names(desired_cols)))
 }
 
 drop_missing_obs_rows <- function(obs, where_fn = is.numeric) {
