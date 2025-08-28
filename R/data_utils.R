@@ -351,7 +351,7 @@ standardize_data_format <- function(
   }
 
   # Insert local time (slow-ish for many stations)
-  if (!fast) {
+  if (!fast & !is.null(known_stations)) {
     formatted <- formatted |>
       insert_date_local(stations_meta = known_stations, by = id_col)
   }
