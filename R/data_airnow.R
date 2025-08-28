@@ -278,7 +278,7 @@ get_airnow_data <- function(
     stop("No data available for desired stations during specified date range.")
   }
   # Standardize formatting
-  airnow_data <- airnow_data |>
+  airnow_data |>
     dplyr::mutate(
       date_utc = paste(.data$date, .data$time) |>
         lubridate::mdy_hm(tz = "UTC") +
@@ -298,8 +298,6 @@ get_airnow_data <- function(
       fast = fast,
       raw = raw
     )
-
-  return(airnow_data)
 }
 
 ## AirNow Helpers ----------------------------------------------------------
