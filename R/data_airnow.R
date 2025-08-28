@@ -183,7 +183,7 @@ get_airnow_data <- function(
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
   if (max(date_range) - allowed_date_range[2] > lubridate::hours(-48)) {
-    if (max(date_range) - allowed_date_range > lubridate::minutes(-55)) {
+    if (max(date_range) - allowed_date_range[2] > lubridate::minutes(-55)) {
       if (!quiet) {
         warning(paste(
           "The current hour AirNow files is updated twice per hour",
