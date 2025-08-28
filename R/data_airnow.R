@@ -173,7 +173,8 @@ get_airnow_data <- function(
   stopifnot(is.logical(quiet))
 
   # Constants/setup
-  allowed_date_range <- c("2014-01-01 01", "now") # TODO: confirm this
+  allowed_date_range <- c("2014-01-01 01", "now") |> # TODO: confirm this
+    handle_date_range()
   data_citation("AirNow", quiet = quiet)
 
   # Handle date_range inputs
