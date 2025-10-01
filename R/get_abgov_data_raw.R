@@ -30,6 +30,7 @@ get_abgov_data_raw <- function(
     handyr::for_each(
       abgov_get_raw_data_request,
       quiet = quiet,
+      .show_progress = !quiet,
       .bind = TRUE
     )
 

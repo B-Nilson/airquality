@@ -32,6 +32,7 @@ bcgov_get_qaqc_data <- function(
     handyr::for_each(
       .enumerate = TRUE,
       .join = TRUE,
+      .show_progress = !quiet,
       # .parallel = fast, # TODO: test if works
       \(path, i) {
         if (!quiet) {

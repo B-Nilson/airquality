@@ -59,6 +59,7 @@ get_abgov_data_qaqc <- function(
   request_tokens <- date_range |>
     handyr::split_date_range(max_duration = max_duration, as_list = TRUE) |>
     handyr::for_each(
+      .show_progress = FALSE,
       \(d_range) {
         d_range <- d_range |> sapply(format, format = "%F") |> unname()
         if (!quiet) {
@@ -90,6 +91,7 @@ get_abgov_data_qaqc <- function(
     handyr::for_each(
       .bind = TRUE,
       .enumerate = TRUE,
+      .show_progress = !quiet,
       \(tokens, i) {
         if (!quiet) {
           "Downloading data for request:" |>
@@ -99,6 +101,7 @@ get_abgov_data_qaqc <- function(
           handyr::for_each(
             .bind = TRUE,
             .enumerate = TRUE,
+            .show_progress = FALSE,
             \(token, j) {
               if (is.null(token)) {
                 return(NULL)
@@ -489,7 +492,8 @@ abgov_get_qaqc_keys <- function(
         )
       },
       .bind = TRUE,
-      .bind_id = "operator_name"
+      .bind_id = "operator_name",
+      .show_progress = FALSE
     ) |>
     dplyr::tibble() |>
     dplyr::left_join(operator_keys, by = "operator_name") |>
@@ -573,6 +577,7 @@ abgov_parse_qaqc_data <- function(
       .as_list = TRUE,
       .enumerate = TRUE,
       .bind = TRUE,
+      .show_progress = FALSE,
       \(start, i) {
         data_rows[, start:param_ends[i]] |>
           abgov_parse_qaqc_station_data()

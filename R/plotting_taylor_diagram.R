@@ -426,6 +426,7 @@ add_taylor_cor_lines <- function(
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
+      .show_progress = FALSE,
       \(at) {
         observed |>
           dplyr::mutate(
@@ -509,6 +510,7 @@ add_taylor_sd_lines <- function(
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
+      .show_progress = FALSE,
       \(i) {
         at <- unique(c(lines_at, observed$sd[i]))
         data.frame(
@@ -563,6 +565,7 @@ add_taylor_axes_lines <- function(taylor, observed, min_cor, sd_max) {
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
+      .show_progress = FALSE,
       \(correlation) {
         observed |>
           dplyr::mutate(
@@ -686,11 +689,13 @@ make_taylor_rmse_lines <- function(
       handyr::for_each(
         .as_list = TRUE,
         .bind = TRUE,
+        .show_progress = FALSE,
         \(x) {
           x |>
             handyr::for_each(
               .as_list = TRUE,
               .bind = TRUE,
+              .show_progress = FALSE,
               \(y) y$lines
             )
         }
@@ -699,11 +704,13 @@ make_taylor_rmse_lines <- function(
       handyr::for_each(
         .as_list = TRUE,
         .bind = TRUE,
+        .show_progress = FALSE,
         \(x) {
           x |>
             handyr::for_each(
               .as_list = TRUE,
               .bind = TRUE,
+              .show_progress = FALSE,
               \(y) y$labels
             )
         }

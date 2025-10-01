@@ -175,12 +175,14 @@ get_data_for_stations <- function(
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
+      .show_progress = !quiet,
       \(net) {
         sources <- names(data_funs[[net]])
         sources |>
           handyr::for_each(
             .as_list = TRUE,
             .bind = TRUE,
+            .show_progress = !quiet,
             \(src) {
               site_ids <- stations |>
                 dplyr::filter(.data$source == src & .data$network == net) |>
@@ -365,6 +367,7 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
     dplyr::group_split() |>
     handyr::for_each(
       .join = TRUE,
+      .show_progress = FALSE,
       \(dat) {
         dat |>
           dplyr::mutate(

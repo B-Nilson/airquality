@@ -330,6 +330,7 @@ CAAQS_meets_standard <- function(year, metric, thresholds) {
     handyr::for_each(
       .as_list = TRUE,
       .bind = TRUE,
+      .show_progress = FALSE,
       \(lvl) metric > lvl
     )
   attainment <- attainment |>

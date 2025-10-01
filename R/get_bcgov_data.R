@@ -138,6 +138,7 @@ get_bcgov_data <- function(
       handyr::for_each(
         .bind = TRUE,
         .parallel = fast,
+        .show_progress = !quiet,
         bcgov_get_annual_data,
         stations = stations,
         qaqc_years = qaqc_years,

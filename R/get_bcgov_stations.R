@@ -66,6 +66,7 @@ get_bcgov_stations <- function(
   stations <- years_to_get |>
     handyr::for_each(
       .bind = TRUE,
+      .show_progress = !quiet,
       bcgov_get_annual_stations,
       qaqc_years = qaqc_years,
       quiet = quiet

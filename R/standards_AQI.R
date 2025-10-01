@@ -73,6 +73,7 @@ AQI <- function(
     handyr::for_each(
       .as_list = TRUE,
       .name = TRUE,
+      .show_progress = FALSE,
       \(pol) all(is.na(get(pol)))
     )
   all_missing$so2_24hr_ppb <- TRUE

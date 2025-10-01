@@ -84,6 +84,7 @@ bcgov_get_raw_data <- function(
   data_paths |>
     handyr::for_each(
       .bind = TRUE,
+      .show_progress = !quiet,
       \(path) {
         withr::with_options(
           list(timeout = 3600),
