@@ -229,6 +229,19 @@ get_bcgov_data <- function(
   )
 )
 
+bcgov_get_qaqc_years <- function() {
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
+  # Get directories in QAQC directory
+  qaqc_dirs <- qaqc_directory |>
+    readLines() |>
+    stringr::str_subset("<DIR>")
+  # Extract years from dir names
+  qaqc_dirs |>
+    stringr::str_extract("\\d{4}$") |>
+    as.numeric()
+}
+
 # Returns all years in qaqc_years and one additional year that is not qaqc (if present)
 bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
