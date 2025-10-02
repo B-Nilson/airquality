@@ -93,8 +93,8 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
         x |>
           as.numeric() |>
           handyr::convert_units(
-            in_unit = unit,
-            out_unit = default_unit,
+            from = unit,
+            to = default_unit,
             keep_units = TRUE
           )
       })
