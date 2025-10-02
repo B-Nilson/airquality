@@ -5,8 +5,8 @@ bcgov_get_qaqc_data <- function(
   use_rounded_value = TRUE,
   quiet = FALSE
 ) {
-  qaqc_directory <- bcgov_ftp_site |>
-    paste0("/AnnualSummary/")
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
 
   # Handle input variables
   all_variables <- names(.bcgov_columns$values) |>
@@ -113,8 +113,8 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 }
 
 bcgov_get_qaqc_years <- function() {
-  qaqc_directory <- bcgov_ftp_site |>
-    paste0("/AnnualSummary/")
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
   # Get directories in QAQC directory
   qaqc_dirs <- qaqc_directory |>
     readLines() |>
@@ -126,8 +126,8 @@ bcgov_get_qaqc_years <- function() {
 }
 
 bcgov_get_qaqc_year_params <- function(year) {
-  qaqc_directory <- bcgov_ftp_site |>
-    paste0("/AnnualSummary/", year, "/")
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/", year, "/")
   # Get directories in QAQC directory
   param_files <- qaqc_directory |>
     readLines() |>
@@ -139,8 +139,8 @@ bcgov_get_qaqc_year_params <- function(year) {
 }
 
 bcgov_make_qaqc_paths <- function(year, params) {
-  qaqc_directory <- bcgov_ftp_site |>
-    paste0("/AnnualSummary/")
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
+  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
   available_params <- bcgov_get_qaqc_year_params(year)
   params <- params[params %in% available_params]
   if (length(params) == 0) {

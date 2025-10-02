@@ -62,6 +62,7 @@ get_bcgov_data <- function(
   data_citation("BCgov", quiet = quiet)
 
   # Constants/setup
+  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
   qaqc_years <- bcgov_get_qaqc_years()
   allowed_date_range <- min(qaqc_years) |>
     paste0("-01-01 01:00:00")
@@ -164,102 +165,6 @@ get_bcgov_data <- function(
     ))
 }
 
-format_bcgov_raw_data <- function(
-  raw_data,
-  desired_cols,
-  mode = "stations"
-) {
-  if (nrow(raw_data) == 0) {
-    stop("No data available before reformatting.")
-  }
-
-  if (nrow(raw_data) == 0) {
-    return(raw_data)
-  }
-  if (mode == "variables") {
-    return(
-      bcgov_format_qaqc_data(raw_data, use_rounded_value = TRUE)
-    )
-  }
-
-  # Get column names and insert unit columns if needed
-  meta_cols <- .bcgov_columns$meta[
-    names(.bcgov_columns$meta) != "quality_assured"
-  ]
-  value_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$values
-  ]
-  unit_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$units
-  ]
-  if (mode == "stations") {
-    instrument_cols <- names(raw_data)[
-      names(raw_data) %in% .bcgov_columns$instruments
-    ]
-  } else {
-    instrument_cols <- character(0)
-    unit_cols <- paste0(value_cols, "_UNIT")
-    # Insert default units as unit columns as no units provided
-    # TODO: confirm units are correct here
-    for (i in 1:length(unit_cols)) {
-      is_value_col <- .bcgov_columns$values == value_cols[i]
-      if (any(is_value_col)) {
-        raw_data[[unit_cols[i]]] <- default_units[
-          names(.bcgov_columns$values)[is_value_col]
-        ]
-      }
-    }
-  }
-
-  # Assign units to value columns
-  for (i in 1:length(unit_cols)) {
-    default_unit <- default_units[
-      names(.bcgov_columns$values[
-        .bcgov_columns$values %in% c(value_cols[i], names(value_cols[i])) # TODO: is this needed?
-      ])
-    ]
-    raw_data <- raw_data |>
-      dplyr::mutate(
-        dplyr::across(
-          dplyr::all_of(value_cols[i]),
-          \(x) {
-            as.numeric(x) |>
-              suppressWarnings() |> # NAs introduced by coercion
-              convert_units(
-                in_unit = .data[[unit_cols[i]]][1],
-                out_unit = default_unit,
-                keep_units = TRUE
-              )
-          }
-        )
-      )
-  }
-
-  formatted <- raw_data |>
-    dplyr::mutate(
-      quality_assured = FALSE,
-      date_utc = .data$DATE_PST |>
-        lubridate::ymd_hm(tz = bcgov_tzone) |>
-        # Some files use HMS instead of HM for some reason..
-        tryCatch(warning = function(w) {
-          .data$DATE_PST |> lubridate::ymd_hms(tz = bcgov_tzone)
-        }) |>
-        lubridate::with_tz("UTC")
-    ) |>
-    dplyr::select(dplyr::any_of(desired_cols)) |>
-    remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    drop_missing_obs_rows(where_fn = \(x) "units" %in% class(x))
-
-  if (nrow(formatted) == 0) {
-    stop("No data available after reformatting.")
-  }
-  return(formatted)
-}
-
-# BCgov Constants ---------------------------------------------------------
-
-bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
 .bcgov_columns <- list(
   meta = c(
     date_utc = "date_utc", # Added by bcgov_get_annual_data()
@@ -328,6 +233,7 @@ bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_
 
 # Drop all raw years except the first
 bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
+  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
   years <- date_range[1] |>
     seq(date_range[2], by = "1 days") |>
     lubridate::with_tz(bcgov_tzone) |>

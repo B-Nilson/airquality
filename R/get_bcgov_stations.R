@@ -36,6 +36,8 @@ get_bcgov_stations <- function(
   stopifnot(is.logical(use_sf), length(use_sf) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
+  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
+
   # Handle date_range input
   allowed_date_range <- c("1998-01-01 00:00:00", "now")
   date_range <- date_range |>
@@ -117,7 +119,7 @@ get_bcgov_stations <- function(
 
 
 bcgov_get_annual_stations <- function(
-  year = lubridate::year(Sys.time() |> lubridate::with_tz(bcgov_tzone)),
+  year = lubridate::year(Sys.time() |> lubridate::with_tz("Etc/GMT+8")),
   qaqc_years = NULL,
   quiet = FALSE
 ) {
@@ -133,6 +135,7 @@ bcgov_get_annual_stations <- function(
   }
 
   # File details
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
   qaqc_directory <- paste0("/AnnualSummary/", year, "/")
   raw_directory <- "/Hourly_Raw_Air_Data/Year_to_Date/"
   stations_file <- "bc_air_monitoring_stations.csv"
@@ -161,6 +164,7 @@ bcgov_get_annual_stations <- function(
 }
 
 bcgov_get_raw_stations <- function(realtime = FALSE) {
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
   raw_directory <- bcgov_ftp_site |>
     paste0(
       "/Hourly_Raw_Air_Data/",

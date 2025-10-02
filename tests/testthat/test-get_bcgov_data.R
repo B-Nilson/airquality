@@ -60,6 +60,7 @@ test_that("invalid date_range causes error", {
 
 test_that("too early date_range causes warning/error", {
   skip("Slow to run, skipping for now")
+  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
   # TODO: Error: No data available for provided stations / date_range / parameters.
   station <- "M110517"
   earliest_time <- lubridate::ymd_h("1980-01-01 01", tz = bcgov_tzone)
@@ -179,6 +180,7 @@ test_that("able to make qaqc paths", {
 })
 
 test_that("able to differentiate qaqc/raw years", {
+  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
   date_range <- c(
     as.POSIXct("1980-01-01 00", tz = bcgov_tzone),
     lubridate::now(tz = bcgov_tzone)
