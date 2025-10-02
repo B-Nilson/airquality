@@ -1,17 +1,10 @@
 #' Download air quality station observations from the Alberta (Canada) Government
 #'
-#' @param stations A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
-#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
-#' Providing a single value will return data for that hour only,
-#' whereas two values will return data between (and including) those times.
-#' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' @inheritParams get_airnow_data
+#' @param stations (Optional) 
+#'   A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
+#'   Default is "all", i.e. all available stations.
 #' @param variables (Optional) A character vector of one or more variables to try and get data desired.
-#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating
-#' if raw data files desired (i.e. without a standardized format). Default is FALSE.
-#' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
-#' Default is FALSE.
-#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be silenced
 #' @param stations_per_call (Optional) A single numeric value indicating the maximum number of stations to request per API call.
 #' The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.
 #' Default is 1.
@@ -25,17 +18,17 @@
 #' The Province of Alberta hosts it's hourly air quality observations
 #' through a public API, providing both historic and real-time raw data.
 #'
-#' [get_abgov_data()] provides an easy way to retrieve these observations using
-#' station name(s) (see [get_abgov_stations()]) and a specified date or date range.
+#' [get_abgov_data] provides an easy way to retrieve these observations using
+#' station name(s) (see [get_abgov_stations]) and a specified date or date range.
 #'
-#' @seealso [get_abgov_stations()]
+#' @seealso [get_abgov_stations]
 #' @return
 #' A tibble of hourly observation data for desired station(s) and date range where available.
 #' Columns returned will vary depending on available data from station(s).
 #'
 #' Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#' 
 #' @family Data Collection
-#' @family Canadian Air Quality
 #'
 #' @export
 #' @examples
@@ -130,11 +123,13 @@ get_abgov_data <- function(
         desired_cols = unlist(unname(.abgov_columns))
       ) |>
       handyr::on_error(.return = NULL)
+  }else {
+    raw_data <- NULL
   }
 
   # Combine and standardize formatting
-  list(qaqc_data, raw_data) |>
-    dplyr::bind_rows() |>
+  qaqc_data |>
+    dplyr::bind_rows(raw_data) |>
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
@@ -143,8 +138,6 @@ get_abgov_data <- function(
       raw = raw
     )
 }
-
-## AB MoE Helpers ---------------------------------------------------------
 
 .abgov_columns <- list(
   meta = c(

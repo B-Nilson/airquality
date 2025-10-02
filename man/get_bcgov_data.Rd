@@ -85,8 +85,6 @@ Other Data Collection:
 
 Other Canadian Air Quality: 
 \code{\link{CAAQS}()},
-\code{\link{get_abgov_data}()},
-\code{\link{get_abgov_stations}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
 }

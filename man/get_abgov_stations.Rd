@@ -11,7 +11,9 @@ get_abgov_stations(..., use_sf = FALSE, quiet = FALSE)
 
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
 
-\item{quiet}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
+\item{quiet}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.
 Default is FALSE.}
 }
 \value{
@@ -23,7 +25,7 @@ primarily as a part of the federal National Air Pollution Surveillance (NAPS) pr
 The Province of Alberta hosts it's hourly air quality metadata
 through a public API.
 
-[get_abgov_stations()] provides an easy way to retrieve this metadata (typically to determine station names to pass to `get_abgov_data()`)
+[get_abgov_stations] provides an easy way to retrieve this metadata (typically to determine station names to pass to [get_abgov_data])
 }
 \examples{
 \donttest{
@@ -34,7 +36,7 @@ get_abgov_stations(use_sf = TRUE)
 }
 }
 \seealso{
-[get_abgov_data()]
+[get_abgov_data]
 
 Other Data Collection: 
 \code{\link{get_abgov_data}()},
@@ -43,13 +45,5 @@ Other Data Collection:
 \code{\link{get_bcgov_data}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
-
-Other Canadian Air Quality: 
-\code{\link{CAAQS}()},
-\code{\link{get_abgov_data}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{get_bcgov_stations}()},
-\code{\link{purpleair_api}()}
 }
-\concept{Canadian Air Quality}
 \concept{Data Collection}

@@ -16,23 +16,32 @@ get_abgov_data(
 )
 }
 \arguments{
-\item{stations}{A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).}
+\item{stations}{(Optional) 
+A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
+Default is "all", i.e. all available stations.}
 
-\item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
+\item{date_range}{(Optional).
+A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
 whereas two values will return data between (and including) those times.
-Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
+Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+Default is "now" (the current hour).}
 
 \item{variables}{(Optional) A character vector of one or more variables to try and get data desired.}
 
-\item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
-if raw data files desired (i.e. without a standardized format). Default is FALSE.}
-
-\item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+\item{raw}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+raw data files are desired (i.e. without a standardized format). 
 Default is FALSE.}
 
-\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be silenced}
+\item{fast}{(Optional).
+A single logical (TRUE or FALSE) value indicating if, where possible, time-intensive code should be skipped and parallel processing should be used.
+Default is FALSE.}
+
+\item{quiet}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.
+Default is FALSE.}
 
 \item{stations_per_call}{(Optional) A single numeric value indicating the maximum number of stations to request per API call.
 The API header requires station names to be passed as a comma-separated list, too manyu stations may cause an eror depending on station name length.
@@ -54,8 +63,8 @@ primarily as a part of the federal National Air Pollution Surveillance (NAPS) pr
 The Province of Alberta hosts it's hourly air quality observations
 through a public API, providing both historic and real-time raw data.
 
-[get_abgov_data()] provides an easy way to retrieve these observations using
-station name(s) (see [get_abgov_stations()]) and a specified date or date range.
+[get_abgov_data] provides an easy way to retrieve these observations using
+station name(s) (see [get_abgov_stations]) and a specified date or date range.
 }
 \examples{
 \donttest{
@@ -63,7 +72,7 @@ get_abgov_data(stations = "Calgary Southeast", quiet = TRUE)
 }
 }
 \seealso{
-[get_abgov_stations()]
+[get_abgov_stations]
 
 Other Data Collection: 
 \code{\link{get_abgov_stations}()},
@@ -72,13 +81,5 @@ Other Data Collection:
 \code{\link{get_bcgov_data}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
-
-Other Canadian Air Quality: 
-\code{\link{CAAQS}()},
-\code{\link{get_abgov_stations}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{get_bcgov_stations}()},
-\code{\link{purpleair_api}()}
 }
-\concept{Canadian Air Quality}
 \concept{Data Collection}
