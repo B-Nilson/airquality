@@ -1,17 +1,16 @@
 test_that("Plot created without error", {
-  date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-04-02 00"))
-  obs <- get_station_data(
-    "Vanderhoof, BC, Canada",
-    date_range,
-    sources = "BCgov",
+  obs <- get_bcgov_data(
+    stations = "0450307",
+    date_range = c(Sys.time() - lubridate::days(10), Sys.time()),
     quiet = TRUE
-  )$data
+  )
   expect_no_error(
     obs |>
-      tile_plot(
+      dplyr::mutate(pm25_1hr = as.numeric(pm25_1hr)) |> # drop units
+      tile_plot( # TODO: handle z units properly
         x = "hour",
         y = "day",
-        z = "pm25_1hr_ugm3",
+        z = "pm25_1hr",
         FUN = mean,
         date_col = "date_utc"
       )
