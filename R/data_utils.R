@@ -272,7 +272,7 @@ data_citation <- function(source, quiet = FALSE) {
 insert_date_local <- function(obs, stations_meta, by = "site_name") {
   obs |>
     dplyr::left_join(
-      stations_meta |> dplyr::select(by, "tz_local"),
+      stations_meta |> dplyr::select(dplyr::all_of(by), "tz_local"),
       by = by
     ) |>
     dplyr::rowwise() |>
