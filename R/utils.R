@@ -1,17 +1,3 @@
-# make backward looking rolling means (NAs not ignored)
-# TODO: ignore NAs, make forward looking equivelant
-# TODO: move this to handyr
-get_lag_n_mean <- function(x, n = 3) {
-  out <- x
-  if (n <= 1) {
-    stop("`n` must be greater than one")
-  }
-  for (i in 1:(n - 1)) {
-    out <- out + dplyr::lag(x, i)
-  }
-  return(out / n)
-}
-
 # General function for loading in data quickly and quietly
 # TODO: document
 # TODO: move this to handyr

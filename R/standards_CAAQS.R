@@ -140,7 +140,7 @@ CAAQS_pm25 <- function(obs, thresholds) {
     # +3 year averages, +whether standard is met
     dplyr::mutate(
       `3yr_mean_of_perc_98` = .data$perc_98_of_daily_means |>
-        get_lag_n_mean(n = 3),
+        handyr::rolling("mean", .width = 3, .direction = "backward"),
       management_level_daily = .data$year |>
         sapply(
           \(y) {
@@ -152,7 +152,7 @@ CAAQS_pm25 <- function(obs, thresholds) {
           }
         ),
       `3yr_mean_of_means` = .data$mean_of_daily_means |>
-        get_lag_n_mean(n = 3),
+        handyr::rolling("mean", .width = 3, .direction = "backward"),
       management_level_annual = .data$year |>
         sapply(
           \(y) {
@@ -194,7 +194,7 @@ CAAQS_o3 <- function(obs, thresholds) {
     # +3 year averages, +whether standard is met
     dplyr::mutate(
       `3yr_mean` = .data$fourth_highest_daily_max_8hr_mean_o3 |>
-        get_lag_n_mean(n = 3),
+        handyr::rolling("mean", .width = 3, .direction = "backward"),
       management_level_8hr = .data$year |>
         sapply(
           \(y) {
@@ -236,7 +236,7 @@ CAAQS_no2 <- function(obs, thresholds) {
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
       `3yr_mean_of_perc_98` = .data$perc_98_of_daily_maxima |>
-        get_lag_n_mean(n = 3),
+        handyr::rolling("mean", .width = 3, .direction = "backward"),
       management_level_hourly = .data$year |>
         sapply(
           \(y) {
@@ -292,7 +292,7 @@ CAAQS_so2 <- function(obs, thresholds) {
     # +3 year averages, +standard for that year, +whether standard is met
     dplyr::mutate(
       `3yr_mean_of_perc_99` = .data$perc_99_of_daily_maxima |>
-        get_lag_n_mean(n = 3),
+        handyr::rolling("mean", .width = 3, .direction = "backward"),
       management_level_hourly = .data$year |>
         sapply(
           \(y) {
