@@ -111,9 +111,6 @@ get_bcgov_data <- function(
         quiet = quiet,
         mode = "realtime"
       ) |>
-      # Drop data from old files still sitting in realtime folder
-      # TODO: don't try to read in outdated files (if station goes offline its realtime file is not deleted)
-      dplyr::filter(.data$date_utc >= realtime_start) |>
       handyr::on_error(.return = NULL, .warn = "Could not get realtime data:")
   } else {
     realtime_data <- NULL

@@ -88,6 +88,14 @@ bcgov_get_raw_data <- function(
   } else {
     data_paths <- raw_directories[[mode]] |>
       paste0(stations, ".csv")
+    # Ensure realtime files exist and are recent before attempting to read
+    if (mode == "realtime") {
+      all_paths <- raw_directories$realtime |>
+        get_file_list(full_path = TRUE)
+      all_ages <- raw_directories$realtime |>
+        get_file_ages(units = "days")
+      data_paths <- all_paths[all_paths %in% data_paths & all_ages < 30]
+    }
   }
 
   # Download each stations file and bind together
@@ -106,6 +114,27 @@ bcgov_get_raw_data <- function(
       mode = mode
     )
 }
+
+# TODO: move to handyr and implement
+get_file_list <- function(url_directory, full_path = TRUE) {
+  files <- url_directory |>
+    readLines() |>
+    stringr::str_extract("[\\w\\-]+\\..*$")
+  if (full_path) {
+    files <- url_directory |>
+      paste0(files)
+  }
+  return(files)
+}
+
+get_file_ages <- function(url_directory, since = Sys.time(), units = "auto") {
+  date_modified <- url_directory |>
+    readLines() |>
+    stringr::str_extract("^\\d{2}-\\d{2}-\\d{2}  \\d{2}:\\d{2}[A,P]M") |> 
+    lubridate::mdy_hm()
+  difftime(since, date_modified, units = units)
+}
+
 
 read_raw_bcgov_data <- function(bcgov_path) {
   stopifnot(is.character(bcgov_path), length(bcgov_path) == 1)
