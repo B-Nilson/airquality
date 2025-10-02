@@ -195,7 +195,8 @@ get_bcgov_data <- function(
     ws_1hr = "WSPD_SCLR",
     ws_vector_1hr = "WSPD_VECT",
     precip_1hr = "PRECIP",
-    snow_1hr = "SNOW",
+    snow_1hr = "SNOW", # mm of SWE
+    snowdepth_1hr = "SNOWDEPTH", # cm of snow
     pressure_1hr = "PRESSURE",
     vapour_pressure_1hr = "VAPOUR"
   ),

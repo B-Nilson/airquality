@@ -311,7 +311,8 @@ default_units <- c(
   ws_1hr = "m/s",
   ws_vector_1hr = "m/s",
   precip_1hr = "mm",
-  snow_1hr = "cm",
+  snow_1hr = "mm",
+  snowdepth_1hr = "cm",
   pressure_1hr = "kPa",
   vapour_pressure_1hr = "kPa"
 )

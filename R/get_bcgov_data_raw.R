@@ -20,10 +20,11 @@ bcgov_get_raw_data <- function(
   )
 
   # Standardize common var names
-  all_variables <- names(.bcgov_columns$values) |>
-    stringr::str_remove("_1hr")
   variables <- variables |>
-    standardize_input_vars(all_variables)
+    standardize_input_vars(
+      all_variables = names(.bcgov_columns$values) |>
+        stringr::str_remove("_1hr")
+    )
 
   # Handle "all" in stations
   all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
@@ -86,22 +87,43 @@ bcgov_get_raw_data <- function(
     handyr::for_each(
       .bind = TRUE,
       .show_progress = !quiet,
-      \(path) {
-        withr::with_options(
-          list(timeout = 3600),
-          data.table::fread(
-            file = path,
-            colClasses = "character",
-            showProgress = !quiet
-          ) |>
-            handyr::on_error(.return = NULL)
-        )
-      }
+      read_raw_bcgov_data
     ) |>
     format_bcgov_raw_data(
       desired_cols = unlist(unname(.bcgov_columns)),
       mode = mode
     )
+}
+
+read_raw_bcgov_data <- function(bcgov_path) {
+  # Fetch and load file
+  obs <- withr::with_options(
+    list(timeout = 3600),
+    data.table::fread(
+      file = bcgov_path,
+      colClasses = "character",
+      showProgress = FALSE
+    ) |>
+      suppressWarnings() |> # when file does not exist
+      handyr::on_error(.return = NULL)
+  )
+  if (is.null(obs)) {
+    return(NULL)
+  }
+
+  # Fix bugged csv files where header not attached properly
+  if (any(names(obs) %in% c("V1", "0.001", "0.0001"))) {
+    header <- readLines(url(bcgov_path), n = 1)
+    names(obs) <- strsplit(header, ",")[[1]]
+  }
+
+  # Attach ems id from file name if not in file already
+  if (!"EMS_ID" %in% names(obs) & nrow(obs) > 0) {
+    obs$EMS_ID <- basename(bcgov_path) |>
+      gsub(pattern = "\\.csv", replacement = "")
+  }
+
+  return(obs)
 }
 
 format_bcgov_raw_data <- function(
@@ -176,23 +198,21 @@ format_bcgov_raw_data <- function(
       )
   }
 
-  formatted <- raw_data |>
+  raw_data |>
     dplyr::mutate(
       quality_assured = FALSE,
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
-        # Some files use HMS instead of HM for some reason..
-        tryCatch(warning = function(w) {
-          .data$DATE_PST |> lubridate::ymd_hms(tz = bcgov_tzone)
-        }) |>
+        suppressWarnings(),
+      # Some files use HMS instead of HM for some reason..
+      date_utc2 = .data$DATE_PST |>
+        lubridate::ymd_hms(tz = bcgov_tzone) |>
+        suppressWarnings(),
+      date_utc = is.na(.data$date_utc) |>
+        ifelse(yes = .data$date_utc2, no = .data$date_utc) |>
         lubridate::with_tz("UTC")
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
     drop_missing_obs_rows(where_fn = \(x) "units" %in% class(x))
-
-  if (nrow(formatted) == 0) {
-    stop("No data available after reformatting.")
-  }
-  return(formatted)
 }
