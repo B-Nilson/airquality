@@ -120,7 +120,7 @@ wind_rose <- function(
     # Radial plot with internal y axis labels and a black border
     ggplot2::coord_radial(
       r.axis.inside = TRUE,
-      start = -convert_units(wd_step / 2, "degrees", "radians")
+      start = -handyr::convert_units(wd_step / 2, "degrees", "radians")
     ) +
     ggplot2::geom_hline(yintercept = most_frequent$p[1] * 1.05) +
     # Format axis labels and extents

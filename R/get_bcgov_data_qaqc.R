@@ -92,7 +92,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       dplyr::across(dplyr::all_of(value_col), \(x) {
         x |>
           as.numeric() |>
-          convert_units(
+          handyr::convert_units(
             in_unit = unit,
             out_unit = default_unit,
             keep_units = TRUE

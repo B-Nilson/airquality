@@ -2,7 +2,6 @@
 
 export(AQI)
 export(CAAQS)
-export(convert_units)
 export(get_abgov_data)
 export(get_abgov_stations)
 export(get_airnow_data)

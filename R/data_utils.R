@@ -416,7 +416,7 @@ standardize_obs_units <- function(obs, default_units, input_units = NULL) {
               no = input_units[names(input_units) == dplyr::cur_column()]
             )
           x |>
-            convert_units(
+            handyr::convert_units(
               in_unit = in_unit,
               out_unit = default_units[
                 names(default_units) == dplyr::cur_column()

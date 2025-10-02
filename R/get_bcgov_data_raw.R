@@ -225,7 +225,7 @@ format_bcgov_raw_data <- function(
           \(x) {
             as.numeric(x) |>
               suppressWarnings() |> # NAs introduced by coercion
-              convert_units(
+              handyr::convert_units(
                 in_unit = .data[[unit_cols[i]]][1],
                 out_unit = default_unit,
                 keep_units = TRUE
