@@ -65,7 +65,7 @@ test_that("too late date_range causes warning/error", {
   # Case: All in the future
   expect_error(get_airnow_data(date_range = future_time, quiet = TRUE))
   # Case: Partly in the future
-  date_range <- c(current_time - lubridate::hours(1), future_time)
+  date_range <- c(current_time - lubridate::hours(2), future_time)
   expect_warning(expect_warning(
     suppressMessages(get_airnow_data(date_range = date_range))
   ))
