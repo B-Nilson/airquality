@@ -39,99 +39,111 @@ is_leap_year <- function(year) {
   year %% 4 == 0
 }
 
-handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
-  # Handle date_range inputs with length != 2
+handle_date_range <- function(
+  date_range,
+  within = c(NA, NA),
+  tz = "UTC",
+  time_step = "1 hours"
+) {
+  stopifnot(length(date_range) %in% 1:2)
+  stopifnot(
+    length(within) %in% 1:2,
+    all(is.na(within)) |
+      "Date" %in% class(within) |
+      "POSIXct" %in% class(within) |
+      is.character(within)
+  )
+  stopifnot(!is.na(lubridate::as.duration(time_step)))
+
+  # Pass within to this function to allow for flexible date range there
+  if (!all(is.na(within))) {
+    original <- within
+    within <- handle_date_range(within, tz = tz)
+    within[is.na(original)] <- NA
+    if (length(original) == 2) {
+      if (is.na(original[2])) within[2] <- NA
+    }
+  }
+
+  # Handle single value date_range
   if (length(date_range) == 1) {
     date_range <- c(date_range, date_range)
   }
-  if (length(date_range) != 2) {
-    stop("`date_range` must have a length of either 1 or 2.")
-  }
+
   # Handle character inputs
   if (is.character(date_range)) {
+    # Handle "now"
     if ("now" %in% date_range) {
       date_range <- date_range |>
         handyr::swap(
           "now",
           with = lubridate::now(tz = tz) |>
-            lubridate::floor_date("hours") |>
+            lubridate::floor_date(time_step) |>
             lubridate::with_tz("UTC") |>
             format("%F %H")
         )
     }
+
+    # Convert to POSIXct
     date_range <- date_range |>
       lubridate::ymd_h(tz = "UTC") |>
       handyr::silence(output = FALSE)
-    if (any(is.na(date_range))) {
+    if (all(is.na(date_range))) {
       stop(
-        "Ensure `date_range` is either a datetime or a character (UTC only) with this format: YYYY-MM-DD HH"
+        "If `date_range` is a character it must be either 'now' ",
+        "or date/time strings (UTC only) with this format: YYYY-MM-DD HH"
       )
     }
   }
+
   # Handle NA's in within (no bound)
   if (is.na(within[1])) {
-    within[1] <- "1970-01-01 00" |> lubridate::ymd_h(tz = "UTC")
+    within[1] <- lubridate::as_datetime(0)
   }
   if (is.na(within[2])) {
-    within[2] <- lubridate::now(tz = "UTC")
-  }
-  if (is.numeric(within)) {
-    within <- within |>
-      lubridate::as_datetime(tz = tz)
+    within[2] <- lubridate::now(tz = tz) |>
+      lubridate::floor_date(time_step)
   }
 
-  # Convert within to min/max dates
-  if (lubridate::is.POSIXct(within)) {
-    within <- within |>
-      lubridate::with_tz(tz) |>
-      format("%F %H")
-  }
-  within <- within |>
-    handyr::swap(
-      "now",
-      with = Sys.time() |>
-        lubridate::floor_date("hours") |>
-        lubridate::with_tz(tz) |>
-        format("%F %H")
-    ) |>
-    lubridate::ymd_h(tz = tz)
   # Handle dates before min date allowed
-  if (!is.null(within[1])) {
-    if (any(date_range < within[1])) {
-      if (all(date_range < within[1])) {
-        stop(paste(
-          "At least one date_range value must be on or after",
-          format(within[1], "%F %Z")
-        ))
-      }
-      warning(paste0(
-        "No data available for this source prior to",
-        format(within[1], "%F %H:%M %Z"),
-        ".\n",
-        "Set the `date_range` to a period from this date onwards to stop this warning."
-      ))
-      date_range[date_range < within[1]] <- within[1]
+  if (any(date_range < within[1])) {
+    if (all(date_range < within[1])) {
+      stop(
+        "At least one date_range value must be on or after ",
+        format(within[1], "%F %Z")
+      )
     }
+    warning(
+      "No data available for this source prior to ",
+      format(within[1], "%F %H:%M %Z"),
+      ".\n ",
+      "Set the `date_range` to a period from this date onwards to stop this warning."
+    )
+    date_range[date_range < within[1]] <- within[1]
   }
+
   # Handle dates after max date allowed
   if (!is.na(within[2])) {
     if (any(date_range > within[2])) {
       if (all(date_range > within[2])) {
-        stop(paste(
-          "At least one date_range value must be on or before",
+        stop(
+          "At least one date_range value must be on or before ",
           format(within[2], "%F %Z")
-        ))
+        )
       }
-      warning(paste0(
-        "No hourly data available from this source beyond the current hour (UTC).\n",
-        "Set the `date_range` to a period from ",
+      warning(
+        "No hourly data available from this source beyond ",
         format(within[2], "%F %H:%M %Z"),
-        " and earlier to stop this warning."
-      ))
+        "Set the max `date_range` to a period from ",
+        "this date or earlier to stop this warning."
+      )
       date_range[date_range > within[2]] <- within[2]
     }
   }
-  date_range |> lubridate::with_tz(tz)
+
+  # Ensure right time zones
+  date_range |>
+    lubridate::with_tz(tz)
 }
 
 # Handle if any/all requested stations for a specific data source don't exist in its meta data
