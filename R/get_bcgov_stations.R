@@ -1,10 +1,7 @@
 #' Download air quality station metadata from the British Columbia (Canada) Government
 #'
-#' @param years (Optional) one or more integer values indicating the year(s) to get metadata for.
-#'   Default is the current year.
-#' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
-#' @param quiet (Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
-#' Default is FALSE
+#' @inheritParams get_airnow_stations
+#' @inheritParams get_airnow_data
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -12,14 +9,13 @@
 #' The Province of British Columbia hosts it's air quality metadata
 #' through a public FTP site.
 #'
-#' [get_bcgov_stations()] provides an easy way to retrieve this metadata (typically to determine station id's to pass to `get_bcgov_data()`)
+#' [get_bcgov_stations] provides an easy way to retrieve this metadata (typically to determine station id's to pass to [get_bcgov_data])
 #'
-#' @seealso [get_bcgov_data()]
+#' @seealso [get_bcgov_data]
 #' @return
 #' A tibble of metadata for British Columbia air quality monitoring stations.
 #'
 #' @family Data Collection
-#' @family Canadian Air Quality
 #'
 #' @export
 #' @examples
@@ -32,35 +28,26 @@
 #' get_bcgov_stations(years = 1998:2000)
 #' }
 get_bcgov_stations <- function(
-  years = lubridate::year(lubridate::now(tz = bcgov_tzone)),
+  date_range = "now",
   use_sf = FALSE,
   quiet = FALSE
 ) {
-  col_names <- c(
-    site_id = "EMS_ID",
-    naps_id = "NAPS_ID",
-    site_name = "STATION_NAME",
-    lat = "LAT",
-    lng = "LONG",
-    elev = "ELEVATION",
-    date_created = "OPENED",
-    date_removed = "CLOSED"
-  )
+  stopifnot(is.numeric(years), length(years) > 0)
+  stopifnot(is.logical(use_sf), length(use_sf) == 1)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
 
-  # Determine years to get (raw data covers 1+ year(s))
-  qaqc_years <- bcgov_get_qaqc_years()
-  years_to_get <- years |>
-    range() |>
-    paste("06") |>
-    lubridate::ym(tz = bcgov_tzone) |>
-    bcgov_determine_years_to_get(qaqc_years)
-  if (any(years_to_get < 1998)) {
-    warning(
-      "Metadata for years prior to 1998 is not available, using 1998 instead."
+  # Handle date_range input
+  allowed_date_range <- c("1998-01-01 00:00:00", "now")
+  date_range <- date_range |>
+    handyr::check_date_range(
+      within = allowed_date_range,
+      tz = bcgov_tzone
     )
-    years_to_get[years_to_get < 1998] <- 1998
-    years_to_get <- unique(years_to_get)
-  }
+
+  # Determine years to get (files are annual, raw data covers recent 1+ year(s))
+  qaqc_years <- bcgov_get_qaqc_years()
+  years_to_get <- date_range |>
+    bcgov_determine_years_to_get(qaqc_years)
 
   # Get annual station metadata as needed
   stations <- years_to_get |>
@@ -96,7 +83,7 @@ get_bcgov_stations <- function(
       LAT = .data$lat2
     ) |>
     # Choose and rename columns
-    dplyr::select(dplyr::any_of(col_names)) |>
+    dplyr::select(dplyr::any_of(.bcgov_meta_columns)) |>
     # Drop duplicates and NA placeholders
     remove_na_placeholders(na_placeholders = "") |>
     dplyr::arrange(
@@ -189,3 +176,14 @@ bcgov_get_raw_stations <- function(realtime = FALSE) {
     !is.na(stations) & !stringr::str_starts(stations, "AQHI")
   ]
 }
+
+.bcgov_meta_columns <- c(
+  site_id = "EMS_ID",
+  naps_id = "NAPS_ID",
+  site_name = "STATION_NAME",
+  lat = "LAT",
+  lng = "LONG",
+  elev = "ELEVATION",
+  date_created = "OPENED",
+  date_removed = "CLOSED"
+)

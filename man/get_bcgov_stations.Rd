@@ -4,20 +4,22 @@
 \alias{get_bcgov_stations}
 \title{Download air quality station metadata from the British Columbia (Canada) Government}
 \usage{
-get_bcgov_stations(
-  years = lubridate::year(lubridate::now(tz = bcgov_tzone)),
-  use_sf = FALSE,
-  quiet = FALSE
-)
+get_bcgov_stations(date_range = "now", use_sf = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{years}{(Optional) one or more integer values indicating the year(s) to get metadata for.
-Default is the current year.}
+\item{date_range}{(Optional).
+A datetime vector (or a character vector with dates in "YYYY-MM-DD HH:MM:SS" format, or "now" for current hour) with either 1 or 2 values.
+Providing a single value will return data for that hour only,
+whereas two values will return data between (and including) those times.
+Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+Default is "now" (the current hour).}
 
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
 
-\item{quiet}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
-Default is FALSE}
+\item{quiet}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.
+Default is FALSE.}
 }
 \value{
 A tibble of metadata for British Columbia air quality monitoring stations.
@@ -28,7 +30,7 @@ primarily as a part of the federal National Air Pollution Surveillance (NAPS) pr
 The Province of British Columbia hosts it's air quality metadata
 through a public FTP site.
 
-[get_bcgov_stations()] provides an easy way to retrieve this metadata (typically to determine station id's to pass to `get_bcgov_data()`)
+[get_bcgov_stations] provides an easy way to retrieve this metadata (typically to determine station id's to pass to [get_bcgov_data])
 }
 \examples{
 \donttest{
@@ -41,7 +43,7 @@ get_bcgov_stations(years = 1998:2000)
 }
 }
 \seealso{
-[get_bcgov_data()]
+[get_bcgov_data]
 
 Other Data Collection: 
 \code{\link{get_abgov_data}()},
@@ -50,11 +52,5 @@ Other Data Collection:
 \code{\link{get_airnow_stations}()},
 \code{\link{get_bcgov_data}()},
 \code{\link{purpleair_api}()}
-
-Other Canadian Air Quality: 
-\code{\link{CAAQS}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{purpleair_api}()}
 }
-\concept{Canadian Air Quality}
 \concept{Data Collection}

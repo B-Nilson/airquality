@@ -95,9 +95,7 @@ Other Data Collection:
 \code{\link{get_bcgov_stations}()}
 
 Other Canadian Air Quality: 
-\code{\link{CAAQS}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{get_bcgov_stations}()}
+\code{\link{CAAQS}()}
 }
 \concept{Canadian Air Quality}
 \concept{Data Collection}

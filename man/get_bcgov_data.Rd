@@ -91,11 +91,5 @@ Other Data Collection:
 \code{\link{get_airnow_stations}()},
 \code{\link{get_bcgov_stations}()},
 \code{\link{purpleair_api}()}
-
-Other Canadian Air Quality: 
-\code{\link{CAAQS}()},
-\code{\link{get_bcgov_stations}()},
-\code{\link{purpleair_api}()}
 }
-\concept{Canadian Air Quality}
 \concept{Data Collection}

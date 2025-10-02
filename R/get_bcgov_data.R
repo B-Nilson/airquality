@@ -28,7 +28,6 @@
 #'
 #' Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @family Data Collection
-#' @family Canadian Air Quality
 #'
 #' @export
 #' @examples
@@ -70,7 +69,7 @@ get_bcgov_data <- function(
   realtime_start <- lubridate::now(tz = bcgov_tzone) -
     lubridate::days(30)
 
-  # Handle date_range inputs
+  # Handle date_range input
   date_range <- date_range |>
     handyr::check_date_range(
       within = allowed_date_range,
@@ -79,22 +78,27 @@ get_bcgov_data <- function(
     )
 
   # Handle variables input
-  all_variables <- names(.bcgov_columns$values) |>
-    stringr::str_remove("_1hr")
   variables <- variables |>
-    standardize_input_vars(all_variables)
+    standardize_input_vars(
+      all_variables = names(.bcgov_columns$values) |>
+        stringr::str_remove("_1hr")
+    )
 
-  # Filter to existing stations only
-  # TODO: what if "all" in stations?
+  # Filter search to existing stations only
   if (!fast) {
     known_stations <- date_range |>
-      bcgov_determine_years_to_get(qaqc_years) |>
+      bcgov_determine_years_to_get(qaqc_years) |> # TODO: is this necessary?
       get_bcgov_stations(use_sf = FALSE, quiet = quiet)
-    stations <- stations |>
-      check_stations_exist(
-        known_stations = known_stations$site_id,
-        source = "the BC FTP site"
-      )
+    # Handle "all" input
+    if ("all" %in% stations) {
+      stations <- known_stations$site_id
+    } else {
+      stations <- stations |>
+        check_stations_exist(
+          known_stations = known_stations$site_id,
+          source = "the BC FTP site"
+        )
+    }
   } else {
     known_stations <- NULL
   }

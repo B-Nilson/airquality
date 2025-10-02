@@ -54,33 +54,36 @@ get_abgov_data <- function(
   stopifnot(is.numeric(stations_per_call))
   stopifnot(is.numeric(days_per_call))
 
+  data_citation("ABgov", quiet = quiet)
+
   # Constants/setup
   tzone <- "America/Edmonton" # TODO: confirm this
   allowed_date_range <- c("1980-01-01 00:00:00", "now") # TODO: confirm this
-  data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
   date_range <- date_range |>
     handyr::check_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
-  all_variables <- names(.abgov_columns$values) |>
-    stringr::str_remove("_1hr")
   variables <- variables |>
-    standardize_input_vars(all_variables)
+    standardize_input_vars(
+      all_variables = names(.abgov_columns$values) |>
+        stringr::str_remove("_1hr")
+    )
 
   # Filter to existing stations only
   if (!fast) {
     known_stations <- get_abgov_stations(quiet = quiet)
+    # Handle "all" input
+    if (!"all" %in% stations) {
+      stations <- stations |>
+        check_stations_exist(
+          known_stations = known_stations$site_name,
+          source = "the Alberta Gov. API"
+        )
+    }
   } else {
     known_stations <- NULL
-  }
-  if (!fast & !"all" %in% stations) {
-    stations <- stations |>
-      check_stations_exist(
-        known_stations = known_stations$site_name, # (error if no stations in known_stations)
-        source = "the Alberta Gov. API"
-      )
   }
 
   # Get QAQC'ed data if any
