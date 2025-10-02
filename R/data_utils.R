@@ -345,7 +345,9 @@ standardize_data_format <- function(
       .data$date_utc,
       .keep_all = TRUE
     ) |>
-    dplyr::filter(.data$date_utc |> dplyr::between(date_range[1], date_range[2])) |>
+    dplyr::filter(
+      .data$date_utc |> dplyr::between(date_range[1], date_range[2])
+    ) |>
     drop_missing_obs_rows(where_fn = is.numeric)
 
   if (nrow(formatted) == 0) {

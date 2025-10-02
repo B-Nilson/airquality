@@ -390,7 +390,11 @@ abgov_get_qaqc_station_params <- function(
   return(params)
 }
 
-abgov_get_qaqc_stations <- function(operator_keys = NULL, parameter = NULL, continuous = TRUE) {
+abgov_get_qaqc_stations <- function(
+  operator_keys = NULL,
+  parameter = NULL,
+  continuous = TRUE
+) {
   api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
   endpoint <- "GetAOStationsListForAreaOperators"
 

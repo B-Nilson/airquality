@@ -180,7 +180,10 @@ test_that("able to make qaqc paths", {
 })
 
 test_that("able to differentiate qaqc/raw years", {
-  date_range <- c(as.POSIXct("1980-01-01 00", tz = bcgov_tzone), lubridate::now(tz = bcgov_tzone))
+  date_range <- c(
+    as.POSIXct("1980-01-01 00", tz = bcgov_tzone),
+    lubridate::now(tz = bcgov_tzone)
+  )
   years <- 1980:(Sys.Date() |> lubridate::year())
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- date_range |>

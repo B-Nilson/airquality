@@ -103,7 +103,7 @@ get_bcgov_data <- function(
         known_stations = known_stations$site_id,
         source = "the BC FTP site"
       )
-  }else {
+  } else {
     known_stations <- NULL
   }
 
