@@ -200,13 +200,16 @@ format_bcgov_raw_data <- function(
     ]
   } else {
     instrument_cols <- character(0)
+    unit_cols <- paste0(value_cols, "_UNIT")
     # Insert default units as unit columns as no units provided
     # TODO: confirm units are correct here
     for (i in 1:length(unit_cols)) {
-      is_value_col <- .bcgov_columns$values %in% value_cols[i]
-      raw_data[[unit_cols[i]]] <- default_units[
-        names(.bcgov_columns$values)[is_value_col]
-      ]
+      is_value_col <- .bcgov_columns$values == value_cols[i]
+      if (any(is_value_col)) {
+        raw_data[[unit_cols[i]]] <- default_units[
+          names(.bcgov_columns$values)[is_value_col]
+        ]
+      }
     }
   }
 
@@ -226,7 +229,8 @@ format_bcgov_raw_data <- function(
               suppressWarnings() |> # NAs introduced by coercion
               convert_units(
                 in_unit = .data[[unit_cols[i]]][1],
-                out_unit = default_unit
+                out_unit = default_unit,
+                keep_units = TRUE
               )
           }
         )
@@ -246,7 +250,7 @@ format_bcgov_raw_data <- function(
     ) |>
     dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    drop_missing_obs_rows(where_fn = \(x) x %in% names(.bcgov_columns$values))
+    drop_missing_obs_rows(where_fn = \(x) "units" %in% class(x))
 
   if (nrow(formatted) == 0) {
     stop("No data available after reformatting.")
