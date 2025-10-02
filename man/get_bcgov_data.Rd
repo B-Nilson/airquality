@@ -5,7 +5,7 @@
 \title{Download air quality station observations from the British Columbia (Canada) Government}
 \usage{
 get_bcgov_data(
-  stations,
+  stations = "all",
   date_range = "now",
   variables = "all",
   raw = FALSE,
@@ -14,7 +14,9 @@ get_bcgov_data(
 )
 }
 \arguments{
-\item{stations}{A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).}
+\item{stations}{(Optional). 
+A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).
+Default is "all", i.e. all available stations.}
 
 \item{date_range}{(Optional).
 A datetime vector (or a character vector with dates in "YYYY-MM-DD HH:MM:SS" format, or "now" for current hour) with either 1 or 2 values.
