@@ -115,7 +115,7 @@ get_bcgov_data <- function(
         quiet = quiet,
         mode = "realtime"
       ) |>
-      handyr::on_error(.return = NULL)
+      handyr::on_error(.return = NULL, .warn = "Could not get realtime data:")
   } else {
     realtime_data <- NULL
     is_all_realtime <- FALSE
@@ -152,8 +152,8 @@ get_bcgov_data <- function(
   }
 
   # Combine and standardize formatting
-  list(archived_data, realtime_data) |>
-    dplyr::bind_rows() |>
+  archived_data |>
+    dplyr::bind_rows(realtime_data) |>
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,

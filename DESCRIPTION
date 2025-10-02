@@ -24,6 +24,7 @@ Imports:
     handyr (>= 0.0.0.9000),
     httr,
     lubridate,
+    lutz,
     methods,
     osmdata,
     rlang,
@@ -33,10 +34,10 @@ Imports:
     uuid,
     xml2,
     zoo
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 URL: https://github.com/B-Nilson/airquality
 BugReports: https://github.com/B-Nilson/airquality/issues
-Remotes:  
+Remotes: 
     github::B-Nilson/handyr,
     github::B-Nilson/aqhi
 Depends: 
