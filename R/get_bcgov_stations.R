@@ -156,7 +156,7 @@ bcgov_get_annual_stations <- function(
   metadata_path |>
     data.table::fread(
       colClasses = force_col_classes,
-      showProgress = !quiet
+      showProgress = FALSE
     ) |>
     dplyr::tibble() |>
     handyr::on_error(.return = NULL)

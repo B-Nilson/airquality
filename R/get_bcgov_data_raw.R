@@ -4,7 +4,15 @@ bcgov_get_raw_data <- function(
   mode = "stations",
   quiet = FALSE
 ) {
-  stopifnot(mode %in% c("stations", "variables", "realtime"))
+  stopifnot(is.character(stations), length(stations) > 0)
+  stopifnot(is.character(variables), length(variables) > 0)
+  stopifnot(
+    is.character(mode),
+    mode %in% c("stations", "variables", "realtime"),
+    length(mode) == 1
+  )
+  stopifnot(is.logical(quiet), length(quiet) == 1)
+
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
 
   non_id_cols <- unname(.bcgov_columns[c("values", "instruments")]) |>
@@ -87,7 +95,11 @@ bcgov_get_raw_data <- function(
     handyr::for_each(
       .bind = TRUE,
       .show_progress = !quiet,
-      read_raw_bcgov_data
+      \(x) {
+        x |>
+          read_raw_bcgov_data() |>
+          handyr::on_error(.return = NULL)
+      }
     ) |>
     format_bcgov_raw_data(
       desired_cols = unlist(unname(.bcgov_columns)),
@@ -96,6 +108,8 @@ bcgov_get_raw_data <- function(
 }
 
 read_raw_bcgov_data <- function(bcgov_path) {
+  stopifnot(is.character(bcgov_path), length(bcgov_path) == 1)
+
   # Fetch and load file
   obs <- withr::with_options(
     list(timeout = 3600),
@@ -104,12 +118,12 @@ read_raw_bcgov_data <- function(bcgov_path) {
       colClasses = "character",
       showProgress = FALSE
     ) |>
-      suppressWarnings() |> # when file does not exist
-      handyr::on_error(.return = NULL)
+      suppressWarnings()
   )
-  if (is.null(obs)) {
-    return(NULL)
-  }
+
+  # Drop "IGNORE_THIS_ROW" entries
+  obs <- obs |>
+    dplyr::filter(!.data$DATE_PST %in% "IGNORE THIS ROW")
 
   # Fix bugged csv files where header not attached properly
   if (any(names(obs) %in% c("V1", "0.001", "0.0001"))) {
@@ -131,39 +145,30 @@ format_bcgov_raw_data <- function(
   desired_cols,
   mode = "stations"
 ) {
+  stopifnot(is.data.frame(raw_data), nrow(raw_data) > 0)
+  stopifnot(
+    any(desired_cols %in% names(raw_data)),
+    length(desired_cols) > 0,
+    is.character(desired_cols)
+  )
+  stopifnot(
+    is.character(mode),
+    mode %in% c("stations", "variables", "realtime"),
+    length(mode) == 1
+  )
+
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
-  if (nrow(raw_data) == 0) {
-    stop("No data available before reformatting.")
-  }
 
-  if (nrow(raw_data) == 0) {
-    return(raw_data)
-  }
+  # "variables" mode has same format as QAQC data - so use that function
   if (mode == "variables") {
-    return(
-      bcgov_format_qaqc_data(raw_data, use_rounded_value = TRUE)
-    )
+    return(raw_data |> bcgov_format_qaqc_data(use_rounded_value = TRUE))
   }
 
-  # Get column names and insert unit columns if needed
-  meta_cols <- .bcgov_columns$meta[
-    names(.bcgov_columns$meta) != "quality_assured"
-  ]
-  value_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$values
-  ]
-  unit_cols <- names(raw_data)[
-    names(raw_data) %in% .bcgov_columns$units
-  ]
-  if (mode == "stations") {
-    instrument_cols <- names(raw_data)[
-      names(raw_data) %in% .bcgov_columns$instruments
-    ]
-  } else {
-    instrument_cols <- character(0)
+  # Get value/unit column names and insert unit columns if needed
+  value_cols <- names(raw_data)[names(raw_data) %in% .bcgov_columns$values]
+  if (mode != "stations") {
+    # Insert default units as unit columns as no units provided within file
     unit_cols <- paste0(value_cols, "_UNIT")
-    # Insert default units as unit columns as no units provided
-    # TODO: confirm units are correct here
     for (i in 1:length(unit_cols)) {
       is_value_col <- .bcgov_columns$values == value_cols[i]
       if (any(is_value_col)) {
@@ -172,15 +177,18 @@ format_bcgov_raw_data <- function(
         ]
       }
     }
+  } else {
+    # "stations" mode has "_UNIT" columns already
+    unit_cols <- names(raw_data)[names(raw_data) %in% .bcgov_columns$units]
   }
 
   # Assign units to value columns
   for (i in 1:length(unit_cols)) {
+    # Get default unit for this value
     default_unit <- default_units[
-      names(.bcgov_columns$values[
-        .bcgov_columns$values %in% c(value_cols[i], names(value_cols[i])) # TODO: is this needed?
-      ])
+      names(.bcgov_columns$values[.bcgov_columns$values == value_cols[i]])
     ]
+    # Set units and standardize to default unit
     raw_data <- raw_data |>
       dplyr::mutate(
         dplyr::across(
@@ -198,13 +206,16 @@ format_bcgov_raw_data <- function(
       )
   }
 
+  # Standardize formatting
   raw_data |>
     dplyr::mutate(
+      # Mark as not QAQCed
       quality_assured = FALSE,
+      # Convert dates
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
         suppressWarnings(),
-      # Some files use HMS instead of HM for some reason..
+      ## Some files use HMS instead of HM for some reason..
       date_utc2 = .data$DATE_PST |>
         lubridate::ymd_hms(tz = bcgov_tzone) |>
         suppressWarnings(),

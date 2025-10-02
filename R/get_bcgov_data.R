@@ -104,12 +104,14 @@ get_bcgov_data <- function(
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
     realtime_data <- stations |>
-      # TODO: remove old files before loading in
       bcgov_get_raw_data(
         variables = variables,
         quiet = quiet,
         mode = "realtime"
       ) |>
+      # Drop data from old files still sitting in realtime folder
+      # TODO: don't try to read in outdated files (if station goes offline its realtime file is not deleted)
+      dplyr::filter(.data$date_utc >= realtime_start) |>
       handyr::on_error(.return = NULL, .warn = "Could not get realtime data:")
   } else {
     realtime_data <- NULL
@@ -119,14 +121,11 @@ get_bcgov_data <- function(
   # Alter date_range to account for retrieved realtime data
   date_range_new <- date_range
   if (!is.null(realtime_data)) {
-    first_realtime_date <- realtime_data |>
-      dplyr::group_by("site_id") |>
+    date_range_new[2] <- realtime_data |>
       dplyr::summarise(min_date = min(.data$date_utc)) |>
-      dplyr::pull("min_date") |>
-      max()
-    date_range_new[2] <- first_realtime_date
-    is_all_realtime <- date_range_new[1] >= date_range_new[2]
+      dplyr::pull("min_date")
   }
+  is_all_realtime <- date_range_new[1] >= date_range_new[2]
 
   # Get raw/qaqc data as needed
   if (!is_all_realtime) {
