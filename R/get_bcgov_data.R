@@ -142,8 +142,8 @@ get_bcgov_data <- function(
         .show_progress = !quiet,
         bcgov_get_annual_data,
         stations = stations,
-        qaqc_years = qaqc_years,
         variables = variables,
+        qaqc_years = qaqc_years,
         quiet = quiet
       )
   } else {
@@ -229,36 +229,39 @@ get_bcgov_data <- function(
   )
 )
 
-# BCgov Helpers ---------------------------------------------------------
-
-# Drop all raw years except the first
+# Returns all years in qaqc_years and one additional year that is not qaqc (if present)
 bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
+
+  # Get years in date_range
+  date_range <- handyr::check_date_range(date_range, tz = bcgov_tzone)
   years <- date_range[1] |>
     seq(date_range[2], by = "1 days") |>
-    lubridate::with_tz(bcgov_tzone) |>
     lubridate::year() |>
     unique() |>
     sort()
+
+  # Determine years with qaqc data if not provided
   if (is.null(qaqc_years)) {
     qaqc_years <- bcgov_get_qaqc_years()
   }
   is_qaqc_year <- years %in% qaqc_years
-  years_to_get <- years[is_qaqc_year] |> # keep all years that are qaqced
-    c(years[!is_qaqc_year][1]) # only keep first non-qaqc year
+
+  # Keep all years that are qaqced, and the first non-qaqc year
+  years_to_get <- years[is_qaqc_year] |>
+    c(years[!is_qaqc_year][1])
   years_to_get[!is.na(years_to_get)]
 }
 
-# BCgov Observations ------------------------------------------------------
-
+# Workhorse function for getting annual raw/qaqc data as needed
 bcgov_get_annual_data <- function(
   stations = "all",
+  variables = "all",
   year,
   qaqc_years = NULL,
-  variables = "all",
   quiet = FALSE
 ) {
-  # Determine file to get for this year
+  # Determine mode (raw or qaqc) for this year
   if (is.null(qaqc_years)) {
     qaqc_years <- bcgov_get_qaqc_years()
   }
@@ -266,11 +269,20 @@ bcgov_get_annual_data <- function(
 
   # Get data for desired stations for this year
   if (is_qaqc_year) {
+    # Get qaqc data
     stations_data <- stations |>
-      bcgov_get_qaqc_data(years = year, variables = variables, quiet = quiet)
+      bcgov_get_qaqc_data(
+        years = year,
+        variables = variables,
+        quiet = quiet
+      )
   } else {
+    # Get raw data
     stations_data <- stations |>
-      bcgov_get_raw_data(variables = variables, quiet = quiet)
+      bcgov_get_raw_data(
+        variables = variables,
+        quiet = quiet
+      )
   }
 
   # Handle no data returned
