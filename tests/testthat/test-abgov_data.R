@@ -50,7 +50,7 @@ test_that("expected date range available", {})
 
 test_that("qaqc data function works for all sites/parameters/date_range", {
   skip("Only to be run in interactive mode")
-  date_range <- c("1990-01-01 00", "2025-06-16 00")
+  date_range <- c("1990-01-01 00:00:00", "2025-06-16 00:00:00")
   test <- get_abgov_archive_data(
     stations = "all",
     date_range = date_range,

@@ -1,5 +1,5 @@
 test_that("an error/warning is not thrown in normal usaage", {
-  date_range <- "2019-02-01 00"
+  date_range <- "2019-02-01 00:00:00"
   obs <- expect_no_warning(expect_no_error(
     get_airnow_data(
       stations = "000010102",
@@ -13,7 +13,7 @@ test_that("an error/warning is not thrown in normal usaage", {
 
 test_that("returns requested stations only", {
   stations <- c("000010102", "000010401")
-  date_range <- "2019-02-01 00"
+  date_range <- "2019-02-01 00:00:00"
   # Case: a single station
   obs <- get_airnow_data(stations[1], date_range, quiet = TRUE)
   expect_true(all(unique(obs$site_id) %in% stations[1]))
@@ -24,7 +24,7 @@ test_that("returns requested stations only", {
 
 test_that("unknown stations cause warning", {
   stations <- c("bananas", "000010102")
-  date_range <- "2019-02-02 00"
+  date_range <- "2019-02-02 00:00:00"
   # Case: All stations invalid
   expect_error(get_airnow_data(stations[1], date_range, quiet = TRUE))
   # Case: Some stations invalid
@@ -40,7 +40,7 @@ test_that("invalid date_range causes error", {
   # Case: too many dates
   expect_error(get_airnow_data(
     station,
-    c("1919-01-01 00", "1919-01-01 01", "1919-01-01 02"),
+    c("1919-01-01 00:00:00", "1919-01-01 01:00:00", "1919-01-01 02:00:00"),
     quiet = TRUE
   ))
 })
@@ -76,13 +76,13 @@ test_that("too late date_range causes warning/error", {
 test_that("raw data differs", {
   obs <- get_airnow_data(
     "000010102",
-    "2018-02-01 00",
+    "2018-02-01 00:00:00",
     raw = FALSE,
     quiet = TRUE
   )
   obs_raw <- get_airnow_data(
     "000010102",
-    "2018-02-01 00",
+    "2018-02-01 00:00:00",
     raw = TRUE,
     quiet = TRUE
   )
@@ -98,13 +98,13 @@ test_that("raw data differs", {
 test_that("fast data differs", {
   obs <- get_airnow_data(
     "000010102",
-    "2018-02-01 00",
+    "2018-02-01 00:00:00",
     fast = FALSE,
     quiet = TRUE
   )
   obs_fast <- get_airnow_data(
     "000010102",
-    "2018-02-01 00",
+    "2018-02-01 00:00:00",
     fast = TRUE,
     quiet = TRUE
   )
@@ -139,13 +139,13 @@ test_that("date_local converts to date_utc correctly", {
 # Outputs: data -----------------------------------------------------------
 
 test_that("expected data returned", {
-  date_range <- "2019-02-01 00"
+  date_range <- "2019-02-01 00:00:00"
   obs <- get_airnow_data("000010102", date_range, quiet = TRUE)
   expect_snapshot(obs)
 
   obs_raw <- get_airnow_data(
     "000010102",
-    "2018-02-01 00",
+    "2018-02-01 00:00:00",
     raw = TRUE,
     quiet = TRUE
   )

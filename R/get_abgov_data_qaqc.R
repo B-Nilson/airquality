@@ -9,11 +9,8 @@ get_abgov_data_qaqc <- function(
 ) {
   # Constants
   tzone <- "MST" # TODO: confirm this?
-  allowed_date_range <- c("1970-01-01 00") # TODO: confirm this
-  allowed_date_range[2] <- lubridate::now(tz = tzone) |>
-    lubridate::floor_date("months") |>
-    lubridate::with_tz("UTC") |>
-    format("%Y-%m-%d %H")
+  allowed_date_range <- c("1970-01-01 00:00:00", "now") # TODO: confirm this
+  now_time_step <- "1 months" # floor "now" to current month
 
   # Decide which api endpoint to use
   mode <- dplyr::case_when(
@@ -26,7 +23,11 @@ get_abgov_data_qaqc <- function(
   # Handle date_range inputs
   # TODO: warning message says "beyond current hour" which is invalid
   date_range <- date_range |>
-    handyr::check_date_range(within = allowed_date_range, tz = tzone)
+    handyr::check_date_range(
+      within = allowed_date_range,
+      tz = tzone,
+      now_time_step = now_time_step
+    )
 
   # Handle input variables
   value_cols <- .abgov_columns$values[

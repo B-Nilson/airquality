@@ -56,7 +56,7 @@ get_abgov_data <- function(
 
   # Constants/setup
   tzone <- "America/Edmonton" # TODO: confirm this
-  allowed_date_range <- c("1980-01-01 00", "now") # TODO: confirm this
+  allowed_date_range <- c("1980-01-01 00:00:00", "now") # TODO: confirm this
   data_citation("ABgov", quiet = quiet)
 
   # Handle date_range inputs
