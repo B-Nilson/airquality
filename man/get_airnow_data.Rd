@@ -14,10 +14,10 @@ get_airnow_data(
 )
 }
 \arguments{
-\item{stations}{(Optional). 
+\item{stations}{(Optional).
 Either "all" or a character vector specifying AQS IDs for stations to filter data to.
 If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
-but only data for desired stations is returned. 
+but only data for desired stations is returned.
 Default is "all".}
 
 \item{date_range}{(Optional).
@@ -34,7 +34,7 @@ Default is "all", i.e. all available variables.}
 
 \item{raw}{(Optional).
 A single logical (TRUE or FALSE) value indicating if
-raw data files are desired (i.e. without a standardized format). 
+raw data files are desired (i.e. without a standardized format).
 Default is FALSE.}
 
 \item{fast}{(Optional).

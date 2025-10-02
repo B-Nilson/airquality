@@ -70,14 +70,14 @@ get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
 }
 
 .abgov_meta_columns <- c(
-    site_id = "Abbreviation",
-    site_name = "Name",
-    type = "Type",
-    description = "Description",
-    operated_by = "URL",
-    address = "Address",
-    airshed = "AirshedName",
-    lat = "Latitude",
-    lng = "Longitude",
-    elev = "Elevation"
-  )
+  site_id = "Abbreviation",
+  site_name = "Name",
+  type = "Type",
+  description = "Description",
+  operated_by = "URL",
+  address = "Address",
+  airshed = "AirshedName",
+  lat = "Latitude",
+  lng = "Longitude",
+  elev = "Elevation"
+)

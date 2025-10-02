@@ -62,8 +62,8 @@ get_airnow_stations <- function(
   na_placeholders <- c("N/A", "na", "n/a")
 
   # Handle date range input
-  date_range <- handle_date_range(date_range, tz = "UTC")
-  dates <- date_range[1] |> 
+  date_range <- handyr::check_date_range(date_range, tz = "UTC")
+  dates <- date_range[1] |>
     seq(to = date_range[2], by = time_step)
 
   # Get data for each date

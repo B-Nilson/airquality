@@ -1,7 +1,7 @@
 #' Download air quality station observations from the Alberta (Canada) Government
 #'
 #' @inheritParams get_airnow_data
-#' @param stations (Optional) 
+#' @param stations (Optional)
 #'   A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
 #'   Default is "all", i.e. all available stations.
 #' @param variables (Optional) A character vector of one or more variables to try and get data desired.
@@ -27,7 +27,7 @@
 #' Columns returned will vary depending on available data from station(s).
 #'
 #' Dates UTC time and are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
-#' 
+#'
 #' @family Data Collection
 #'
 #' @export
@@ -61,7 +61,7 @@ get_abgov_data <- function(
 
   # Handle date_range inputs
   date_range <- date_range |>
-    handle_date_range(within = allowed_date_range, tz = tzone)
+    handyr::check_date_range(within = allowed_date_range, tz = tzone)
 
   # Handle input variables
   all_variables <- names(.abgov_columns$values) |>
@@ -123,7 +123,7 @@ get_abgov_data <- function(
         desired_cols = unlist(unname(.abgov_columns))
       ) |>
       handyr::on_error(.return = NULL)
-  }else {
+  } else {
     raw_data <- NULL
   }
 

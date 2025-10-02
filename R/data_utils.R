@@ -76,7 +76,7 @@ get_station_data <- function(
 ) {
   # Determine what, when, and where to get data
   data_funs <- get_data_collection_funs(networks, sources)
-  date_range <- date_range |> handle_date_range()
+  date_range <- date_range |> handyr::check_date_range()
   search_area <- locations |>
     determine_search_area(buffer_dist = buffer_dist, quiet = quiet)
 

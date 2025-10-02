@@ -1,6 +1,6 @@
 test_that("basic case works", {
   station <- "0450307"
-  date_range <- handle_date_range("now")
+  date_range <- handyr::check_date_range("now")
   date_range[1] <- date_range[1] - lubridate::hours(1)
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
@@ -46,7 +46,7 @@ test_that("unknown stations cause warning", {
 
 # Inputs: date_range ------------------------------------------------------
 
-# TODO: test handle_date_range() instead to save time
+# TODO: test handyr::check_date_range() instead to save time
 test_that("invalid date_range causes error", {
   station <- "0450307"
   # Case: invalid input value

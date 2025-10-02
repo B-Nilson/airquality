@@ -84,7 +84,7 @@ get_bcgov_data <- function(
 
   # Handle date_range inputs
   date_range <- date_range |>
-    handle_date_range(within = allowed_date_range)
+    handyr::check_date_range(within = allowed_date_range)
 
   # Handle variables input
   all_variables <- names(.bcgov_columns$values) |>

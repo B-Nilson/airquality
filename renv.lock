@@ -916,7 +916,7 @@
       "RemoteUsername": "B-Nilson",
       "RemoteRepo": "handyr",
       "RemoteRef": "main",
-      "RemoteSha": "b9668e2328b7acfa4dec3eb28892ed7ba9f10729",
+      "RemoteSha": "fb4a6776df7efa740661eaa0c306e8f5268da6ef",
       "RemoteHost": "api.github.com"
     },
     "httr": {

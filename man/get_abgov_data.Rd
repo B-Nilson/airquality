@@ -16,7 +16,7 @@ get_abgov_data(
 )
 }
 \arguments{
-\item{stations}{(Optional) 
+\item{stations}{(Optional)
 A character vector of one or more station names to try and get data desired for (see [get_abgov_stations()]).
 Default is "all", i.e. all available stations.}
 
@@ -31,7 +31,7 @@ Default is "now" (the current hour).}
 
 \item{raw}{(Optional).
 A single logical (TRUE or FALSE) value indicating if
-raw data files are desired (i.e. without a standardized format). 
+raw data files are desired (i.e. without a standardized format).
 Default is FALSE.}
 
 \item{fast}{(Optional).

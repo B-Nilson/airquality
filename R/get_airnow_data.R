@@ -1,9 +1,9 @@
 #' Download air quality station observations from the US EPA "AirNow" platform
 #'
-#' @param stations (Optional). 
+#' @param stations (Optional).
 #'   Either "all" or a character vector specifying AQS IDs for stations to filter data to.
 #'   If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
-#'   but only data for desired stations is returned. 
+#'   but only data for desired stations is returned.
 #'   Default is "all".
 #' @param date_range (Optional).
 #'   A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
@@ -17,7 +17,7 @@
 #'   Default is "all", i.e. all available variables.
 #' @param raw (Optional).
 #'   A single logical (TRUE or FALSE) value indicating if
-#'   raw data files are desired (i.e. without a standardized format). 
+#'   raw data files are desired (i.e. without a standardized format).
 #'   Default is FALSE.
 #' @param fast (Optional).
 #'   A single logical (TRUE or FALSE) value indicating if, where possible, time-intensive code should be skipped and parallel processing should be used.
@@ -82,12 +82,12 @@ get_airnow_data <- function(
 
   # Constants/setup
   allowed_date_range <- c("2014-01-01 01", "now") |> # TODO: confirm this
-    handle_date_range()
+    handyr::check_date_range()
   data_citation("AirNow", quiet = quiet)
 
   # Handle date_range inputs
   date_range <- date_range |>
-    handle_date_range(within = allowed_date_range)
+    handyr::check_date_range(within = allowed_date_range)
 
   # Handle input variables
   all_variables <- names(.airnow_columns$values) |>
@@ -110,7 +110,7 @@ get_airnow_data <- function(
           read_airnow_data_file(quiet = quiet) |>
           handyr::on_error(.return = NULL)
       }
-    ) |> 
+    ) |>
     tibble::as_tibble()
 
   if (nrow(airnow_data) == 0) {
@@ -174,12 +174,12 @@ get_airnow_data <- function(
 make_airnow_filepaths <- function(date_range, quiet = FALSE) {
   stopifnot("POSIXct" %in% class(date_range) | "Date" %in% class(date_range))
   stopifnot(is.logical(quiet), length(quiet) == 1)
-  
+
   airnow_site <- "https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow"
 
   # Data may be missing for most recent hourly files - depending on data transfer delays
   # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
-  allowed_date_range <- handle_date_range("now", tz = "UTC")
+  allowed_date_range <- handyr::check_date_range("now", tz = "UTC")
   if (max(date_range) - allowed_date_range[2] > lubridate::hours(-48)) {
     if (max(date_range) - allowed_date_range[2] > lubridate::minutes(-55)) {
       if (!quiet) {

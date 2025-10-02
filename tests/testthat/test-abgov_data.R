@@ -1,5 +1,5 @@
 test_that("basic case works", {
-  date_range <- handle_date_range("now")
+  date_range <- handyr::check_date_range("now")
   obs <- get_abgov_data(
     date_range = date_range,
     variables = "pm25",
