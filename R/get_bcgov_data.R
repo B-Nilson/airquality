@@ -54,12 +54,11 @@ get_bcgov_data <- function(
   fast = FALSE,
   quiet = FALSE
 ) {
-  stopifnot(is.character(stations))
-  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
-  stopifnot(is.character(variables))
-  stopifnot(is.logical(raw))
-  stopifnot(is.logical(fast))
-  stopifnot(is.logical(quiet))
+  stopifnot(is.character(stations), length(stations) > 0)
+  stopifnot(is.character(variables), length(variables) > 0)
+  stopifnot(is.logical(raw), length(raw) == 1)
+  stopifnot(is.logical(fast), length(fast) == 1)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
 
   data_citation("BCgov", quiet = quiet)
 
@@ -69,7 +68,7 @@ get_bcgov_data <- function(
   allowed_date_range <- min(qaqc_years) |>
     paste0("-01-01 01:00:00")
   allowed_date_range[2] <- "now"
-  realtime_start <- lubridate::now(tz = bcgov_tzone) -
+  realtime_start <- handyr::check_date_range("now") -
     lubridate::days(30)
 
   # Handle date_range input

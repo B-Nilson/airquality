@@ -110,7 +110,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       values_from = value_col
     ) |>
     dplyr::rename_with(
-      .cols = "INSTRUMENT",
+      .cols = dplyr::all_of("INSTRUMENT"),
       \(col_name) paste0(parameter, "_", col_name)
     )
 }
@@ -120,7 +120,7 @@ bcgov_get_qaqc_year_params <- function(year) {
   stopifnot(is.numeric(year), length(year) == 1)
 
   qaqc_directory <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/" |>
-    file.path("AnnualSummary", year)
+    paste0("AnnualSummary/", year, "/")
 
   # Get paramater CSV file names located in QAQC directory
   param_files <- qaqc_directory |>
@@ -154,7 +154,8 @@ bcgov_make_qaqc_paths <- function(years, variables) {
     sapply(
       \(year) {
         # Filter for valid parameters
-        available_params <- bcgov_get_qaqc_year_params(year)
+        available_params <- bcgov_get_qaqc_year_params(year) |> 
+          handyr::on_error(.return = character(0)) # in case year not available
         params <- all_params[all_params %in% available_params]
         if (length(params) == 0) {
           warning("No valid parameters provided:", year)
