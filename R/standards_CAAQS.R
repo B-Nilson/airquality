@@ -20,6 +20,7 @@
 #'
 #' @return a list of tibbles (data.frames), one tibble per pollutant provided with annual CAAQS metrics and management levels
 #' @export
+#' @importFrom rlang .data
 #'
 #' @examples
 #' obs <- data.frame(
