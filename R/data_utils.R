@@ -487,7 +487,7 @@ fix_units <- function(units) {
   dplyr::case_when(
     units %in% c("% RH", "percent") ~ "%",
     units %in% c("\xb0C", "deg c", "c") ~ "degC",
-    units %in% c("Deg.", "deg") ~ "degrees",
+    units %in% c("Deg.", "deg", "Deg") ~ "degrees",
     TRUE ~ units
   )
 }

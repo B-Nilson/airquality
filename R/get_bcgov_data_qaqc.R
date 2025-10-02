@@ -79,6 +79,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 
   # Get parameter name, default unit, and value column name
   parameter <- qaqc_data$PARAMETER[1]
+  unit <- qaqc_data$UNIT[1] |> fix_units()
   default_unit <- default_units[
     names(.bcgov_columns$values)[.bcgov_columns$values %in% parameter]
   ]
@@ -92,7 +93,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
         x |>
           as.numeric() |>
           convert_units(
-            in_unit = .data$UNIT[1],
+            in_unit = unit,
             out_unit = default_unit,
             keep_units = TRUE
           )
