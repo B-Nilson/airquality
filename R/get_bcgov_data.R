@@ -195,37 +195,13 @@ get_bcgov_data <- function(
     snowdepth_1hr = "SNOWDEPTH", # cm of snow
     pressure_1hr = "PRESSURE",
     vapour_pressure_1hr = "VAPOUR"
-  ),
-  # TODO: just paste _INSTRUMENT instead
-  instruments = c(
-    # Particulate Matter
-    pm25_1hr_instrument = "PM25_INSTRUMENT",
-    pm10_1hr_instrument = "PM10_INSTRUMENT",
-    # Ozone
-    o3_1hr_instrument = "O3_INSTRUMENT",
-    # Nitrogen Pollutants
-    no_1hr_instrument = "NO_INSTRUMENT",
-    no2_1hr_instrument = "NO2_INSTRUMENT",
-    nox_1hr_instrument = "NOx_INSTRUMENT",
-    # Sulfur Pollutants
-    so2_1hr_instrument = "SO2_INSTRUMENT",
-    trs_1hr_instrument = "TRS_INSTRUMENT",
-    h2s_1hr_instrument = "H2S_INSTRUMENT",
-    # Carbon Monoxide
-    co_1hr_instrument = "CO_INSTRUMENT",
-    # Met data
-    rh_1hr_instrument = "HUMIDITY_INSTRUMENT",
-    temp_1hr_instrument = "TEMP_MEAN_INSTRUMENT",
-    wd_1hr_instrument = "WDIR_VECT_INSTRUMENT",
-    wd_unitvector_1hr_instrument = "WDIR_UVEC_INSTRUMENT",
-    ws_1hr_instrument = "WSPD_SCLR_INSTRUMENT",
-    ws_vector_1hr_instrument = "WSPD_VECT_INSTRUMENT",
-    precip_1hr_instrument = "PRECIP_INSTRUMENT",
-    snow_1hr_instrument = "SNOW_INSTRUMENT",
-    pressure_1hr_instrument = "PRESSURE_INSTRUMENT",
-    vapour_pressure_1hr_instrument = "VAPOUR_INSTRUMENT"
   )
 )
+
+# Also grab any matching _instrument columns for reference
+.bcgov_columns$instruments <- .bcgov_columns$values |>
+  paste0("_INSTRUMENT") |> 
+  setNames(.bcgov_columns$values |> paste0("_instrument"))
 
 bcgov_get_qaqc_years <- function() {
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
