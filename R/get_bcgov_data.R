@@ -55,7 +55,6 @@ get_bcgov_data <- function(
   quiet = FALSE
 ) {
   stopifnot(is.character(stations), length(stations) > 0)
-  stopifnot(is.character(variables), length(variables) > 0)
   stopifnot(is.logical(raw), length(raw) == 1)
   stopifnot(is.logical(fast), length(fast) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
@@ -77,13 +76,6 @@ get_bcgov_data <- function(
       within = allowed_date_range,
       now_time_step = "1 hours",
       tz = bcgov_tzone
-    )
-
-  # Handle variables input
-  variables <- variables |>
-    standardize_input_vars(
-      all_variables = names(.bcgov_columns$values) |>
-        stringr::str_remove("_1hr")
     )
 
   # Filter search to existing stations only
