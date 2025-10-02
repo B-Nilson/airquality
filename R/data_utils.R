@@ -345,7 +345,7 @@ standardize_data_format <- function(
       .data$date_utc,
       .keep_all = TRUE
     ) |>
-    dplyr::filter(date_utc |> dplyr::between(date_range[1], date_range[2])) |>
+    dplyr::filter(.data$date_utc |> dplyr::between(date_range[1], date_range[2])) |>
     drop_missing_obs_rows(where_fn = is.numeric)
 
   if (nrow(formatted) == 0) {
@@ -374,14 +374,14 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
             dplyr::across(
               dplyr::any_of(value_col),
               \(val) {
-                unit <- fix_units(.unit[1])
+                unit <- fix_units(.data$.unit[1])
                 val |>
                   as.numeric() |>
                   units::set_units(unit, mode = "standard")
               }
             )
           ) |>
-          dplyr::select(-.unit) |>
+          dplyr::select(-".unit") |>
           tidyr::pivot_wider(
             names_from = name_col,
             values_from = value_col
@@ -439,7 +439,7 @@ extract_options <- function(session, html_id) {
     rvest::html_attr("value") |>
     as.numeric() |>
     suppressWarnings() |>
-    setNames(option_names)
+    stats::setNames(option_names)
   is_place_holder <- option_names == "--- SELECT ---"
   options[!is_place_holder]
 }

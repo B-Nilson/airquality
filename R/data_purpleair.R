@@ -20,6 +20,9 @@ get_purpleair_stations <- function(
 #' @param parameters (Optional) A named list containing paramaters to be supplied to the API request (see api.purpleair.com).
 #' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
 #' non-critical messages/warnings should be silenced.
+#' @param estimate_cost (Optional) A single logical (TRUE or FALSE) value indicating if
+#' the cost of the request should be estimated.
+#' Default is TRUE.
 #'
 #' @md
 #' @description

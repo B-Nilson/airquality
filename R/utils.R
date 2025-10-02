@@ -29,7 +29,7 @@ read_data <- function(
   } else {
     invisible(data.table::fread(
       ...,
-      showProgress = showProgress,
+      showProgress = !quiet,
       data.table = data.table
     ))
   }

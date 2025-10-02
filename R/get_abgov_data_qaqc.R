@@ -41,7 +41,7 @@ get_abgov_data_qaqc <- function(
   date_chunks <- date_range |> pretty(n = 5)
   max_duration <- date_chunks |>
     difftime(dplyr::lag(date_chunks), units = "days") |>
-    median(na.rm = TRUE)
+    stats::median(na.rm = TRUE)
   if (max_duration > 3650) {
     max_duration <- "3650 days"
   } else if (max_duration < 30) {
@@ -136,23 +136,23 @@ get_abgov_data_qaqc <- function(
 abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
   qaqc_data |>
     # Remove duplicates and any missing or flagged data
-    dplyr::filter(!is.na(`Measurement Value`), is.na(Flags)) |>
+    dplyr::filter(!is.na(.data$`Measurement Value`), is.na(.data$Flags)) |>
     dplyr::distinct(
-      StationName,
-      `Interval End`,
-      Parameter,
-      Unit,
+      .data$StationName,
+      .data$`Interval End`,
+      .data$Parameter,
+      .data$Unit,
       .keep_all = TRUE
     ) |>
     # Fix units, set obs date, and mark quality assured
     dplyr::mutate(
-      Unit = fix_units(Unit),
-      ReadingDate = (`Interval Start` + lubridate::hours(1)) |>
+      Unit = fix_units(.data$Unit),
+      ReadingDate = (.data$`Interval Start` + lubridate::hours(1)) |>
         lubridate::with_tz("UTC"),
-      quality_assured = is.na(Flags)
+      quality_assured = is.na(.data$Flags)
     ) |>
     dplyr::filter(
-      ReadingDate |> dplyr::between(date_range[1], date_range[2])
+      .data$ReadingDate |> dplyr::between(date_range[1], date_range[2])
     ) |>
     # Cleanup
     widen_with_units(
@@ -290,7 +290,7 @@ abgov_get_qaqc_parameters <- function() {
 }
 
 abgov_make_key_args <- function(keys, key_name) {
-  as.list(keys) |> setNames(rep(key_name, length(keys)))
+  as.list(keys) |> stats::setNames(rep(key_name, length(keys)))
 }
 
 abgov_get_keys <- function(
@@ -353,8 +353,8 @@ abgov_post_request <- function(api_url, endpoint, request_body) {
     httr::POST(body = request_body, encode = "form") |>
     httr::content(as = "parsed", encoding = "UTF-8") |>
     dplyr::bind_rows() |>
-    dplyr::select(name = text, value) |>
-    dplyr::mutate(value = as.numeric(value)) |>
+    dplyr::select(name = "text", "value") |>
+    dplyr::mutate(value = as.numeric(.data$value)) |>
     tidyr::pivot_wider()
 }
 
@@ -390,7 +390,7 @@ abgov_get_qaqc_station_params <- function(
   return(params)
 }
 
-abgov_get_qaqc_stations <- function(operator_keys = NULL, parameter = NULL) {
+abgov_get_qaqc_stations <- function(operator_keys = NULL, parameter = NULL, continuous = TRUE) {
   api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
   endpoint <- "GetAOStationsListForAreaOperators"
 
@@ -564,9 +564,9 @@ abgov_parse_qaqc_data <- function(
     stop("No data found")
   }
   meta_rows <- data_stream |>
-    head(header_row - 1)
+    utils::head(header_row - 1)
   data_rows <- data_stream |>
-    tail(-(header_row - 1))
+    utils::tail(-(header_row - 1))
 
   # Parse from groups of columns for each param to a single data frame
   param_starts <- which(data_rows[1, ] == header_texts[[mode]])
@@ -592,15 +592,15 @@ abgov_parse_qaqc_station_data <- function(station_data) {
   # Split metadata and observations
   header_row_idx <- which(station_data[, 1] == "Interval Start")
   meta <- station_data[, 1:2] |>
-    head(header_row_idx - 1) |>
-    setNames(c("name", "value")) |>
+    utils::head(header_row_idx - 1) |>
+    stats::setNames(c("name", "value")) |>
     dplyr::mutate(
       name = gsub(": ", "", .data$name),
       value = .data$value |> handyr::swap("", with = NA)
     ) |>
     tidyr::pivot_wider()
   obs <- station_data |>
-    tail(-(header_row_idx - 1))
+    utils::tail(-(header_row_idx - 1))
 
   # Parse observations
   header <- obs[1, ] |> as.vector() |> unlist()

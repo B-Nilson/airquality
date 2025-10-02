@@ -10,6 +10,9 @@ get_abgov_stations(..., use_sf = FALSE, quiet = FALSE)
 \item{...}{Not used. For compatibility with other metadata functions and future expansion.}
 
 \item{use_sf}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package}
+
+\item{quiet}{(Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
+Default is FALSE.}
 }
 \value{
 A tibble of metadata for Alberta air quality monitoring stations.

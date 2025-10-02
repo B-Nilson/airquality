@@ -24,6 +24,10 @@ purpleair_api(
 
 \item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
 non-critical messages/warnings should be silenced.}
+
+\item{estimate_cost}{(Optional) A single logical (TRUE or FALSE) value indicating if
+the cost of the request should be estimated.
+Default is TRUE.}
 }
 \value{
 If channel either "keys" or "organization", or invalid/missing parameters, then a list with the request results

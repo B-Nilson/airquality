@@ -27,6 +27,7 @@ Imports:
     lutz,
     methods,
     osmdata,
+    pbapply,
     rlang,
     stringr,
     tibble,

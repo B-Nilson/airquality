@@ -105,8 +105,8 @@ get_bcgov_stations <- function(
       .data$site_name,
       dplyr::desc(.data$date_created)
     ) |>
-    dplyr::distinct(site_id, .keep_all = TRUE) |>
-    dplyr::filter(complete.cases(.data$site_id, .data$lat, .data$lng)) |>
+    dplyr::distinct(.data$site_id, .keep_all = TRUE) |>
+    dplyr::filter(stats::complete.cases(.data$site_id, .data$lat, .data$lng)) |>
     # Cleanup dates and add local_tz
     dplyr::mutate(
       # Convert date_created and date_removed to date objects

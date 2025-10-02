@@ -40,10 +40,7 @@
 #' @export
 #' @examples
 #' \donttest{
-#' get_abgov_data(
-#'   stations = "Calgary Southeast",
-#'   date_range = c("2024-01-05 00", "2025-01-05 23")
-#' )
+#' get_abgov_data(stations = "Calgary Southeast", quiet = TRUE)
 #' }
 get_abgov_data <- function(
   stations = "all",

@@ -2,6 +2,8 @@
 #'
 #' @param ... Not used. For compatibility with other metadata functions and future expansion.
 #' @param use_sf (Optional) a single logical (TRUE/FALSE) value indicating whether or not to return a spatial object. using the `sf` package
+#' @param quiet (Optional) a single logical (TRUE/FALSE) value indicating whether or not to suppress non-critical messages.
+#' Default is FALSE.
 #'
 #' @description
 #' Air pollution monitoring in Canada is done by individual Provinces/Territories,
@@ -65,8 +67,8 @@ get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
         handyr::get_timezone(lat = .data$lat)
     ) |>
     dplyr::arrange(.data$site_id) |>
-    dplyr::distinct(site_id, .keep_all = TRUE) |>
-    dplyr::filter(complete.cases(.data$site_id, .data$lat, .data$lng))
+    dplyr::distinct(.data$site_id, .keep_all = TRUE) |>
+    dplyr::filter(stats::complete.cases(.data$site_id, .data$lat, .data$lng))
 
   # Convert to spatial if desired
   if (use_sf) {
