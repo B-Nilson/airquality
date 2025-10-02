@@ -1,7 +1,7 @@
 test_that("basic case works", {
   station <- "0450307"
-  stations <- get_bcgov_stations(quiet = TRUE)
   date_range <- handle_date_range("now")
+  date_range[1] <- date_range[1] - lubridate::hours(1)
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
       stations = station,
