@@ -1,25 +1,3 @@
-# General function for loading in data quickly and quietly
-# TODO: document
-# TODO: move this to handyr
-read_data <- function(
-  ...,
-  quiet = FALSE,
-  data.table = FALSE
-) {
-  if (!quiet) {
-    data.table::fread(
-      ...,
-      showProgress = !quiet,
-      data.table = data.table
-    )
-  } else {
-    invisible(data.table::fread(
-      ...,
-      showProgress = !quiet,
-      data.table = data.table
-    ))
-  }
-}
 
 is_leap_year <- function(year) {
   year %% 4 == 0
