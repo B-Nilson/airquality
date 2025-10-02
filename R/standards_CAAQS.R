@@ -126,7 +126,7 @@ CAAQS_pm25 <- function(obs, thresholds) {
     ) |>
     dplyr::summarise(dplyr::across(
       dplyr::everything(),
-      c(mean = mean_no_na)
+      c(mean = \(x) mean(x, na.rm = TRUE))
     )) |>
     # Daily mean -> annual 98th percentile and annual mean
     dplyr::group_by(year = lubridate::year(.data$date)) |>
@@ -135,7 +135,7 @@ CAAQS_pm25 <- function(obs, thresholds) {
       perc_98_of_daily_means = .data$pm25_mean |>
         stats::quantile(0.98, na.rm = T) |>
         unname(),
-      mean_of_daily_means = mean_no_na(.data$pm25_mean)
+      mean_of_daily_means = mean(.data$pm25_mean, na.rm = TRUE)
     ) |>
     # +3 year averages, +whether standard is met
     dplyr::mutate(
@@ -178,7 +178,7 @@ CAAQS_o3 <- function(obs, thresholds) {
       date = .data$date |>
         lubridate::floor_date("8 hours")
     ) |>
-    dplyr::summarise(`8hr_mean_o3` = .data$o3 |> mean_no_na()) |>
+    dplyr::summarise(`8hr_mean_o3` = .data$o3 |> mean(na.rm = TRUE)) |>
     # 8 hourly mean -> daily max
     dplyr::group_by(date = .data$date |> lubridate::floor_date("days")) |>
     dplyr::summarise(
@@ -212,7 +212,7 @@ CAAQS_no2 <- function(obs, thresholds) {
   obs |>
     # + annual mean
     dplyr::group_by(year = .data$date |> lubridate::year()) |>
-    dplyr::mutate(annual_mean_of_hourly = .data$no2 |> mean_no_na()) |>
+    dplyr::mutate(annual_mean_of_hourly = .data$no2 |> mean(na.rm = TRUE)) |>
     # hourly mean -> daily maxima
     dplyr::group_by(
       date = .data$date |> lubridate::floor_date("1 days"),
@@ -268,7 +268,7 @@ CAAQS_so2 <- function(obs, thresholds) {
   obs |>
     # + annual mean
     dplyr::group_by(year = date |> lubridate::year()) |>
-    dplyr::mutate(annual_mean_of_hourly = .data$so2 |> mean_no_na()) |>
+    dplyr::mutate(annual_mean_of_hourly = .data$so2 |> mean(na.rm = TRUE)) |>
     # hourly mean -> daily maxima
     dplyr::group_by(
       date = date |> lubridate::floor_date("1 days"),

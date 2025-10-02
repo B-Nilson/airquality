@@ -39,9 +39,6 @@ is_leap_year <- function(year) {
   year %% 4 == 0
 }
 
-# remove NA by default
-mean_no_na <- function(x, ...) mean(x, na.rm = TRUE, ...)
-
 handle_date_range <- function(date_range, within = c(NA, NA), tz = "UTC") {
   # Handle date_range inputs with length != 2
   if (length(date_range) == 1) {

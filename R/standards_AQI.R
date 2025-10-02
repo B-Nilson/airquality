@@ -149,7 +149,7 @@ AQI <- function(
       .groups = "drop",
       dplyr::across(
         dplyr::everything(),
-        mean_no_na
+        \(x) mean(x, na.rm = TRUE)
       )
     ) |>
     # Truncate daily means
