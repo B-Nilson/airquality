@@ -187,7 +187,8 @@ test_that("able to differentiate qaqc/raw years", {
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
   date_range <- c(
     as.POSIXct("1980-01-01 00", tz = bcgov_tzone),
-    lubridate::now(tz = bcgov_tzone)
+    lubridate::now(tz = bcgov_tzone) |> 
+      lubridate::floor_date("hours")
   )
   years <- 1980:(Sys.Date() |> lubridate::year())
   qaqc_years <- bcgov_get_qaqc_years()
