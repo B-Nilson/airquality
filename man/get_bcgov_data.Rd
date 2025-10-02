@@ -16,22 +16,31 @@ get_bcgov_data(
 \arguments{
 \item{stations}{A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).}
 
-\item{date_range}{A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
+\item{date_range}{(Optional).
+A datetime vector (or a character vector with dates in "YYYY-MM-DD HH:MM:SS" format, or "now" for current hour) with either 1 or 2 values.
 Providing a single value will return data for that hour only,
 whereas two values will return data between (and including) those times.
-Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".}
+Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+Default is "now" (the current hour).}
 
-\item{variables}{(Optional) A character vector of one or more variables to try and get data for.
-Default is all available variables.}
+\item{variables}{(Optional).
+A character vector of one or more variables to try and get data for.
+All variables are downloaded regardless of this parameter, but only data for desired variables is returned.
+Default is "all", i.e. all available variables.}
 
-\item{raw}{(Optional) A single logical (TRUE or FALSE) value indicating
-if raw data files desired (i.e. without a standardized format). Default is FALSE.}
-
-\item{fast}{(Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
+\item{raw}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+raw data files are desired (i.e. without a standardized format).
 Default is FALSE.}
 
-\item{quiet}{(Optional) A single logical (TRUE or FALSE) value indicating if
-non-critical messages/warnings should be silenced}
+\item{fast}{(Optional).
+A single logical (TRUE or FALSE) value indicating if, where possible, time-intensive code should be skipped and parallel processing should be used.
+Default is FALSE.}
+
+\item{quiet}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+non-critical messages/warnings should be silenced.
+Default is FALSE.}
 }
 \value{
 A tibble of hourly observation data for desired station(s) and date range where available.
