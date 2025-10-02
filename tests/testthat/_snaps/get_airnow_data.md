@@ -13,10 +13,8 @@
     Code
       obs_raw
     Output
-             date   time    siteID       site tz_offset  param   unit value
-           <char> <char>    <char>     <char>     <int> <char> <char> <num>
-      1: 01/31/18  23:00 000010102 St. John's        -4  OZONE    PPB    33
-                            operator
-                              <char>
-      1: Newfoundland & Labrador DEC
+      # A tibble: 1 x 9
+        date     time  siteID    site       tz_offset param unit  value operator      
+        <chr>    <chr> <chr>     <chr>          <int> <chr> <chr> <dbl> <chr>         
+      1 01/31/18 23:00 000010102 St. John's        -4 OZONE PPB      33 Newfoundland ~
 

@@ -1,20 +1,31 @@
 #' Download air quality station observations from the US EPA "AirNow" platform
 #'
-#' @param stations (Optional) Either "all" or a character vector specifying AQS IDs for stations to filter data to.
-#' If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
-#' but only data for desired stations is returned. Default is "all".
-#' @param date_range A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
-#' Providing a single value will return data for that hour only,
-#' whereas two values will return data between (and including) those times.
-#' Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
-#' @param variables (Optional) A character vector of one or more variables to try and get data for.
-#' Default is all available variables.
-#' @param raw (Optional) A single logical (TRUE or FALSE) value indicating if
-#' raw data files desired (i.e. without a standardized format). Default is FALSE.
-#' @param fast (Optional) A single logical (TRUE or FALSE) value indicating if time-intensive code should be skipped where possible.
-#' Default is FALSE.
-#' @param quiet (Optional) A single logical (TRUE or FALSE) value indicating if
-#' non-critical messages/warnings should be silenced
+#' @param stations (Optional). 
+#'   Either "all" or a character vector specifying AQS IDs for stations to filter data to.
+#'   If "all" not provided, data for all stations for each hour in `date_range` are still downloaded,
+#'   but only data for desired stations is returned. 
+#'   Default is "all".
+#' @param date_range (Optional).
+#'   A datetime vector (or a character vector with UTC dates in "YYYY-MM-DD HH" format, or "now" for current hour) with either 1 or 2 values.
+#'   Providing a single value will return data for that hour only,
+#'   whereas two values will return data between (and including) those times.
+#'   Dates are "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
+#'   Default is "now" (the current hour).
+#' @param variables (Optional).
+#'   A character vector of one or more variables to try and get data for.
+#'   All variables are downloaded regardless of this parameter, but only data for desired variables is returned.
+#'   Default is "all", i.e. all available variables.
+#' @param raw (Optional).
+#'   A single logical (TRUE or FALSE) value indicating if
+#'   raw data files are desired (i.e. without a standardized format). 
+#'   Default is FALSE.
+#' @param fast (Optional).
+#'   A single logical (TRUE or FALSE) value indicating if, where possible, time-intensive code should be skipped and parallel processing should be used.
+#'   Default is FALSE.
+#' @param quiet (Optional).
+#'   A single logical (TRUE or FALSE) value indicating if
+#'   non-critical messages/warnings should be silenced.
+#'   Default is FALSE.
 #'
 #' @description
 #' AirNow is a US EPA nationwide voluntary program which hosts non-validated air quality
@@ -26,21 +37,21 @@
 #' data to support regulation, trends, guidance, or any other government or public decision making.
 #' It is highly recommended to seek out quality assured data where possible.
 #'
-#' [get_airnow_data()] provides an easy way to retrieve these observations using
-#' AirNow's station IDs (see [get_airnow_stations()]) and a specified date or date range.
+#' [get_airnow_data] provides an easy way to retrieve these observations using
+#' AirNow's station IDs (see [get_airnow_stations]) and a specified date or date range.
 #'
 #' Due to the API's file structure, data retrieval time is proportional to the
-#' number of hours of data desired, regardless of the number of stations.
+#' number of hours of data desired, regardless of the number of stations or variables requested.
 #'
 #' @return
 #' A tibble of hourly observation data for desired station(s) and date range where available.
 #' Columns returned will vary depending on available data from station(s).
+#' If `raw = FALSE` (default), the returned data will be in a standardized format and units will be attached to each variable.
 #'
 #' Dates are UTC time and "backward-looking", so a value of "2019-01-01 01:00" covers from "2019-01-01 00:01"- "2019-01-01 01:00".
 #' @export
 #'
 #' @family Data Collection
-#' @family USA Air Quality
 #'
 #' @examples
 #' \donttest{
@@ -77,30 +88,6 @@ get_airnow_data <- function(
   # Handle date_range inputs
   date_range <- date_range |>
     handle_date_range(within = allowed_date_range)
-  # Data may be missing for most recent hourly files - depending on data transfer delays
-  # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
-  if (max(date_range) - allowed_date_range[2] > lubridate::hours(-48)) {
-    if (max(date_range) - allowed_date_range[2] > lubridate::minutes(-55)) {
-      if (!quiet) {
-        warning(paste(
-          "The current hour AirNow files is updated twice per hour",
-          "(at 25 and 55 minutes past the hour) or more frequently if possible.",
-          "All hourly files for the preceding 48 hours will be updated every hour",
-          "to ensure data completeness and quality.",
-          "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."
-        ))
-      }
-    } else {
-      # if date_range in past 48 hours but not past 55 minutes
-      if (!quiet) {
-        warning(paste(
-          "All hourly AirNow files for the preceding 48 hours will be updated every hour",
-          "to ensure data completeness and quality.",
-          "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."
-        ))
-      }
-    }
-  }
 
   # Handle input variables
   all_variables <- names(.airnow_columns$values) |>
@@ -113,32 +100,18 @@ get_airnow_data <- function(
   ]
 
   # Get hourly data files for desired date range
-  file_header <- c(
-    "date",
-    "time",
-    "siteID",
-    "site",
-    "tz_offset",
-    "param",
-    "unit",
-    "value",
-    "operator"
-  )
   airnow_data <- date_range |>
-    make_airnow_filepaths() |>
+    make_airnow_filepaths(quiet = quiet) |>
     handyr::for_each(
-      .as_list = TRUE,
       .bind = TRUE,
       .parallel = fast,
       \(airnow_file_path) {
-        data.table::fread(
-          file = airnow_file_path,
-          showProgress = !quiet
-        ) |>
+        airnow_file_path |>
+          read_airnow_data_file(quiet = quiet) |>
           handyr::on_error(.return = NULL)
       }
-    ) |>
-    stats::setNames(file_header)
+    ) |> 
+    tibble::as_tibble()
 
   if (nrow(airnow_data) == 0) {
     stop(paste(
@@ -165,8 +138,8 @@ get_airnow_data <- function(
 
   # Get meta for stations within date_range for adding date_local
   if (!fast) {
-    known_stations <- seq(date_range[1], date_range[2], "25 days") |>
-      get_airnow_stations()
+    known_stations <- date_range |>
+      get_airnow_stations(time_step = "25 days")
   } else {
     known_stations <- NULL
   }
@@ -174,6 +147,7 @@ get_airnow_data <- function(
   if (nrow(airnow_data) == 0) {
     stop("No data available for desired stations during specified date range.")
   }
+
   # Standardize formatting
   airnow_data |>
     dplyr::mutate(
@@ -197,19 +171,75 @@ get_airnow_data <- function(
     )
 }
 
-make_airnow_filepaths <- function(date_range) {
-  dates <- seq(date_range[1], date_range[2], "1 hours") -
-    lubridate::hours(1) # files are forward looking averages
-  dates <- dates |> lubridate::with_tz("UTC")
+make_airnow_filepaths <- function(date_range, quiet = FALSE) {
+  stopifnot("POSIXct" %in% class(date_range) | "Date" %in% class(date_range))
+  stopifnot(is.logical(quiet), length(quiet) == 1)
+  
   airnow_site <- "https://s3-us-west-1.amazonaws.com/files.airnowtech.org/airnow"
-  file_names <- paste0("HourlyData_", dates |> format("%Y%m%d%H"), ".dat")
-  file.path(
-    airnow_site,
-    dates |> lubridate::year(),
-    dates |> format("%Y%m%d"),
-    file_names
-  )
+
+  # Data may be missing for most recent hourly files - depending on data transfer delays
+  # Warn user of this if requesting data in past 48 hours, especially if last 55 minutes
+  allowed_date_range <- handle_date_range("now", tz = "UTC")
+  if (max(date_range) - allowed_date_range[2] > lubridate::hours(-48)) {
+    if (max(date_range) - allowed_date_range[2] > lubridate::minutes(-55)) {
+      if (!quiet) {
+        warning(paste(
+          "The current hour AirNow files is updated twice per hour",
+          "(at 25 and 55 minutes past the hour) or more frequently if possible.",
+          "All hourly files for the preceding 48 hours will be updated every hour",
+          "to ensure data completeness and quality.",
+          "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."
+        ))
+      }
+    } else {
+      # if date_range in past 48 hours but not past 55 minutes
+      if (!quiet) {
+        warning(paste(
+          "All hourly AirNow files for the preceding 48 hours will be updated every hour",
+          "to ensure data completeness and quality.",
+          "\n\tData may be missing from stations for any hours in the past 48, especially for the current hour."
+        ))
+      }
+    }
+  }
+
+  # Get forward looking dates for each hour in range
+  dates <- date_range[1] |>
+    seq(date_range[2], "1 hours") -
+    lubridate::hours(1)
+  dates <- dates |> lubridate::with_tz("UTC")
+
+  # Build file paths for each hour
+  airnow_site |>
+    file.path(
+      dates |> format("%Y"),
+      dates |> format("%Y%m%d"),
+      "HourlyData_%s.dat" |> sprintf(dates |> format("%Y%m%d%H"))
+    )
 }
+
+read_airnow_data_file <- function(airnow_file_path, quiet = FALSE) {
+  stopifnot(is.character(airnow_file_path), length(airnow_file_path) == 1)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
+
+  file_header <- c(
+    "date",
+    "time",
+    "siteID",
+    "site",
+    "tz_offset",
+    "param",
+    "unit",
+    "value",
+    "operator"
+  )
+  data.table::fread(
+    file = airnow_file_path,
+    showProgress = !quiet
+  ) |>
+    stats::setNames(file_header)
+}
+
 
 .airnow_columns <- list(
   # Meta

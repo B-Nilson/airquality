@@ -60,15 +60,14 @@ test_that("too early date_range causes warning/error", {
 })
 
 test_that("too late date_range causes warning/error", {
-  station <- "000020104"
   current_time <- Sys.time()
   future_time <- current_time + lubridate::hours(24)
   # Case: All in the future
-  expect_error(get_airnow_data(station, future_time, quiet = TRUE))
+  expect_error(get_airnow_data(date_range = future_time, quiet = TRUE))
   # Case: Partly in the future
   date_range <- c(current_time - lubridate::hours(1), future_time)
   expect_warning(expect_warning(
-    suppressMessages(get_airnow_data(station, date_range))
+    suppressMessages(get_airnow_data(date_range = date_range))
   ))
 })
 
@@ -110,7 +109,7 @@ test_that("fast data differs", {
     quiet = TRUE
   )
   expect_true(ncol(obs) != ncol(obs_fast))
-  expect_true(!all(names(obs_fast) %in% names(obs)))
+  expect_true(!all(names(obs) %in% names(obs_fast)))
 })
 
 # Outputs: dates ----------------------------------------------------------
