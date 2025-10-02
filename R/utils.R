@@ -1,4 +1,3 @@
-
 is_leap_year <- function(year) {
   year %% 4 == 0
 }

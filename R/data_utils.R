@@ -458,7 +458,6 @@ simulate_session <- function(site, endpoint) {
     rvest::read_html()
 }
 
-# TODO: implement for all sources
 standardize_input_vars <- function(variables, all_variables = NULL) {
   variables <- tolower(variables)
 

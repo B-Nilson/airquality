@@ -130,7 +130,7 @@ get_file_list <- function(url_directory, full_path = TRUE) {
 get_file_ages <- function(url_directory, since = Sys.time(), units = "auto") {
   date_modified <- url_directory |>
     readLines() |>
-    stringr::str_extract("^\\d{2}-\\d{2}-\\d{2}  \\d{2}:\\d{2}[A,P]M") |> 
+    stringr::str_extract("^\\d{2}-\\d{2}-\\d{2}  \\d{2}:\\d{2}[A,P]M") |>
     lubridate::mdy_hm()
   difftime(since, date_modified, units = units)
 }

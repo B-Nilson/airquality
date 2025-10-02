@@ -103,7 +103,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::filter(!is.na(.data[[value_col]])) |>
     dplyr::select(-dplyr::any_of(erroneous_cols)) |>
     # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989)
-    dplyr::distinct() |> 
+    dplyr::distinct() |>
     # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
     tidyr::pivot_wider(
       names_from = "PARAMETER",
@@ -154,7 +154,7 @@ bcgov_make_qaqc_paths <- function(years, variables) {
     sapply(
       \(year) {
         # Filter for valid parameters
-        available_params <- bcgov_get_qaqc_year_params(year) |> 
+        available_params <- bcgov_get_qaqc_year_params(year) |>
           handyr::on_error(.return = character(0)) # in case year not available
         params <- all_params[all_params %in% available_params]
         if (length(params) == 0) {

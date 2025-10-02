@@ -1,6 +1,6 @@
 #' Download air quality station observations from the British Columbia (Canada) Government
 #'
-#' @param stations (Optional). 
+#' @param stations (Optional).
 #'   A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).
 #'   Default is "all", i.e. all available stations.
 #' @inheritParams get_airnow_data
@@ -81,7 +81,7 @@ get_bcgov_data <- function(
   # Filter search to existing stations only
   if (!fast) {
     known_stations <- date_range |>
-      get_bcgov_stations(use_sf = FALSE, quiet = quiet) |> 
+      get_bcgov_stations(use_sf = FALSE, quiet = quiet) |>
       suppressWarnings() # in case getting stations prior to 1998
     if (!"all" %in% stations) {
       stations <- stations |>
