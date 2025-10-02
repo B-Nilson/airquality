@@ -82,7 +82,7 @@ get_bcgov_data <- function(
 
   # Handle date_range inputs
   date_range <- date_range |>
-    handle_date_range(within = c(min_date, max_date))
+    handle_date_range(within = allowed_date_range)
 
   # Handle variables input
   all_variables <- names(.bcgov_columns$values) |>
@@ -101,6 +101,8 @@ get_bcgov_data <- function(
         known_stations = known_stations$site_id,
         source = "the BC FTP site"
       )
+  }else {
+    known_stations <- NULL
   }
 
   # Get realtime data if needed
@@ -154,7 +156,7 @@ get_bcgov_data <- function(
     dplyr::bind_rows() |>
     standardize_data_format(
       date_range = date_range,
-      known_stations = all_stations,
+      known_stations = known_stations,
       fast = fast,
       raw = raw
     ) |>

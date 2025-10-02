@@ -1,5 +1,6 @@
 test_that("basic case works", {
-  obs <- get_abgov_data(variables = "pm25", quiet = TRUE)
+  date_range <- handle_date_range("now")
+  obs <- get_abgov_data(date_range = date_range, variables = "pm25", quiet = TRUE)
 
   # Case: All expected columns
   expect_equal(
