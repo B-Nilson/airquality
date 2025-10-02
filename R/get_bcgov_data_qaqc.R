@@ -135,7 +135,7 @@ bcgov_make_qaqc_paths <- function(years, variables) {
   stopifnot(is.numeric(years), length(years) > 0, !any(duplicated(years)))
   stopifnot(is.character(variables), length(variables) > 0)
 
-  qaqc_directory <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/" |> 
+  qaqc_directory <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/" |>
     file.path("AnnualSummary")
 
   # Handle input variables

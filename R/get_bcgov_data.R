@@ -199,7 +199,7 @@ get_bcgov_data <- function(
 
 # Also grab any matching _instrument columns for reference
 .bcgov_columns$instruments <- .bcgov_columns$values |>
-  paste0("_INSTRUMENT") |> 
+  paste0("_INSTRUMENT") |>
   setNames(.bcgov_columns$values |> paste0("_instrument"))
 
 bcgov_get_qaqc_years <- function() {

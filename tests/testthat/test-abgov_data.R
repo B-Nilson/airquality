@@ -39,7 +39,7 @@ test_that("able to get stations", {
 test_that("quiet arg works", {
   expect_no_message(expect_no_warning(expect_no_error(
     {
-      stations <- get_abgov_stations(quiet = TRUE) |> 
+      stations <- get_abgov_stations(quiet = TRUE) |>
         dplyr::filter(type == "Operational")
       stations$site_name[1] |>
         get_abgov_data(quiet = TRUE, variables = "pm25")
