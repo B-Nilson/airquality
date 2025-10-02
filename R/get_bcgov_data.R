@@ -130,7 +130,7 @@ get_bcgov_data <- function(
   # Get raw/qaqc data as needed
   if (!is_all_realtime) {
     archived_data <- date_range_new |>
-      bcgov_determine_years_to_get(qaqc_years) |>
+      bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
       handyr::for_each(
         .bind = TRUE,
         .parallel = fast,
@@ -260,7 +260,7 @@ bcgov_get_annual_data <- function(
       bcgov_get_qaqc_data(
         years = year,
         variables = variables,
-        quiet = quiet
+        quiet = TRUE
       )
   } else {
     # Get raw data

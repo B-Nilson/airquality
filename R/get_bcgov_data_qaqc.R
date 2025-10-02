@@ -2,64 +2,30 @@ bcgov_get_qaqc_data <- function(
   stations = "all",
   variables = "all",
   years,
-  use_rounded_value = TRUE,
+  use_rounded_value = TRUE, # TODO: is FALSE better?
   quiet = FALSE
 ) {
   stopifnot(is.character(stations), length(stations) > 0)
-  stopifnot(is.character(date_range) | lubridate::is.POSIXct(date_range))
-  stopifnot(is.character(variables))
-  stopifnot(is.logical(raw))
-  stopifnot(is.logical(fast))
-  stopifnot(is.logical(quiet))
-  stopifnot(is.numeric(stations_per_call))
-  stopifnot(is.numeric(days_per_call))
-
-  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
-
-  # Handle input variables
-  variables <- variables |>
-    standardize_input_vars(
-      all_variables = names(.bcgov_columns$values) |>
-        stringr::str_remove("_1hr")
-    )
-
-  # Make paths to files to get
-  qaqc_paths <- years |>
-    sapply(\(year) {
-      year |>
-        bcgov_make_qaqc_paths(params = variables) |>
-        handyr::on_error(.return = character(0))
-    }) |>
-    unlist() |>
-    as.vector()
-  if (length(qaqc_paths) == 0) {
-    stop("No data available for provided date_range / variables.")
-  }
+  stopifnot(is.character(variables), length(variables) > 0)
+  stopifnot(is.numeric(years), length(years) > 0)
+  stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
 
   # Download, format, and join data
-  qaqc_data <- qaqc_paths |>
+  qaqc_data <- years |>
+    bcgov_make_qaqc_paths(variables = variables) |>
     handyr::for_each(
-      .enumerate = TRUE,
+      read_bcgov_qaqc_file,
+      use_rounded_value = use_rounded_value,
       .join = TRUE,
-      .show_progress = !quiet,
+      .show_progress = !quiet
       # .parallel = fast, # TODO: test if works
-      \(path, i) {
-        withr::with_options(
-          list(timeout = 3600),
-          path |>
-            data.table::fread(
-              showProgress = FALSE,
-              colClasses = "character"
-            ) |>
-            bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
-            handyr::on_error(.return = NULL)
-        )
-      }
-    )
+    ) |>
+    # Drop any all NA columns
+    dplyr::select_if(\(x) !all(is.na(x)))
 
-  if (is.null(qaqc_data)) {
-    stop("No data available for provided stations / date_range / parameters.")
+  if (nrow(qaqc_data) == 0) {
+    stop("No data available.")
   }
 
   if (!"all" %in% stations) {
@@ -69,13 +35,36 @@ bcgov_get_qaqc_data <- function(
   return(qaqc_data)
 }
 
-bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
-  if (nrow(qaqc_data) == 0) {
-    return(qaqc_data)
-  }
+read_bcgov_qaqc_file <- function(
+  path,
+  use_rounded_value = TRUE,
+  timeout = 3600
+) {
+  stopifnot(is.character(path), length(path) == 1)
+  stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
+  stopifnot(is.numeric(timeout), length(timeout) == 1, !is.na(timeout))
 
+  list(timeout = timeout) |>
+    withr::with_options(
+      path |>
+        data.table::fread(
+          showProgress = FALSE,
+          colClasses = "character"
+        )
+    ) |>
+    bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
+    handyr::on_error(
+      .return = NULL,
+      .warn = paste0("Could not read file:", path)
+    )
+}
+
+bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
+  stopifnot(is.data.frame(qaqc_data), nrow(qaqc_data) > 0)
+  stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
+
+  # Constants
   value_cols <- c("RAW_VALUE", "ROUNDED_VALUE")
-  value_col <- value_cols[use_rounded_value + 1]
   erroneous_cols <- c(
     "NAPS_ID",
     "STATION_NAME",
@@ -88,15 +77,20 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     value_cols[(!use_rounded_value) + 1]
   )
 
+  # Get parameter name, default unit, and value column name
   parameter <- qaqc_data$PARAMETER[1]
   default_unit <- default_units[
     names(.bcgov_columns$values)[.bcgov_columns$values %in% parameter]
   ]
+  value_col <- value_cols[use_rounded_value + 1]
+
+  # Reformat and return
   qaqc_data |>
-    # Set units of value column
+    # Set units of value column and convert to default unit
     dplyr::mutate(
       dplyr::across(dplyr::all_of(value_col), \(x) {
         x |>
+          as.numeric() |>
           convert_units(
             in_unit = .data$UNIT[1],
             out_unit = default_unit,
@@ -120,10 +114,12 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 
 # Returns the available parameters for a given qaqc year
 bcgov_get_qaqc_year_params <- function(year) {
-  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/", year, "/")
+  stopifnot(is.numeric(year), length(year) == 1)
 
-  # Get directories in QAQC directory
+  qaqc_directory <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/" |>
+    file.path("AnnualSummary", year)
+
+  # Get paramater CSV file names located in QAQC directory
   param_files <- qaqc_directory |>
     readLines() |>
     stringr::str_subset("csv$") |>
@@ -134,22 +130,42 @@ bcgov_get_qaqc_year_params <- function(year) {
     stringr::str_extract("(\\w*)\\.csv$", group = 1)
 }
 
-# Returns paths to qaqc data for a given year and parameters
-bcgov_make_qaqc_paths <- function(year, params) {
-  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  qaqc_directory <- bcgov_ftp_site |> paste0("/AnnualSummary/")
+# Returns paths to qaqc data for given years and parameters
+bcgov_make_qaqc_paths <- function(years, variables) {
+  stopifnot(is.numeric(years), length(years) > 0, !any(duplicated(years)))
+  stopifnot(is.character(variables), length(variables) > 0)
 
-  # Filter for valid parameters
-  available_params <- bcgov_get_qaqc_year_params(year)
-  params <- params[params %in% available_params]
-  if (length(params) == 0) {
-    stop("No valid parameters provided for this year.")
+  qaqc_directory <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/" |> 
+    file.path("AnnualSummary")
+
+  # Handle input variables
+  variables <- variables |>
+    standardize_input_vars(
+      all_variables = names(.bcgov_columns$values) |>
+        stringr::str_remove("_1hr")
+    )
+
+  # Build paths to each vailable parameter file for each year
+  all_params <- .bcgov_columns$values[paste0(variables, "_1hr")]
+  paths <- years |>
+    sapply(
+      \(year) {
+        # Filter for valid parameters
+        available_params <- bcgov_get_qaqc_year_params(year)
+        params <- all_params[all_params %in% available_params]
+        if (length(params) == 0) {
+          warning("No valid parameters provided:", year)
+        }
+        # Build paths to each parameter file
+        param_files <- paste0(params, ".csv")
+        qaqc_directory |> file.path(year, param_files)
+      }
+    ) |>
+    unlist()
+
+  if (length(paths) == 0) {
+    stop("No files available for provided years / variables.")
   }
 
-  # Build paths to each parameter file
-  qaqc_directory |>
-    file.path(
-      year,
-      paste0(params, ".csv")
-    )
+  return(paths)
 }

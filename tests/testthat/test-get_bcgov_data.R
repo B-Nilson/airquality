@@ -172,7 +172,7 @@ test_that("able to get qaqc year params", {
 })
 
 test_that("able to make qaqc paths", {
-  path <- bcgov_make_qaqc_paths(1980, c("PM25", "SO2")) |>
+  path <- bcgov_make_qaqc_paths(1980, c("pm25", "so2")) |>
     expect_no_warning() |>
     expect_no_error()
   expect_true(length(path) == 1)
