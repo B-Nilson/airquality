@@ -102,6 +102,8 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     # drop unnecessary rows/columns for memory-saving
     dplyr::filter(!is.na(.data[[value_col]])) |>
     dplyr::select(-dplyr::any_of(erroneous_cols)) |>
+    # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989)
+    dplyr::distinct() |> 
     # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
     tidyr::pivot_wider(
       names_from = "PARAMETER",
