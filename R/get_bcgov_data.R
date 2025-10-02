@@ -88,12 +88,8 @@ get_bcgov_data <- function(
   # Filter search to existing stations only
   if (!fast) {
     known_stations <- date_range |>
-      bcgov_determine_years_to_get(qaqc_years) |> # TODO: is this necessary?
       get_bcgov_stations(use_sf = FALSE, quiet = quiet)
-    # Handle "all" input
-    if ("all" %in% stations) {
-      stations <- known_stations$site_id
-    } else {
+    if (!"all" %in% stations) {
       stations <- stations |>
         check_stations_exist(
           known_stations = known_stations$site_id,
@@ -200,6 +196,7 @@ get_bcgov_data <- function(
     pressure_1hr = "PRESSURE",
     vapour_pressure_1hr = "VAPOUR"
   ),
+  # TODO: just paste _INSTRUMENT instead
   instruments = c(
     # Particulate Matter
     pm25_1hr_instrument = "PM25_INSTRUMENT",

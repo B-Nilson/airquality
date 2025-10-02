@@ -53,7 +53,11 @@ test_that("invalid date_range causes error", {
   # Case: too many dates
   expect_error(get_bcgov_data(
     station,
-    date_range = c("1919-01-01 00:00:00", "1919-01-01 01:00:00", "1919-01-01 02:00:00"),
+    date_range = c(
+      "1919-01-01 00:00:00",
+      "1919-01-01 01:00:00",
+      "1919-01-01 02:00:00"
+    ),
     quiet = TRUE
   ))
 })

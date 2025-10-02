@@ -49,7 +49,7 @@ bcgov_get_qaqc_data <- function(
           list(timeout = 3600),
           path |>
             data.table::fread(
-              showProgress = !quiet,
+              showProgress = FALSE,
               colClasses = "character"
             ) |>
             bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>

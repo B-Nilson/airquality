@@ -32,7 +32,6 @@ get_bcgov_stations <- function(
   use_sf = FALSE,
   quiet = FALSE
 ) {
-  stopifnot(is.numeric(years), length(years) > 0)
   stopifnot(is.logical(use_sf), length(use_sf) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
