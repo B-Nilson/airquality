@@ -6,7 +6,7 @@
 \usage{
 wind_rose(
   obs,
-  data_cols = c(ws = "ws_1hr_ms", wd = "wd_1hr_degrees"),
+  data_cols = c(ws = "ws_1hr", wd = "wd_1hr"),
   facet_by = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
@@ -23,7 +23,7 @@ wind_rose(
 \item{obs}{Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.}
 
 \item{data_cols}{(Optional) a character vector with 2 values indicating column names in `obs` to get wind speed (ws) and wind direction (wd) values.
-Default assumes columns "ws_1hr_ms" and "wd_1hr_degrees" exist.}
+Default assumes columns "ws_1hr" and "wd_1hr" exist.}
 
 \item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 If names are present they will be used as the corresponding facet titles.

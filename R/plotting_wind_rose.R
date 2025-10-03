@@ -7,7 +7,7 @@
 #'
 #' @param obs Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.
 #' @param data_cols (Optional) a character vector with 2 values indicating column names in `obs` to get wind speed (ws) and wind direction (wd) values.
-#'   Default assumes columns "ws_1hr_ms" and "wd_1hr_degrees" exist.
+#'   Default assumes columns "ws_1hr" and "wd_1hr" exist.
 #' @param facet_by (Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
 #'   If names are present they will be used as the corresponding facet titles.
 #'   Default (NULL) does not facet the plot.
@@ -54,7 +54,7 @@
 #' }
 wind_rose <- function(
   obs,
-  data_cols = c(ws = "ws_1hr_ms", wd = "wd_1hr_degrees"),
+  data_cols = c(ws = "ws_1hr", wd = "wd_1hr"),
   facet_by = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
@@ -88,6 +88,15 @@ wind_rose <- function(
   facet_by <- names(facet_by)
 
   rose_data <- rose_data |>
+    # Handle unit data
+    dplyr::mutate(
+      ws = .data$ws |>
+        units::set_units("m/s") |>
+        as.numeric(),
+      wd = .data$wd |>
+        units::set_units("degrees") |>
+        as.numeric()
+    ) |>
     # Drop too low of winds and make ws/wd bins
     dplyr::filter(.data$ws >= ws_min) |>
     dplyr::mutate(
@@ -120,7 +129,11 @@ wind_rose <- function(
     # Radial plot with internal y axis labels and a black border
     ggplot2::coord_radial(
       r.axis.inside = TRUE,
-      start = -handyr::convert_units(wd_step / 2, from = "degrees", to = "radians")
+      start = -handyr::convert_units(
+        wd_step / 2,
+        from = "degrees",
+        to = "radians"
+      )
     ) +
     ggplot2::geom_hline(yintercept = most_frequent$p[1] * 1.05) +
     # Format axis labels and extents
