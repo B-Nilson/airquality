@@ -157,41 +157,6 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
-    "aqhi": {
-      "Package": "aqhi",
-      "Version": "0.9.0",
-      "Source": "GitHub",
-      "Type": "Package",
-      "Title": "Canadian Air Quality Health Index",
-      "Authors@R": "person(\"Brayden\", \"Nilson\", email = \"nilson.brayden@gmail.com\", role = c(\"aut\", \"cre\", \"cph\"))",
-      "Description": "Calculate the Canadian Air Quality Health Index (AQHI) and the AQHI+ modification in both English and French.  AQHI is formulated from 3-hour rolling mean fine particulate matter (PM2.5), nitrogen dioxide (NO2), and ozone (O3), while AQHI+ uses only 1-hour mean PM2.5.   AQHI+ overrides AQHI by default if higher for a given hour. AQHI colours, associated risk levels, and health messaging can be produced individually. Stieb, D. et al. (2008) <doi:10.3155/1047-3289.58.3.435>, Yao, J. et al. (2019) <doi:10.17269/s41997-019-00237-w>, Environment and Climate Change Canada (2018) <https://www.canada.ca/en/environment-climate-change/services/air-quality-health-index/understanding-messages.html>, Environment and Climate Change Canada (2021) <https://www.canada.ca/en/environment-climate-change/services/air-quality-health-index/about.html>.",
-      "License": "MIT + file LICENSE",
-      "Encoding": "UTF-8",
-      "Roxygen": "list(markdown = TRUE)",
-      "RoxygenNote": "7.3.3",
-      "Imports": [
-        "dplyr",
-        "rlang",
-        "stats",
-        "tidyr"
-      ],
-      "Suggests": [
-        "testthat (>= 3.0.0)"
-      ],
-      "Config/testthat/edition": "3",
-      "URL": "https://github.com/B-Nilson/aqhi",
-      "BugReports": "https://github.com/B-Nilson/aqhi/issues",
-      "Depends": [
-        "R (>= 4.1.0)"
-      ],
-      "Author": "Brayden Nilson [aut, cre, cph]",
-      "Maintainer": "Brayden Nilson <nilson.brayden@gmail.com>",
-      "RemoteType": "github",
-      "RemoteUsername": "B-Nilson",
-      "RemoteRepo": "aqhi",
-      "RemoteSha": "d947f4d3b1a8e5f4a411057e2acb4c709902c156",
-      "RemoteHost": "api.github.com"
-    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.2.1",
@@ -1123,46 +1088,6 @@
       "Repository": "CRAN",
       "Encoding": "UTF-8"
     },
-    "lattice": {
-      "Package": "lattice",
-      "Version": "0.22-7",
-      "Source": "Repository",
-      "Date": "2025-03-31",
-      "Priority": "recommended",
-      "Title": "Trellis Graphics for R",
-      "Authors@R": "c(person(\"Deepayan\", \"Sarkar\", role = c(\"aut\", \"cre\"), email = \"deepayan.sarkar@r-project.org\", comment = c(ORCID = \"0000-0003-4107-1553\")), person(\"Felix\", \"Andrews\", role = \"ctb\"), person(\"Kevin\", \"Wright\", role = \"ctb\", comment = \"documentation\"), person(\"Neil\", \"Klepeis\", role = \"ctb\"), person(\"Johan\", \"Larsson\", role = \"ctb\", comment = \"miscellaneous improvements\"), person(\"Zhijian (Jason)\", \"Wen\", role = \"cph\", comment = \"filled contour code\"), person(\"Paul\", \"Murrell\", role = \"ctb\", email = \"paul@stat.auckland.ac.nz\"), person(\"Stefan\", \"Eng\", role = \"ctb\", comment = \"violin plot improvements\"), person(\"Achim\", \"Zeileis\", role = \"ctb\", comment = \"modern colors\"), person(\"Alexandre\", \"Courtiol\", role = \"ctb\", comment = \"generics for larrows, lpolygon, lrect and lsegments\") )",
-      "Description": "A powerful and elegant high-level data visualization system inspired by Trellis graphics, with an emphasis on multivariate data. Lattice is sufficient for typical graphics needs, and is also flexible enough to handle most nonstandard requirements. See ?Lattice for an introduction.",
-      "Depends": [
-        "R (>= 4.0.0)"
-      ],
-      "Suggests": [
-        "KernSmooth",
-        "MASS",
-        "latticeExtra",
-        "colorspace"
-      ],
-      "Imports": [
-        "grid",
-        "grDevices",
-        "graphics",
-        "stats",
-        "utils"
-      ],
-      "Enhances": [
-        "chron",
-        "zoo"
-      ],
-      "LazyLoad": "yes",
-      "LazyData": "yes",
-      "License": "GPL (>= 2)",
-      "URL": "https://lattice.r-forge.r-project.org/",
-      "BugReports": "https://github.com/deepayan/lattice/issues",
-      "NeedsCompilation": "yes",
-      "Author": "Deepayan Sarkar [aut, cre] (<https://orcid.org/0000-0003-4107-1553>), Felix Andrews [ctb], Kevin Wright [ctb] (documentation), Neil Klepeis [ctb], Johan Larsson [ctb] (miscellaneous improvements), Zhijian (Jason) Wen [cph] (filled contour code), Paul Murrell [ctb], Stefan Eng [ctb] (violin plot improvements), Achim Zeileis [ctb] (modern colors), Alexandre Courtiol [ctb] (generics for larrows, lpolygon, lrect and lsegments)",
-      "Maintainer": "Deepayan Sarkar <deepayan.sarkar@r-project.org>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
-    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "1.0.4",
@@ -1280,43 +1205,6 @@
       "Collate": "'Dates.r' 'POSIXt.r' 'util.r' 'parse.r' 'timespans.r' 'intervals.r' 'difftimes.r' 'durations.r' 'periods.r' 'accessors-date.R' 'accessors-day.r' 'accessors-dst.r' 'accessors-hour.r' 'accessors-minute.r' 'accessors-month.r' 'accessors-quarter.r' 'accessors-second.r' 'accessors-tz.r' 'accessors-week.r' 'accessors-year.r' 'am-pm.r' 'time-zones.r' 'numeric.r' 'coercion.r' 'constants.r' 'cyclic_encoding.r' 'data.r' 'decimal-dates.r' 'deprecated.r' 'format_ISO8601.r' 'guess.r' 'hidden.r' 'instants.r' 'leap-years.r' 'ops-addition.r' 'ops-compare.r' 'ops-division.r' 'ops-integer-division.r' 'ops-m+.r' 'ops-modulo.r' 'ops-multiplication.r' 'ops-subtraction.r' 'package.r' 'pretty.r' 'round.r' 'stamp.r' 'tzdir.R' 'update.r' 'vctrs.R' 'zzz.R'",
       "NeedsCompilation": "yes",
       "Author": "Vitalie Spinu [aut, cre], Garrett Grolemund [aut], Hadley Wickham [aut], Davis Vaughan [ctb], Ian Lyttle [ctb], Imanuel Costigan [ctb], Jason Law [ctb], Doug Mitarotonda [ctb], Joseph Larmarange [ctb], Jonathan Boiser [ctb], Chel Hee Lee [ctb]",
-      "Repository": "CRAN"
-    },
-    "lutz": {
-      "Package": "lutz",
-      "Version": "0.3.2",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Look Up Time Zones of Point Coordinates",
-      "Authors@R": "c( person(\"Andy\", \"Teucher\", email = \"andy.teucher@gmail.com\", role = c(\"aut\", \"cre\"),  comment = c(ORCID = \"0000-0002-7840-692X\")), person(\"Bob\", \"Rudis\", email = \"bob@rud.is\", role = c(\"ctb\"),  comment = c(ORCID = \"0000-0001-5670-2640\")) )",
-      "Description": "Input latitude and longitude values or an 'sf/sfc' POINT  object and get back the time zone in which they exist. Two methods are implemented.  One is very fast and uses 'Rcpp' in conjunction with data from the 'Javascript' library (<https://github.com/darkskyapp/tz-lookup-oss/>). This method also works outside of countries'  borders and in international waters, however speed comes at the cost of accuracy - near time  zone borders away from populated centres there is a chance that it will return the incorrect time zone. The other method is slower but more accurate - it uses the 'sf' package to intersect  points with a detailed map of time zones from here:  <https://github.com/evansiroky/timezone-boundary-builder/>. The package also  contains several utility functions for helping to understand and visualize  time zones, such as listing of world time zones, including information about  daylight savings times and their offsets from UTC. You can also plot a  time zone to visualize the UTC offset over a year and when daylight savings  times are in effect.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://andyteucher.ca/lutz/, https://github.com/ateucher/lutz",
-      "BugReports": "https://github.com/ateucher/lutz/issues",
-      "Depends": [
-        "R (>= 3.2)"
-      ],
-      "Imports": [
-        "stats",
-        "Rcpp",
-        "lubridate"
-      ],
-      "Suggests": [
-        "testthat (>= 2.1.0)",
-        "sf (>= 0.7)",
-        "sp",
-        "datasets",
-        "covr",
-        "ggplot2"
-      ],
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.2.3",
-      "LinkingTo": [
-        "Rcpp"
-      ],
-      "NeedsCompilation": "yes",
-      "Author": "Andy Teucher [aut, cre] (<https://orcid.org/0000-0002-7840-692X>), Bob Rudis [ctb] (<https://orcid.org/0000-0001-5670-2640>)",
-      "Maintainer": "Andy Teucher <andy.teucher@gmail.com>",
       "Repository": "CRAN"
     },
     "magrittr": {
@@ -1483,35 +1371,6 @@
       "Author": "Joan Maspons [aut, cre] (ORCID: <https://orcid.org/0000-0003-2286-8727>), Mark Padgham [aut], Bob Rudis [aut], Robin Lovelace [aut], Maëlle Salmon [aut], Andrew Smith [ctb], James Smith [ctb], Andrea Gilardi [ctb], Enrico Spinielli [ctb], Anthony North [ctb], Martin Machyna [ctb], Marcin Kalicinski [ctb, cph] (Author of included RapidXML code), Eli Pousson [ctb] (ORCID: <https://orcid.org/0000-0001-8280-1706>)",
       "Maintainer": "Joan Maspons <joanmaspons@gmail.com>",
       "Repository": "CRAN"
-    },
-    "pbapply": {
-      "Package": "pbapply",
-      "Version": "1.7-4",
-      "Source": "Repository",
-      "Type": "Package",
-      "Title": "Adding Progress Bar to '*apply' Functions",
-      "Date": "2025-07-19",
-      "Authors@R": "c(person(given = \"Peter\", family = \"Solymos\", comment = c(ORCID = \"0000-0001-7337-1740\"), role = c(\"aut\", \"cre\"), email = \"psolymos@gmail.com\"), person(given = \"Zygmunt\", family = \"Zawadzki\", role = \"aut\", email = \"zygmunt@zstat.pl\"), person(given = \"Henrik\",  family = \"Bengtsson\",  role = \"ctb\", email = \"henrikb@braju.com\"), person(\"R Core Team\", role = c(\"cph\", \"ctb\")))",
-      "Maintainer": "Peter Solymos <psolymos@gmail.com>",
-      "Description": "A lightweight package that adds progress bar to vectorized R functions ('*apply'). The implementation can easily be added to functions where showing the progress is useful (e.g. bootstrap). The type and style of the progress bar (with percentages or remaining time) can be set through options. Supports several parallel processing backends including mirai and future.",
-      "Depends": [
-        "R (>= 3.2.0)"
-      ],
-      "Imports": [
-        "parallel"
-      ],
-      "Suggests": [
-        "shiny",
-        "future",
-        "future.apply"
-      ],
-      "License": "GPL (>= 2)",
-      "URL": "https://github.com/psolymos/pbapply, https://peter.solymos.org/pbapply/",
-      "BugReports": "https://github.com/psolymos/pbapply/issues",
-      "NeedsCompilation": "no",
-      "Author": "Peter Solymos [aut, cre] (ORCID: <https://orcid.org/0000-0001-7337-1740>), Zygmunt Zawadzki [aut], Henrik Bengtsson [ctb], R Core Team [cph, ctb]",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     },
     "pillar": {
       "Package": "pillar",
@@ -2333,6 +2192,50 @@
       "Author": "Thomas Lin Pedersen [aut, cre] (<https://orcid.org/0000-0002-5147-4711>)",
       "Repository": "CRAN"
     },
+    "units": {
+      "Package": "units",
+      "Version": "0.8-7",
+      "Source": "Repository",
+      "Title": "Measurement Units for R Vectors",
+      "Authors@R": "c(person(\"Edzer\", \"Pebesma\", role = c(\"aut\", \"cre\"), email = \"edzer.pebesma@uni-muenster.de\", comment = c(ORCID = \"0000-0001-8049-7069\")), person(\"Thomas\", \"Mailund\", role = \"aut\", email = \"mailund@birc.au.dk\"), person(\"Tomasz\", \"Kalinowski\", role = \"aut\"), person(\"James\", \"Hiebert\", role = \"ctb\"), person(\"Iñaki\", \"Ucar\", role = \"aut\", email = \"iucar@fedoraproject.org\", comment = c(ORCID = \"0000-0001-6403-5550\")), person(\"Thomas Lin\", \"Pedersen\", role = \"ctb\") )",
+      "Depends": [
+        "R (>= 3.0.2)"
+      ],
+      "Imports": [
+        "Rcpp"
+      ],
+      "LinkingTo": [
+        "Rcpp (>= 0.12.10)"
+      ],
+      "Suggests": [
+        "NISTunits",
+        "measurements",
+        "xml2",
+        "magrittr",
+        "pillar (>= 1.3.0)",
+        "dplyr (>= 1.0.0)",
+        "vctrs (>= 0.3.1)",
+        "ggplot2 (> 3.2.1)",
+        "testthat (>= 3.0.0)",
+        "vdiffr",
+        "knitr",
+        "rvest",
+        "rmarkdown"
+      ],
+      "VignetteBuilder": "knitr",
+      "Description": "Support for measurement units in R vectors, matrices and arrays: automatic propagation, conversion, derivation and simplification of units; raising errors in case of unit incompatibility. Compatible with the POSIXct, Date and difftime  classes. Uses the UNIDATA udunits library and unit database for  unit compatibility checking and conversion. Documentation about 'units' is provided in the paper by Pebesma, Mailund & Hiebert (2016, <doi:10.32614/RJ-2016-061>), included in this package as a vignette; see 'citation(\"units\")' for details.",
+      "SystemRequirements": "udunits-2",
+      "License": "GPL-2",
+      "URL": "https://r-quantities.github.io/units/, https://github.com/r-quantities/units",
+      "BugReports": "https://github.com/r-quantities/units/issues",
+      "RoxygenNote": "7.3.2",
+      "Encoding": "UTF-8",
+      "Config/testthat/edition": "3",
+      "NeedsCompilation": "yes",
+      "Author": "Edzer Pebesma [aut, cre] (<https://orcid.org/0000-0001-8049-7069>), Thomas Mailund [aut], Tomasz Kalinowski [aut], James Hiebert [ctb], Iñaki Ucar [aut] (<https://orcid.org/0000-0001-6403-5550>), Thomas Lin Pedersen [ctb]",
+      "Maintainer": "Edzer Pebesma <edzer.pebesma@uni-muenster.de>",
+      "Repository": "CRAN"
+    },
     "utf8": {
       "Package": "utf8",
       "Version": "1.2.6",
@@ -2363,25 +2266,6 @@
       "Author": "Patrick O. Perry [aut, cph], Kirill Müller [cre] (ORCID: <https://orcid.org/0000-0002-1416-3412>), Unicode, Inc. [cph, dtc] (Unicode Character Database)",
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
-    },
-    "uuid": {
-      "Package": "uuid",
-      "Version": "1.2-1",
-      "Source": "Repository",
-      "Title": "Tools for Generating and Handling of UUIDs",
-      "Author": "Simon Urbanek [aut, cre, cph] (https://urbanek.org, <https://orcid.org/0000-0003-2297-1732>), Theodore Ts'o [aut, cph] (libuuid)",
-      "Maintainer": "Simon Urbanek <Simon.Urbanek@r-project.org>",
-      "Authors@R": "c(person(\"Simon\", \"Urbanek\", role=c(\"aut\",\"cre\",\"cph\"), email=\"Simon.Urbanek@r-project.org\", comment=c(\"https://urbanek.org\", ORCID=\"0000-0003-2297-1732\")), person(\"Theodore\",\"Ts'o\", email=\"tytso@thunk.org\", role=c(\"aut\",\"cph\"), comment=\"libuuid\"))",
-      "Depends": [
-        "R (>= 2.9.0)"
-      ],
-      "Description": "Tools for generating and handling of UUIDs (Universally Unique Identifiers).",
-      "License": "MIT + file LICENSE",
-      "URL": "https://www.rforge.net/uuid",
-      "BugReports": "https://github.com/s-u/uuid/issues",
-      "NeedsCompilation": "yes",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     },
     "vctrs": {
       "Package": "vctrs",
@@ -2584,48 +2468,6 @@
       "Author": "Hadley Wickham [aut], Jim Hester [aut], Jeroen Ooms [aut, cre], Posit Software, PBC [cph, fnd], R Foundation [ctb] (Copy of R-project homepage cached as example)",
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "CRAN"
-    },
-    "zoo": {
-      "Package": "zoo",
-      "Version": "1.8-14",
-      "Source": "Repository",
-      "Date": "2025-04-09",
-      "Title": "S3 Infrastructure for Regular and Irregular Time Series (Z's Ordered Observations)",
-      "Authors@R": "c(person(given = \"Achim\", family = \"Zeileis\", role = c(\"aut\", \"cre\"), email = \"Achim.Zeileis@R-project.org\", comment = c(ORCID = \"0000-0003-0918-3766\")), person(given = \"Gabor\", family = \"Grothendieck\", role = \"aut\", email = \"ggrothendieck@gmail.com\"), person(given = c(\"Jeffrey\", \"A.\"), family = \"Ryan\", role = \"aut\", email = \"jeff.a.ryan@gmail.com\"), person(given = c(\"Joshua\", \"M.\"), family = \"Ulrich\", role = \"ctb\", email = \"josh.m.ulrich@gmail.com\"), person(given = \"Felix\", family = \"Andrews\", role = \"ctb\", email = \"felix@nfrac.org\"))",
-      "Description": "An S3 class with methods for totally ordered indexed observations. It is particularly aimed at irregular time series of numeric vectors/matrices and factors. zoo's key design goals are independence of a particular index/date/time class and consistency with ts and base R by providing methods to extend standard generics.",
-      "Depends": [
-        "R (>= 3.1.0)",
-        "stats"
-      ],
-      "Suggests": [
-        "AER",
-        "coda",
-        "chron",
-        "ggplot2 (>= 3.5.0)",
-        "mondate",
-        "scales",
-        "stinepack",
-        "strucchange",
-        "timeDate",
-        "timeSeries",
-        "tinyplot",
-        "tis",
-        "tseries",
-        "xts"
-      ],
-      "Imports": [
-        "utils",
-        "graphics",
-        "grDevices",
-        "lattice (>= 0.20-27)"
-      ],
-      "License": "GPL-2 | GPL-3",
-      "URL": "https://zoo.R-Forge.R-project.org/",
-      "NeedsCompilation": "yes",
-      "Author": "Achim Zeileis [aut, cre] (<https://orcid.org/0000-0003-0918-3766>), Gabor Grothendieck [aut], Jeffrey A. Ryan [aut], Joshua M. Ulrich [ctb], Felix Andrews [ctb]",
-      "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
-      "Repository": "CRAN",
-      "Encoding": "UTF-8"
     }
   }
 }

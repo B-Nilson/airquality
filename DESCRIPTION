@@ -12,6 +12,7 @@ LazyData: true
 Suggests: 
     arrow,
     future.apply,
+    lutz,
     pbapply,
     RCurl,
     sf,
