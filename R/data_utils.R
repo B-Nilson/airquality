@@ -326,7 +326,8 @@ standardize_data_format <- function(
   obs_data,
   date_range,
   known_stations = NULL,
-  id_col = "site_id",
+  id_cols = "site_id",
+  desired_cols,
   fast = FALSE,
   raw = FALSE
 ) {
@@ -337,20 +338,25 @@ standardize_data_format <- function(
     stop("No data available before reformatting.")
   }
   formatted <- obs_data |>
+    dplyr::select(dplyr::any_of(desired_cols)) |>
     dplyr::arrange(
-      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
+      dplyr::pick(dplyr::any_of(id_cols)),
       .data$date_utc,
       !.data$quality_assured
     ) |>
     dplyr::distinct(
-      dplyr::pick(dplyr::any_of(c("site_name", "site_id"))),
+      dplyr::pick(dplyr::any_of(id_cols)),
       .data$date_utc,
       .keep_all = TRUE
     ) |>
     dplyr::filter(
       .data$date_utc |> dplyr::between(date_range[1], date_range[2])
     ) |>
-    drop_missing_obs_rows(where_fn = is.numeric)
+    dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
+    # Drop any all NA (obs) rows
+    drop_missing_obs_rows() |>
+    # Drop any all NA columns
+    dplyr::select_if(\(x) !all(is.na(x)))
 
   if (nrow(formatted) == 0) {
     stop("No data available after reformatting.")
@@ -359,7 +365,7 @@ standardize_data_format <- function(
   # Insert local time (slow-ish for many stations)
   if (!fast & !is.null(known_stations)) {
     formatted <- formatted |>
-      insert_date_local(stations_meta = known_stations, by = id_col)
+      insert_date_local(stations_meta = known_stations, by = id_cols)
   }
   return(formatted)
 }
@@ -397,7 +403,7 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
     dplyr::select(dplyr::any_of(names(desired_cols)))
 }
 
-drop_missing_obs_rows <- function(obs, where_fn = is.numeric) {
+drop_missing_obs_rows <- function(obs, where_fn = \(x) "units" %in% class(x)) {
   obs |>
     dplyr::filter(
       rowSums(!is.na(dplyr::across(dplyr::where(!!where_fn)))) > 0

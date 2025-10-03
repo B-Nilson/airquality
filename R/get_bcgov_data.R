@@ -143,13 +143,10 @@ get_bcgov_data <- function(
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
+      desired_cols = unlist(unname(.bcgov_columns)),
       fast = fast,
       raw = raw
-    ) |>
-    dplyr::mutate(dplyr::across(
-      dplyr::any_of(names(.bcgov_columns$instruments)),
-      factor
-    ))
+    )
 }
 
 .bcgov_columns <- list(

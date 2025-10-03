@@ -22,9 +22,7 @@ bcgov_get_qaqc_data <- function(
       .join = TRUE,
       .show_progress = !quiet
       # .parallel = fast, # TODO: test if works
-    ) |>
-    # Drop any all NA columns
-    dplyr::select_if(\(x) !all(is.na(x)))
+    )
 
   if (nrow(qaqc_data) == 0) {
     stop("No data available.")
@@ -69,7 +67,6 @@ read_bcgov_qaqc_file <- function(
 
   obs |>
     bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
-    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns)))) |>
     handyr::on_error(
       .return = NULL,
       .warn = paste0("Could not format file:", path)

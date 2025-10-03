@@ -127,11 +127,9 @@ bcgov_get_raw_data <- function(
         .show_progress = !quiet,
         read_raw_bcgov_data
       ) |>
-      format_bcgov_raw_data(mode = mode) |>
-      dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
+      format_bcgov_raw_data(mode = mode)
   }
 }
-
 
 
 bcgov_get_raw_stations <- function(realtime = FALSE) {
@@ -299,5 +297,5 @@ format_bcgov_raw_data <- function(
         lubridate::with_tz("UTC")
     ) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
-    drop_missing_obs_rows(where_fn = \(x) "units" %in% class(x))
+    drop_missing_obs_rows()
 }

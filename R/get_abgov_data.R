@@ -136,7 +136,7 @@ get_abgov_data <- function(
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
-      id_col = "site_name",
+      id_cols = "site_name",
       fast = fast,
       raw = raw
     )
