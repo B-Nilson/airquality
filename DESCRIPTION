@@ -10,11 +10,15 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests: 
+    arrow,
+    future.apply,
+    pbapply,
+    RCurl,
     sf,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tzdb
 Config/testthat/edition: 3
 Imports: 
-    aqhi (>= 0.1.0),
     data.table,
     dplyr,
     forcats,
@@ -24,22 +28,20 @@ Imports:
     handyr (>= 0.0.0.9000),
     httr,
     lubridate,
-    lutz,
     methods,
     osmdata,
-    pbapply,
     rlang,
+    rvest,
     stringr,
     tibble,
     tidyr,
-    uuid,
-    xml2,
-    zoo
+    units,
+    withr,
+    xml2
 RoxygenNote: 7.3.3
 URL: https://github.com/B-Nilson/airquality
 BugReports: https://github.com/B-Nilson/airquality/issues
 Remotes: 
-    github::B-Nilson/handyr,
-    github::B-Nilson/aqhi
+    github::B-Nilson/handyr
 Depends: 
     R (>= 3.5)
