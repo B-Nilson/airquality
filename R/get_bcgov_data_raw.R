@@ -115,14 +115,35 @@ bcgov_get_raw_data <- function(
     )
 }
 
+bcgov_get_raw_stations <- function(realtime = FALSE) {
+
+  # Make path to realtime/year_to_date directory
+  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR"
+  mode_directory <- ifelse(realtime, "Station/", "Year_to_Date/STATION_DATA/")
+  raw_directory <- bcgov_ftp_site |>
+    file.path("Hourly_Raw_Air_Data", mode_directory)
+
+  # Pull stations from directory listing
+  raw_directory |>
+    get_file_list(full_path = FALSE, pattern = "\\.csv") |>
+    stringr::str_subset("AQHI|Copy", negate = TRUE) |>
+    stringr::str_remove("\\.csv")
+}
+
 # TODO: move to handyr and implement
-get_file_list <- function(url_directory, full_path = TRUE) {
+get_file_list <- function(url_directory, full_path = TRUE, pattern = NULL) {
   files <- url_directory |>
+    paste0("/") |>
     readLines() |>
     stringr::str_extract("[\\w\\-]+\\..*$")
   if (full_path) {
     files <- url_directory |>
       paste0(files)
+  }
+
+  if (!is.null(pattern)) {
+    files <- files |>
+      stringr::str_subset(pattern)
   }
   return(files)
 }

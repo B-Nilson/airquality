@@ -162,24 +162,6 @@ bcgov_get_annual_stations <- function(
     handyr::on_error(.return = NULL)
 }
 
-bcgov_get_raw_stations <- function(realtime = FALSE) {
-  bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  raw_directory <- bcgov_ftp_site |>
-    paste0(
-      "/Hourly_Raw_Air_Data/",
-      ifelse(realtime, "Station/", "Year_to_Date/STATION_DATA/")
-    )
-  # Pull stations from directory listing
-  stations <- raw_directory |>
-    readLines() |>
-    stringr::str_extract("[\\w\\-]+\\.(csv|CSV)$") |>
-    stringr::str_remove("\\.csv")
-
-  stations[
-    !is.na(stations) & !stringr::str_starts(stations, "AQHI")
-  ]
-}
-
 .bcgov_meta_columns <- c(
   site_id = "EMS_ID",
   naps_id = "NAPS_ID",
