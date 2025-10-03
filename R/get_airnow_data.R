@@ -165,6 +165,7 @@ get_airnow_data <- function(
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
+      desired_cols = names(unlist(unname(.airnow_columns))),
       fast = fast,
       raw = raw
     )
