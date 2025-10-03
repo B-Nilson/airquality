@@ -52,10 +52,14 @@ read_bcgov_qaqc_file <- function(
           colClasses = "character"
         )
     ) |>
-    bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
     handyr::on_error(
       .return = NULL,
       .warn = paste0("Could not read file:", path)
+    ) |>
+    bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
+    handyr::on_error(
+      .return = NULL,
+      .warn = paste0("Could not format file:", path)
     )
 }
 
