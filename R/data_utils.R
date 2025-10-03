@@ -78,9 +78,16 @@ get_station_data <- function(
 
   # Get data for our stations/date_range
   stations <- data_funs |>
-    get_stations_in_search_area(search_area, date_range)
+    get_stations_in_search_area(
+      search_area = search_area,
+      date_range = date_range
+    )
   data <- data_funs |>
-    get_data_for_stations(stations, date_range, quiet = quiet)
+    get_data_for_stations(
+      stations = stations,
+      date_range = date_range,
+      quiet = quiet
+    )
   list(stations = stations, data = data)
 }
 
@@ -130,18 +137,16 @@ get_location_polygons <- function(location_name, quiet = FALSE) {
 # Get station metadata during period in our search area
 get_stations_in_search_area <- function(data_funs, search_area, date_range) {
   rlang::check_installed("sf")
-  dates <- seq(date_range[1], date_range[2], "30 days")
   stations <- names(data_funs) |>
     handyr::for_each(
-      .as_list = TRUE,
       .bind = TRUE,
       \(net) {
         names(data_funs[[net]]) |>
           handyr::for_each(
-            .as_list = TRUE,
             .bind = TRUE,
+            .show_progress = FALSE,
             \(src) {
-              data_funs[[net]][[src]]$meta(dates, use_sf = TRUE) |>
+              data_funs[[net]][[src]]$meta(date_range, use_sf = TRUE) |>
                 dplyr::mutate(source = src, network = net) |>
                 handyr::on_error(.return = NULL, .message = TRUE)
             }
@@ -178,7 +183,7 @@ get_data_for_stations <- function(
           handyr::for_each(
             .as_list = TRUE,
             .bind = TRUE,
-            .show_progress = !quiet,
+            .show_progress = FALSE,
             \(src) {
               site_ids <- stations |>
                 dplyr::filter(.data$source == src & .data$network == net) |>
