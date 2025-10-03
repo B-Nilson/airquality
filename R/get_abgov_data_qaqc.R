@@ -65,7 +65,7 @@ get_abgov_data_qaqc <- function(
         d_range <- d_range |> sapply(format, format = "%F") |> unname()
         if (!quiet) {
           "Requesting data for:" |>
-            handyr::log_step(d_range[1], "–", d_range[2])
+            handyr::log_step(d_range[1], "-", d_range[2])
         }
         mode_name <- ifelse(mode == "stations", "station", "parameter")
         unique(keys[[mode_name]]) |>
