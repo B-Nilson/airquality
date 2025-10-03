@@ -33,7 +33,7 @@
 #' @export
 #' @examples
 #' \donttest{
-#' get_abgov_data(stations = "Calgary Southeast", quiet = TRUE)
+#' get_abgov_data(quiet = TRUE)
 #' }
 get_abgov_data <- function(
   stations = "all",

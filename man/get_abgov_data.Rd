@@ -68,7 +68,7 @@ station name(s) (see [get_abgov_stations]) and a specified date or date range.
 }
 \examples{
 \donttest{
-get_abgov_data(stations = "Calgary Southeast", quiet = TRUE)
+get_abgov_data(quiet = TRUE)
 }
 }
 \seealso{
