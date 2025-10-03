@@ -105,34 +105,39 @@ AQI <- function(
 
   # Make additional running averages if needed
   needs_o3_8hr <- all_missing$o3_8hr_ppm &
-    !all_missing$o3_1hr_ppm
+    !all_missing$o3_1hr_ppm &
+    sum(!is.na(dat$o3_1hr_ppm)) >= 5
   if (needs_o3_8hr) {
     dat$o3_8hr_ppm <- dat$o3_1hr_ppm |>
       handyr::rolling("mean", .width = 8, .min_non_na = 5)
     all_missing$o3_8hr_ppm <- FALSE
   }
   needs_pm25_24hr <- all_missing$pm25_24hr_ugm3 &
-    !all_missing$pm25_1hr_ugm3
+    !all_missing$pm25_1hr_ugm3 &
+    sum(!is.na(dat$pm25_1hr_ugm3)) >= 15
   if (needs_pm25_24hr) {
     dat$pm25_24hr_ugm3 <- dat$pm25_1hr_ugm3 |>
       handyr::rolling("mean", .width = 24, .min_non_na = 15)
     all_missing$pm25_24hr_ugm3 <- FALSE
   }
   needs_pm10_24hr <- all_missing$pm10_24hr_ugm3 &
-    !all_missing$pm10_1hr_ugm3
+    !all_missing$pm10_1hr_ugm3 &
+    sum(!is.na(dat$pm10_1hr_ugm3)) >= 15
   if (needs_pm10_24hr) {
     dat$pm10_24hr_ugm3 <- dat$pm10_1hr_ugm3 |>
       handyr::rolling("mean", .width = 24, .min_non_na = 15)
     all_missing$pm10_24hr_ugm3 <- FALSE
   }
   needs_co_8hr <- all_missing$co_8hr_ppm &
-    !all_missing$co_1hr_ppm
+    !all_missing$co_1hr_ppm &
+    sum(!is.na(dat$co_1hr_ppm)) >= 5
   if (needs_co_8hr) {
     dat$co_8hr_ppm <- dat$co_1hr_ppm |>
       handyr::rolling("mean", .width = 8, .min_non_na = 5)
     all_missing$co_8hr_ppm <- FALSE
   }
-  needs_so2_24hr <- !all_missing$so2_1hr_ppb
+  needs_so2_24hr <- !all_missing$so2_1hr_ppb &
+    sum(!is.na(dat$so2_1hr_ppb)) >= 15
   if (needs_so2_24hr) {
     dat$so2_24hr_ppb <- dat$so2_1hr_ppb |>
       handyr::rolling("mean", .width = 24, .min_non_na = 15)
