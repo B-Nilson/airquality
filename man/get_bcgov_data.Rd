@@ -14,7 +14,7 @@ get_bcgov_data(
 )
 }
 \arguments{
-\item{stations}{(Optional). 
+\item{stations}{(Optional).
 A character vector of one or more station IDs (BC EMS IDs) to try and get data desired for (see [get_bcgov_stations()]).
 Default is "all", i.e. all available stations.}
 
