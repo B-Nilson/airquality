@@ -1,33 +1,35 @@
 bcgov_get_raw_data <- function(
-  stations,
+  stations = "all",
   variables = "all",
-  mode = "stations",
+  mode = "binary",
   quiet = FALSE
 ) {
   stopifnot(is.character(stations), length(stations) > 0)
   stopifnot(is.character(variables), length(variables) > 0)
   stopifnot(
     is.character(mode),
-    mode %in% c("stations", "variables", "realtime"),
+    mode %in% c("binary", "stations", "variables", "realtime"),
     length(mode) == 1
   )
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
+  # Constants
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-
   non_id_cols <- unname(.bcgov_columns[c("values", "instruments")]) |>
     unlist()
-
   raw_directories <- list(
     stations = bcgov_ftp_site |>
       paste0("/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"),
     variables = bcgov_ftp_site |>
       paste0("/Hourly_Raw_Air_Data/Year_to_Date/"),
+    binary = bcgov_ftp_site |>
+      paste0("/Hourly_Raw_Air_Data/Year_to_Date/binary/"),
     realtime = bcgov_ftp_site |>
       paste0("/Hourly_Raw_Air_Data/Station/")
   )
 
   # Standardize common var names
+  is_all_variables <- any(variables == "all")
   variables <- variables |>
     standardize_input_vars(
       all_variables = names(.bcgov_columns$values) |>
@@ -39,7 +41,7 @@ bcgov_get_raw_data <- function(
   if (any(stations == "all")) {
     stations <- all_stations
     if (mode != "realtime") {
-      mode <- "variables" # force variable mode if all stations desired
+      mode <- "binary" # force binary mode if all stations desired
     }
   }
 
@@ -58,7 +60,7 @@ bcgov_get_raw_data <- function(
   stations <- stations[stations %in% all_stations]
 
   # Determine which columns to drop if variables not "all"
-  if (any(variables == "all")) {
+  if (is_all_variables) {
     cols_to_drop <- character(0)
   } else {
     is_col_in_variables <- names(non_id_cols) |>
@@ -67,24 +69,33 @@ bcgov_get_raw_data <- function(
       unname()
   }
 
-  # Force variable mode if only one variable and more than a few stations
-  if (length(variables) == 1 & length(stations) > 3 & mode != "realtime") {
-    mode <- "variables"
-  } else if (
-    length(variables) == 2 & length(stations) > 10 & mode != "realtime"
+  # Force binary mode if many stations relative to variables
+  if (
+    (length(variables) == 1 & length(stations) > 3) |
+      (length(variables) == 2 & length(stations) > 10) &
+        mode != "realtime"
   ) {
-    mode <- "variables"
+    mode <- "binary"
   }
 
   # Determine files to download
-  if (mode == "variables") {
+  if (mode %in% c("variables", "binary")) {
     is_instrument_col <- non_id_cols %in% .bcgov_columns$instruments
     file_variables <- non_id_cols[
       !non_id_cols %in% cols_to_drop & !is_instrument_col
     ] |>
       unname()
-    data_paths <- raw_directories$variables |>
-      paste0(file_variables, ".csv")
+    all_paths <- raw_directories[[mode]] |>
+      get_file_list(full_path = TRUE)
+    if (mode == "binary") {
+      data_paths <- raw_directories$binary |>
+        paste0(file_variables, ".parquet")
+    } else {
+      data_paths <- raw_directories$variables |>
+        paste0(file_variables, ".csv")
+    }
+    # Ensure realtime files exist before attempting to read
+    data_paths <- all_paths[all_paths %in% data_paths]
   } else {
     data_paths <- raw_directories[[mode]] |>
       paste0(stations, ".csv")
@@ -98,25 +109,32 @@ bcgov_get_raw_data <- function(
     }
   }
 
-  # Download each stations file and bind together
-  data_paths |>
-    handyr::for_each(
-      .bind = TRUE,
-      .show_progress = !quiet,
-      \(x) {
-        x |>
-          read_raw_bcgov_data() |>
-          handyr::on_error(.return = NULL)
-      }
-    ) |>
-    format_bcgov_raw_data(
-      desired_cols = unlist(unname(.bcgov_columns)),
-      mode = mode
-    )
+  if (mode %in% c("variables", "binary")) {
+    # Download/format each variables file and join together
+    data_paths |>
+      handyr::for_each(
+        read_bcgov_qaqc_file,
+        use_rounded_value = TRUE,
+        .join = TRUE,
+        .as_list = TRUE,
+        .show_progress = !quiet
+      )
+  } else {
+    # Download each stations file and bind together
+    data_paths |>
+      handyr::for_each(
+        .bind = TRUE,
+        .show_progress = !quiet,
+        read_raw_bcgov_data
+      ) |>
+      format_bcgov_raw_data(mode = mode) |>
+      dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
+  }
 }
 
-bcgov_get_raw_stations <- function(realtime = FALSE) {
 
+
+bcgov_get_raw_stations <- function(realtime = FALSE) {
   # Make path to realtime/year_to_date directory
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR"
   mode_directory <- ifelse(realtime, "Station/", "Year_to_Date/STATION_DATA/")
@@ -158,19 +176,32 @@ get_file_ages <- function(url_directory, since = Sys.time(), units = "auto") {
 
 
 read_raw_bcgov_data <- function(bcgov_path) {
-  stopifnot(is.character(bcgov_path), length(bcgov_path) == 1)
-
-  # Fetch and load file
-  obs <- withr::with_options(
-    list(timeout = 3600),
-    data.table::fread(
-      file = bcgov_path,
-      colClasses = "character",
-      showProgress = FALSE
-    ) |>
-      suppressWarnings()
+  stopifnot(
+    is.character(bcgov_path),
+    length(bcgov_path) == 1,
+    tools::file_ext(bcgov_path) %in% c("csv", "parquet")
   )
 
+  is_binary <- tools::file_ext(bcgov_path) == "parquet"
+
+  # Fetch and load file
+  if (is_binary) {
+    obs <- bcgov_path |> get_parquet_file()
+  } else {
+    obs <- withr::with_options(
+      list(timeout = 3600),
+      data.table::fread(
+        file = bcgov_path,
+        colClasses = "character",
+        showProgress = FALSE
+      ) |>
+        suppressWarnings() |>
+        handyr::on_error(
+          .return = NULL,
+          .warn = paste0("Could not read file:", bcgov_path)
+        )
+    )
+  }
   # Drop "IGNORE_THIS_ROW" entries
   obs <- obs |>
     dplyr::filter(!.data$DATE_PST %in% "IGNORE THIS ROW")
@@ -192,26 +223,22 @@ read_raw_bcgov_data <- function(bcgov_path) {
 
 format_bcgov_raw_data <- function(
   raw_data,
-  desired_cols,
-  mode = "stations"
+  mode = "binary"
 ) {
   stopifnot(is.data.frame(raw_data), nrow(raw_data) > 0)
   stopifnot(
-    any(desired_cols %in% names(raw_data)),
-    length(desired_cols) > 0,
-    is.character(desired_cols)
-  )
-  stopifnot(
     is.character(mode),
-    mode %in% c("stations", "variables", "realtime"),
+    mode %in% c("binary", "stations", "variables", "realtime"),
     length(mode) == 1
   )
 
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
 
-  # "variables" mode has same format as QAQC data - so use that function
-  if (mode == "variables") {
-    return(raw_data |> bcgov_format_qaqc_data(use_rounded_value = TRUE))
+  # binary/variables modes have same format as QAQC data - so use that function
+  if (mode %in% c("variables", "binary")) {
+    return(
+      raw_data |> bcgov_format_qaqc_data(use_rounded_value = TRUE)
+    )
   }
 
   # Get value/unit column names and insert unit columns if needed
@@ -259,8 +286,6 @@ format_bcgov_raw_data <- function(
   # Standardize formatting
   raw_data |>
     dplyr::mutate(
-      # Mark as not QAQCed
-      quality_assured = FALSE,
       # Convert dates
       date_utc = .data$DATE_PST |>
         lubridate::ymd_hm(tz = bcgov_tzone) |>
@@ -273,7 +298,6 @@ format_bcgov_raw_data <- function(
         ifelse(yes = .data$date_utc2, no = .data$date_utc) |>
         lubridate::with_tz("UTC")
     ) |>
-    dplyr::select(dplyr::any_of(desired_cols)) |>
     remove_na_placeholders(na_placeholders = c("", "UNSPECIFIED")) |>
     drop_missing_obs_rows(where_fn = \(x) "units" %in% class(x))
 }

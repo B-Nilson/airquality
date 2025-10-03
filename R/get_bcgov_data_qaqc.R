@@ -2,18 +2,20 @@ bcgov_get_qaqc_data <- function(
   stations = "all",
   variables = "all",
   years,
+  mode = "binary",
   use_rounded_value = TRUE, # TODO: is FALSE better?
   quiet = FALSE
 ) {
   stopifnot(is.character(stations), length(stations) > 0)
   stopifnot(is.character(variables), length(variables) > 0)
   stopifnot(is.numeric(years), length(years) > 0)
+  stopifnot(is.character(mode), mode %in% c("binary", "csv"), length(mode) == 1)
   stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
   # Download, format, and join data
   qaqc_data <- years |>
-    bcgov_make_qaqc_paths(variables = variables) |>
+    bcgov_make_qaqc_paths(variables = variables, mode = mode) |>
     handyr::for_each(
       read_bcgov_qaqc_file,
       use_rounded_value = use_rounded_value,
@@ -40,26 +42,50 @@ read_bcgov_qaqc_file <- function(
   use_rounded_value = TRUE,
   timeout = 3600
 ) {
-  stopifnot(is.character(path), length(path) == 1)
+  stopifnot(
+    is.character(path),
+    length(path) == 1,
+    tools::file_ext(path) %in% c("csv", "parquet")
+  )
   stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
   stopifnot(is.numeric(timeout), length(timeout) == 1, !is.na(timeout))
 
-  list(timeout = timeout) |>
-    withr::with_options(
-      path |>
-        data.table::fread(
-          showProgress = FALSE,
-          colClasses = "character"
-        )
-    ) |>
-    handyr::on_error(
-      .return = NULL,
-      .warn = paste0("Could not read file:", path)
-    ) |>
+  if (tools::file_ext(path) == "parquet") {
+    obs <- path |> get_parquet_file()
+  } else {
+    obs <- list(timeout = timeout) |>
+      withr::with_options(
+        path |>
+          data.table::fread(
+            showProgress = FALSE,
+            colClasses = "character"
+          )
+      ) |>
+      handyr::on_error(
+        .return = NULL,
+        .warn = paste0("Could not read file:", path)
+      )
+  }
+
+  obs |>
     bcgov_format_qaqc_data(use_rounded_value = use_rounded_value) |>
+    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns)))) |>
     handyr::on_error(
       .return = NULL,
       .warn = paste0("Could not format file:", path)
+    )
+}
+
+get_parquet_file <- function(url) {
+  rlang::check_installed("arrow")
+  rlang::check_installed("tzdb")
+  rlang::check_installed("RCurl")
+  url |>
+    RCurl::getBinaryURL() |>
+    arrow::read_parquet() |>
+    handyr::on_error(
+      .return = NULL,
+      .warn = paste0("Could not read file:", url)
     )
 }
 
@@ -69,55 +95,52 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 
   # Constants
   value_cols <- c("RAW_VALUE", "ROUNDED_VALUE")
-  erroneous_cols <- c(
-    "NAPS_ID",
-    "STATION_NAME",
-    "STATION_NAME_FULL",
-    "OWNER",
-    "REGION",
-    "DATE",
-    "TIME",
-    "UNIT",
-    value_cols[(!use_rounded_value) + 1]
+  value_col <- value_cols[use_rounded_value + 1]
+  desired_cols <- c(
+    "date_utc",
+    "EMS_ID",
+    "PARAMETER",
+    "VALUE" = value_col,
+    "INSTRUMENT"
   )
 
-  # Get parameter name, default unit, and value column name
+  # Get parameter name, unit, and default unit
   parameter <- qaqc_data$PARAMETER[1]
   unit <- qaqc_data$UNIT[1] |> fix_units()
   default_unit <- default_units[
     names(.bcgov_columns$values)[.bcgov_columns$values %in% parameter]
   ]
-  value_col <- value_cols[use_rounded_value + 1]
 
   # Reformat and return
   qaqc_data |>
-    # Set units of value column and convert to default unit
+    remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
     dplyr::mutate(
-      dplyr::across(dplyr::all_of(value_col), \(x) {
-        x |>
-          as.numeric() |>
-          handyr::convert_units(
-            from = unit,
-            to = default_unit,
-            keep_units = TRUE
-          )
-      })
+      # Convert date to UTC backward looking
+      date_utc = .data$DATE_PST |>
+        lubridate::as_datetime(tz = "Etc/GMT+8") |>
+        lubridate::with_tz("UTC") +
+        lubridate::hours(1) # TODO: confirm valid
     ) |>
     # drop unnecessary rows/columns for memory-saving
-    dplyr::filter(!is.na(.data[[value_col]])) |>
-    dplyr::select(-dplyr::any_of(erroneous_cols)) |>
+    dplyr::select(dplyr::all_of(desired_cols)) |>
+    dplyr::filter(!is.na(.data$VALUE)) |>
     # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989)
     dplyr::distinct() |>
-    # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
-    tidyr::pivot_wider(
-      names_from = "PARAMETER",
-      values_from = value_col
+    # Set units of value column and convert to default unit
+    dplyr::mutate(
+      VALUE = as.numeric(.data$VALUE) |>
+        handyr::convert_units(
+          from = unit,
+          to = default_unit,
+          keep_units = TRUE
+        )
     ) |>
+    # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
+    tidyr::pivot_wider(names_from = "PARAMETER", values_from = "VALUE") |>
     dplyr::rename_with(
       .cols = dplyr::all_of("INSTRUMENT"),
       \(col_name) paste0(parameter, "_", col_name)
-    ) |> 
-    remove_na_placeholders(na_placeholders = c("UNSPECIFIED", ""))
+    )
 }
 
 # Returns the available parameters for a given qaqc year
@@ -139,7 +162,7 @@ bcgov_get_qaqc_year_params <- function(year) {
 }
 
 # Returns paths to qaqc data for given years and parameters
-bcgov_make_qaqc_paths <- function(years, variables) {
+bcgov_make_qaqc_paths <- function(years, variables, mode = "binary") {
   stopifnot(is.numeric(years), length(years) > 0, !any(duplicated(years)))
   stopifnot(is.character(variables), length(variables) > 0)
 
@@ -166,8 +189,10 @@ bcgov_make_qaqc_paths <- function(years, variables) {
           warning("No valid parameters provided:", year)
         }
         # Build paths to each parameter file
-        param_files <- paste0(params, ".csv")
-        qaqc_directory |> file.path(year, param_files)
+        param_files <- params |>
+          paste0(ifelse(mode == "binary", ".parquet", ".csv"))
+        qaqc_directory |>
+          file.path(year, ifelse(mode == "binary", "binary", ""), param_files)
       }
     ) |>
     unlist()

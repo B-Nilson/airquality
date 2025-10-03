@@ -103,6 +103,7 @@ get_bcgov_data <- function(
         quiet = quiet,
         mode = "realtime"
       ) |>
+      dplyr::mutate(quality_assured = FALSE) |>
       handyr::on_error(.return = NULL, .warn = "Could not get realtime data:")
   } else {
     realtime_data <- NULL
@@ -124,7 +125,7 @@ get_bcgov_data <- function(
       bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
       handyr::for_each(
         .bind = TRUE,
-        .parallel = fast,
+        # .parallel = fast, # TODO: test if works
         .show_progress = !quiet,
         bcgov_get_annual_data,
         stations = stations,
@@ -191,7 +192,7 @@ get_bcgov_data <- function(
 # Also grab any matching _instrument columns for reference
 .bcgov_columns$instruments <- .bcgov_columns$values |>
   paste0("_INSTRUMENT") |>
-  setNames(.bcgov_columns$values |> paste0("_instrument"))
+  setNames(names(.bcgov_columns$values) |> paste0("_instrument"))
 
 bcgov_get_qaqc_years <- function() {
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
