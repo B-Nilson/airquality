@@ -393,8 +393,8 @@ widen_with_units <- function(obs, unit_col, value_col, name_col, desired_cols) {
           ) |>
           dplyr::select(-".unit") |>
           tidyr::pivot_wider(
-            names_from = name_col,
-            values_from = value_col
+            names_from = dplyr::any_of(name_col),
+            values_from = dplyr::any_of(value_col)
           ) |>
           dplyr::select(dplyr::any_of(desired_cols)) |>
           dplyr::distinct()
