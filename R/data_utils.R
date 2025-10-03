@@ -280,7 +280,7 @@ insert_date_local <- function(obs, stations_meta, by = "site_name") {
       stations_meta |> dplyr::select(dplyr::all_of(by), "tz_local"),
       by = by
     ) |>
-    dplyr::group_by(tz_local) |>
+    dplyr::group_by(.data$tz_local) |>
     dplyr::mutate(
       date_local = .data$date_utc |>
         lubridate::with_tz(.data$tz_local[1]) |>
