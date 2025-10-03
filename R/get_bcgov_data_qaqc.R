@@ -116,7 +116,8 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::rename_with(
       .cols = dplyr::all_of("INSTRUMENT"),
       \(col_name) paste0(parameter, "_", col_name)
-    )
+    ) |> 
+    remove_na_placeholders(na_placeholders = c("UNSPECIFIED", ""))
 }
 
 # Returns the available parameters for a given qaqc year
