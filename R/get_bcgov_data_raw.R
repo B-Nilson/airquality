@@ -17,7 +17,8 @@ bcgov_get_raw_data <- function(
   data_paths <- stations |> 
     bcgov_make_raw_paths(
       variables = variables,
-      mode = mode
+      mode = mode,
+      quiet = quiet
     )
 
   is_parquet <- tools::file_ext(data_paths[1]) == "parquet"
@@ -46,7 +47,8 @@ bcgov_get_raw_data <- function(
 bcgov_make_raw_paths <- function(
   stations = NULL,
   variables = NULL,
-  mode = "binary"
+  mode = "binary",
+  quiet = FALSE
 ) {
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
   raw_directories <- list(
