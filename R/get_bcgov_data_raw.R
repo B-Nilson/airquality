@@ -13,10 +13,42 @@ bcgov_get_raw_data <- function(
   )
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
-  # Constants
+  # Get raw data file paths
+  data_paths <- stations |> 
+    bcgov_make_raw_paths(
+      variables = variables,
+      mode = mode
+    )
+
+  is_parquet <- tools::file_ext(data_paths[1]) == "parquet"
+  if (mode %in% c("variables", "binary") | is_parquet) {
+    # Download/format each variables file and join together
+    data_paths |>
+      handyr::for_each(
+        read_bcgov_qaqc_file,
+        use_rounded_value = TRUE,
+        .join = TRUE,
+        .as_list = TRUE,
+        .show_progress = !quiet
+      )
+  } else {
+    # Download each stations file and bind together, then format
+    data_paths |>
+      handyr::for_each(
+        read_raw_bcgov_data,
+        .bind = TRUE,
+        .show_progress = !quiet
+      ) |>
+      format_bcgov_raw_data(mode = mode)
+  }
+}
+
+bcgov_make_raw_paths <- function(
+  stations = NULL,
+  variables = NULL,
+  mode = "binary"
+) {
   bcgov_ftp_site <- "ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR/"
-  non_id_cols <- unname(.bcgov_columns[c("values", "instruments")]) |>
-    unlist()
   raw_directories <- list(
     stations = bcgov_ftp_site |>
       paste0("/Hourly_Raw_Air_Data/Year_to_Date/STATION_DATA/"),
@@ -35,7 +67,7 @@ bcgov_get_raw_data <- function(
       all_variables = names(.bcgov_columns$values) |>
         stringr::str_remove("_1hr")
     )
-
+  
   # Handle "all" in stations
   all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
   if (any(stations == "all")) {
@@ -60,6 +92,8 @@ bcgov_get_raw_data <- function(
   stations <- stations[stations %in% all_stations]
 
   # Determine which columns to drop if variables not "all"
+  non_id_cols <- unname(.bcgov_columns[c("values", "instruments")]) |>
+    unlist()
   if (is_all_variables) {
     cols_to_drop <- character(0)
   } else {
@@ -109,28 +143,8 @@ bcgov_get_raw_data <- function(
     }
   }
 
-  if (mode %in% c("variables", "binary")) {
-    # Download/format each variables file and join together
-    data_paths |>
-      handyr::for_each(
-        read_bcgov_qaqc_file,
-        use_rounded_value = TRUE,
-        .join = TRUE,
-        .as_list = TRUE,
-        .show_progress = !quiet
-      )
-  } else {
-    # Download each stations file and bind together
-    data_paths |>
-      handyr::for_each(
-        .bind = TRUE,
-        .show_progress = !quiet,
-        read_raw_bcgov_data
-      ) |>
-      format_bcgov_raw_data(mode = mode)
-  }
+  return(data_paths)
 }
-
 
 bcgov_get_raw_stations <- function(realtime = FALSE) {
   # Make path to realtime/year_to_date directory
