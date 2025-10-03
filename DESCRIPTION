@@ -44,4 +44,4 @@ BugReports: https://github.com/B-Nilson/airquality/issues
 Remotes: 
     github::B-Nilson/handyr
 Depends: 
-    R (>= 3.5)
+    R (>= 4.1.0)
