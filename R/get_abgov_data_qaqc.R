@@ -7,11 +7,6 @@ get_abgov_data_qaqc <- function(
   fast = FALSE,
   quiet = FALSE
 ) {
-  # Constants
-  tzone <- "MST" # TODO: confirm this?
-  allowed_date_range <- c("1970-01-01 00:00:00", "now") # TODO: confirm this
-  now_time_step <- "1 months" # floor "now" to current month
-
   # Decide which api endpoint to use
   mode <- dplyr::case_when(
     any(stations == "all") ~ "parameters",
@@ -20,103 +15,17 @@ get_abgov_data_qaqc <- function(
     TRUE ~ "stations"
   )
 
-  # Handle date_range inputs
-  # TODO: warning message says "beyond current hour" which is invalid
-  date_range <- date_range |>
-    handyr::check_date_range(
-      within = allowed_date_range,
-      tz = tzone,
-      now_time_step = now_time_step
-    )
-
-  # Handle input variables
-  value_cols <- .abgov_columns$values[
-    .abgov_columns$values != "Fine Particulate Matter" # raw API column
-  ]
-  all_variables <- names(value_cols) |>
-    stringr::str_remove("_1hr")
-  variables <- variables |>
-    standardize_input_vars(all_variables)
-
-  # Break up date range into smaller chunks depending on duration
-  date_chunks <- date_range |> pretty(n = 5)
-  max_duration <- date_chunks |>
-    difftime(dplyr::lag(date_chunks), units = "days") |>
-    stats::median(na.rm = TRUE)
-  if (max_duration > 3650) {
-    max_duration <- "3650 days"
-  } else if (max_duration < 30) {
-    max_duration <- "30 days"
-  }
-
-  # Get API keys for our stations/parameters
-  desired_var_cols <- value_cols[
-    stringr::str_remove(names(value_cols), "_1hr") %in% variables
-  ]
-  keys <- stations |>
-    abgov_get_qaqc_keys(parameters = desired_var_cols, mode = mode)
-
-  # Initiate data request(s) and get token(s) for tracking progress
-  request_tokens <- date_range |>
-    handyr::split_date_range(max_duration = max_duration, as_list = TRUE) |>
-    handyr::for_each(
-      .show_progress = FALSE,
-      \(d_range) {
-        d_range <- d_range |> sapply(format, format = "%F") |> unname()
-        if (!quiet) {
-          "Requesting data for:" |>
-            handyr::log_step(d_range[1], "-", d_range[2])
-        }
-        mode_name <- ifelse(mode == "stations", "station", "parameter")
-        unique(keys[[mode_name]]) |>
-          sapply(\(key) {
-            this <- keys[keys[[mode_name]] == key, ]
-            out_name <- this[[paste0(mode_name, "_name")]][1]
-            station_keys <- if (mode == "stations") key else this$station
-            parameter_keys <- if (mode == "stations") this$parameter else key
-            unique(this$operator) |>
-              abgov_init_data_request(
-                station_keys = station_keys,
-                parameter_keys = parameter_keys,
-                mode = mode,
-                date_range = d_range
-              ) |>
-              stats::setNames(out_name) |>
-              handyr::on_error(.return = NULL)
-          })
-      }
+  # Initiate data request(s) and download data as it becomes available
+  obs <- date_range |>
+    abgov_submit_qaqc_requests(
+      stations = stations,
+      variables = variables,
+      mode = mode,
+      quiet = quiet
     ) |>
-    lapply(\(x) x[!sapply(x, is.null)])
-  # Download data as it becomes available
-  obs <- request_tokens |>
-    handyr::for_each(
-      .bind = TRUE,
-      .enumerate = TRUE,
-      .show_progress = !quiet,
-      \(tokens, i) {
-        if (!quiet) {
-          "Downloading data for request:" |>
-            handyr::log_step(i, "/", length(request_tokens))
-        }
-        tokens |>
-          handyr::for_each(
-            .bind = TRUE,
-            .enumerate = TRUE,
-            .show_progress = FALSE,
-            \(token, j) {
-              if (is.null(token)) {
-                return(NULL)
-              }
-              token |>
-                abgov_get_qaqc_data_request(
-                  max_tries = max_tries,
-                  quiet = quiet
-                ) |>
-                abgov_parse_qaqc_data(mode = mode) |>
-                handyr::on_error(.return = NULL)
-            }
-          )
-      }
+    abgov_read_qaqc_data(
+      max_tries = max_tries,
+      quiet = quiet
     )
 
   if (nrow(obs) == 0) {
@@ -135,6 +44,10 @@ get_abgov_data_qaqc <- function(
 }
 
 abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
+  stopifnot(is.data.frame(qaqc_data), nrow(qaqc_data) > 0)
+  stopifnot(lubridate::is.POSIXct(date_range), length(date_range) == 2)
+  stopifnot(is.character(desired_cols), length(desired_cols) > 0)
+
   qaqc_data |>
     # Remove duplicates and any missing or flagged data
     dplyr::filter(!is.na(.data$`Measurement Value`), is.na(.data$Flags)) |>
@@ -162,8 +75,124 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
       name_col = "Parameter",
       desired_cols = desired_cols
     ) |>
-    drop_missing_obs_rows() |>
-    standardize_obs_units(default_units = default_units)
+    standardize_obs_units(default_units = default_units) # TODO: move to standardize_data_format() ?
+}
+
+abgov_submit_qaqc_requests <- function(
+  date_range,
+  stations,
+  variables,
+  mode,
+  quiet = FALSE
+) {
+  tzone <- "MST" # TODO: confirm this?
+  allowed_date_range <- c("1970-01-01 00:00:00", "now") # TODO: confirm this
+  now_time_step <- "1 months" # floor "now" to current month
+  value_cols <- .abgov_columns$values[
+    .abgov_columns$values != "Fine Particulate Matter" # Drop raw API column
+  ]
+
+  # Handle variables input
+  variables <- variables |>
+    standardize_input_vars(
+      all_variables = names(value_cols) |>
+        stringr::str_remove("_1hr")
+    )
+
+  # Get API keys for our stations/parameters
+  desired_var_cols <- value_cols[
+    stringr::str_remove(names(value_cols), "_1hr") %in% variables
+  ]
+  keys <- stations |>
+    abgov_get_qaqc_keys(parameters = desired_var_cols, mode = mode)
+
+  # Handle date_range inputs
+  date_range <- date_range |>
+    handyr::check_date_range(
+      within = allowed_date_range,
+      tz = tzone,
+      now_time_step = now_time_step
+    )
+
+  # Break up date range into smaller chunks depending on duration
+  date_chunks <- date_range |> pretty(n = 5)
+  max_duration <- date_chunks |>
+    difftime(dplyr::lag(date_chunks), units = "days") |>
+    stats::median(na.rm = TRUE)
+  if (max_duration > 3650) {
+    max_duration <- "3650 days"
+  } else if (max_duration < 30) {
+    max_duration <- "30 days"
+  }
+
+  date_range |>
+    handyr::split_date_range(max_duration = max_duration, as_list = TRUE) |>
+    handyr::for_each(
+      .show_progress = FALSE,
+      \(d_range) {
+        d_range <- d_range |> sapply(format, format = "%F") |> unname()
+        if (!quiet) {
+          "Requesting data for:" |>
+            handyr::log_step(d_range[1], "-", d_range[2])
+        }
+        mode_name <- ifelse(mode == "stations", "station", "parameter")
+        mode_keys <- unique(keys[[mode_name]])
+        mode_keys |>
+          sapply(\(mode_key) {
+            this <- keys[keys[[mode_name]] == mode_key, ]
+            out_name <- this[[paste0(mode_name, "_name")]][1]
+            station_keys <- if (mode == "stations") mode_key else this$station
+            parameter_keys <- if (mode == "stations") {
+              this$parameter
+            } else {
+              mode_key
+            }
+            unique(this$operator) |>
+              abgov_init_data_request(
+                station_keys = station_keys,
+                parameter_keys = parameter_keys,
+                mode = mode,
+                date_range = d_range
+              ) |>
+              stats::setNames(out_name) |>
+              handyr::on_error(.return = NULL)
+          })
+      }
+    ) |>
+    lapply(\(x) x[!sapply(x, is.null)])
+}
+
+abgov_read_qaqc_data <- function(request_tokens, max_tries, quiet) {
+  request_tokens |>
+    handyr::for_each(
+      .bind = TRUE,
+      .enumerate = TRUE,
+      .show_progress = !quiet,
+      \(tokens, i) {
+        if (!quiet) {
+          "Downloading data for request:" |>
+            handyr::log_step(i, "/", length(request_tokens))
+        }
+        tokens |>
+          handyr::for_each(
+            .bind = TRUE,
+            .enumerate = TRUE,
+            .show_progress = FALSE,
+            \(token, j) {
+              if (is.null(token)) {
+                return(NULL)
+              }
+              token |>
+                abgov_get_qaqc_data_request(
+                  max_tries = max_tries,
+                  quiet = quiet
+                ) |>
+                abgov_parse_qaqc_data() |>
+                handyr::on_error(.return = NULL)
+            }
+          )
+      }
+    )
 }
 
 abgov_init_data_request <- function(
@@ -174,11 +203,14 @@ abgov_init_data_request <- function(
   mode = "stations",
   continuous = TRUE
 ) {
+  # Constants
   api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
-  endpoints <- list(
+  endpoint <- list(
     stations = "AreaOperatorAmbientMultipleParameters",
     parameters = "AreaOperatorAmbientMultipleStations"
-  )
+  )[[mode]]
+
+  # Handle inputs
   is_continuous <- continuous |>
     ifelse("Continuous", "Non Continuous")
   operator_keys <- unique(operator_keys)
@@ -191,15 +223,12 @@ abgov_init_data_request <- function(
   parameter_keys <- unique(parameter_keys)
   parameter_keys <- parameter_keys[!is.na(parameter_keys)]
 
+  # Get session token
   session_token <- api_url |>
-    simulate_session(endpoint = endpoints[[mode]]) |>
+    simulate_session(endpoint = endpoint) |>
     get_session_token()
+
   # Build request
-  key_args <- c(
-    operator_keys |> abgov_make_key_args("AreaOperatorKeys"),
-    station_keys |> abgov_make_key_args("StationKeys"),
-    parameter_keys |> abgov_make_key_args("ParameterKeys")
-  )
   request_body <- list(
     IsGoodQuality = 1,
     IncludeQaQcSamples = 0,
@@ -225,9 +254,13 @@ abgov_init_data_request <- function(
     EndDate = date_range[2],
     `__Invariant` = "EndDate"
   ) |>
-    c(key_args)
+    c(
+      operator_keys |> abgov_make_key_args("AreaOperatorKeys"),
+      station_keys |> abgov_make_key_args("StationKeys"),
+      parameter_keys |> abgov_make_key_args("ParameterKeys")
+    )
   result <- api_url |>
-    paste0(endpoints[[mode]]) |>
+    paste0(endpoint) |>
     httr::POST(body = request_body, encode = "form") |>
     httr::content(as = "parsed", encoding = "UTF-8")
 
@@ -250,12 +283,12 @@ abgov_get_qaqc_operators <- function(
 
   if (is.null(select_parameter)) {
     # Simulate session and extract operator options
-    operator <- api_url |>
+    operators <- api_url |>
       simulate_session(endpoint = endpoint_stations) |>
       extract_options(html_id = "AreaOperatorKeys")
   } else {
     request_body <- list(
-      ParameterKey = select_parameter, # TODO: convert from variable -> key,
+      ParameterKey = unname(select_parameter),
       CollectionType = continuous |>
         ifelse("Continuous", "Non Continuous")
     )
@@ -278,20 +311,27 @@ abgov_get_qaqc_operators <- function(
 abgov_get_qaqc_parameters <- function() {
   api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
   endpoint <- "AreaOperatorAmbientMultipleStations"
+
+  # Simulate session and extract parameter options
   parameters <- api_url |>
     simulate_session(endpoint = endpoint) |>
     extract_options(html_id = "ParameterKey")
 
-  names(parameters) <- stringr::str_split(
-    names(parameters),
-    " / ",
-    simplify = TRUE
-  )[, 1]
+  # Extract parameter names
+  names(parameters) <- names(parameters) |>
+    stringr::str_split(pattern = " / ", simplify = TRUE) |>
+    as.data.frame() |>
+    dplyr::pull(1)
+
   return(parameters)
 }
 
 abgov_make_key_args <- function(keys, key_name) {
-  as.list(keys) |> stats::setNames(rep(key_name, length(keys)))
+  keys <- unique(keys)
+  names <- rep(key_name, length(keys))
+  keys |> 
+    as.list() |> 
+    stats::setNames(names)
 }
 
 abgov_get_keys <- function(
@@ -347,7 +387,6 @@ abgov_get_keys <- function(
   return(keys)
 }
 
-# TODO: use in other sources?
 abgov_post_request <- function(api_url, endpoint, request_body) {
   api_url |>
     paste0(endpoint) |>
@@ -400,18 +439,14 @@ abgov_get_qaqc_stations <- function(
   endpoint <- "GetAOStationsListForAreaOperators"
 
   # Get keys for all operators if needed
-  if (is.null(parameter) & is.null(operator_keys)) {
+  if (is.null(operator_keys)) {
     operator_keys <- abgov_get_qaqc_operators()
-  } else if (is.null(operator_keys)) {
-    all_parameters <- abgov_get_qaqc_parameters()
-    parameter_key <- all_parameters[names(all_parameters) == parameter]
-    operator_keys <- abgov_get_qaqc_operators(
-      select_parameter = parameter_key,
-      continuous = continuous
-    )
   }
+
   # Get stations for all/select parameters
   if (!is.null(parameter)) {
+    parameters <- abgov_get_qaqc_parameters()
+    parameter_key <- parameters[parameter]
     request_body <- list(
       ParameterKey = unname(parameter_key),
       AreaOperatorKeys = paste(operator_keys, collapse = ";"),
@@ -439,23 +474,11 @@ abgov_get_qaqc_keys <- function(
   continuous = TRUE
 ) {
   # Get keys for all operators
-  if (mode == "stations") {
-    operator_keys <- abgov_get_qaqc_operators()
-  } else if (mode == "parameters") {
-    all_parameters <- abgov_get_qaqc_parameters()
-    parameter_keys <- all_parameters[names(all_parameters) %in% parameters]
-    operator_keys <- abgov_get_qaqc_operators(
-      select_parameter = parameter_keys,
-      continuous = continuous
-    )
-  } else {
-    stop("mode must be one of 'stations' or 'parameters'")
-  }
+  operator_keys <- abgov_get_qaqc_operators()
 
   # Get keys for selected stations by operator
   station_keys <- abgov_get_qaqc_stations(
-    operator_keys = operator_keys,
-    parameter = if (mode == "parameters") parameters[1] else NULL
+    operator_keys = operator_keys
   )
 
   # Drop keys for non-selected operators
@@ -477,6 +500,9 @@ abgov_get_qaqc_keys <- function(
         type = "parameters",
         continuous = TRUE
       )
+  } else {
+    parameter_keys <- abgov_get_qaqc_parameters()
+    parameter_keys <- parameter_keys[names(parameter_keys) %in% parameters]
   }
 
   # Combine keys for making requests
@@ -506,45 +532,21 @@ abgov_get_qaqc_keys <- function(
 }
 
 abgov_get_qaqc_data_request <- function(
-  data_request_token,
+  request_token,
   max_tries = 25,
   quiet = FALSE
 ) {
-  api_url <- "https://datamanagementplatform.alberta.ca/"
-  endpoint_status <- "Home/GetRequestStatus"
-  endpoint_download <- "Home/ProcessDownload"
+  stopifnot(length(request_token) == 1, is.character(request_token))
+  stopifnot(length(max_tries) == 1, is.numeric(max_tries))
+  stopifnot(length(quiet) == 1, is.logical(quiet))
 
-  # Initialize
-  request_not_ready <- TRUE
-  total_tries <- 0
-  recent_tries <- 0
-  while (request_not_ready) {
-    # Check request status
-    request_status <- api_url |>
-      paste0(endpoint_status, "?token=", data_request_token) |>
-      httr::GET() |>
-      httr::content(as = "parsed")
-    request_not_ready <- as.character(request_status) != "OK"
-    if (request_not_ready) {
-      # Handle too many attempts
-      if (total_tries > max_tries) {
-        stop(
-          "Failed to download data within the specified number of attempts. Try increasing `max_tries` or requesting less data."
-        )
-      }
-      # Wait before trying again
-      wait_time <- c(1, 1, 1, 5, 5, 10)[pmin(recent_tries + 1, 6)]
-      recent_tries <- recent_tries %% 6
-      Sys.sleep(wait_time)
-      # Increment
-      recent_tries <- recent_tries + 1
-      total_tries <- total_tries + 1
-    }
-  }
+  # Wait for request to be ready
+  request_token |>
+    abgov_wait_for_request(max_tries = max_tries)
 
   # Download data
-  api_url |>
-    paste0(endpoint_download, "?token=", data_request_token) |>
+  "https://datamanagementplatform.alberta.ca/" |>
+    paste0("Home/ProcessDownload", "?token=", request_token) |>
     httr::GET() |>
     httr::content(as = "text", encoding = "UTF-8") |>
     data.table::fread(
@@ -555,16 +557,54 @@ abgov_get_qaqc_data_request <- function(
     )
 }
 
+abgov_wait_for_request <- function(request_token, max_tries = 25) {
+  stopifnot(length(request_token) == 1, is.character(request_token))
+  stopifnot(length(max_tries) == 1, is.numeric(max_tries))
+
+  api_url <- "https://datamanagementplatform.alberta.ca/"
+  endpoint_status <- "Home/GetRequestStatus"
+
+  # Initialize
+  request_not_ready <- TRUE
+  total_tries <- 0
+  recent_tries <- 0
+
+  # Check request status until ready or exceed maximum attempts
+  while (request_not_ready) {
+    # Check request status
+    request_status <- api_url |>
+      paste0(endpoint_status, "?token=", request_token) |>
+      httr::GET() |>
+      httr::content(as = "parsed")
+    request_not_ready <- as.character(request_status) != "OK"
+    if (request_not_ready) {
+      # Handle too many attempts
+      if (total_tries > max_tries) {
+        stop(
+          "Failed to download data within the specified number of attempts. ",
+          "Try increasing `max_tries` or requesting less data."
+        )
+      }
+
+      # Wait before trying again
+      wait_time <- c(1, 1, 1, 5, 5, 10)[pmin(recent_tries + 1, 6)]
+      recent_tries <- recent_tries %% 6
+      Sys.sleep(wait_time)
+
+      # Increment
+      recent_tries <- recent_tries + 1
+      total_tries <- total_tries + 1
+    }
+  }
+
+  invisible(request_token)
+}
+
 abgov_parse_qaqc_data <- function(
-  data_stream,
-  mode = "stations"
+  data_stream
 ) {
   # Remove metadata header
-  header_texts <- list(
-    stations = "Data Origin: ",
-    parameters = "Data Origin: "
-  )
-  header_row <- which(data_stream[, 1] == header_texts[[mode]])
+  header_row <- which(data_stream[, 1] == "Data Origin: ")
   if (length(header_row) == 0) {
     stop("No data found")
   }
@@ -574,7 +614,7 @@ abgov_parse_qaqc_data <- function(
     utils::tail(-(header_row - 1))
 
   # Parse from groups of columns for each param to a single data frame
-  param_starts <- which(data_rows[1, ] == header_texts[[mode]])
+  param_starts <- which(data_rows[1, ] == "Data Origin: ")
   param_ends <- dplyr::lead(param_starts) - 1
   param_ends[length(param_ends)] <- ncol(data_rows)
   qaqc_data <- param_starts |>
