@@ -500,6 +500,7 @@ fix_units <- function(units) {
     units %in% c("% RH", "percent") ~ "%",
     units %in% c("\xb0C", "deg c", "c") ~ "degC",
     units %in% c("Deg.", "deg", "Deg") ~ "degrees",
+    units %in% c("w/m2") ~ "W/m2",
     TRUE ~ units
   )
 }
