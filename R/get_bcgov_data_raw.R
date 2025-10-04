@@ -14,7 +14,7 @@ bcgov_get_raw_data <- function(
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
   # Get raw data file paths
-  data_paths <- stations |> 
+  data_paths <- stations |>
     bcgov_make_raw_paths(
       variables = variables,
       mode = mode,
@@ -69,7 +69,7 @@ bcgov_make_raw_paths <- function(
       all_variables = names(.bcgov_columns$values) |>
         stringr::str_remove("_1hr")
     )
-  
+
   # Handle "all" in stations
   all_stations <- bcgov_get_raw_stations(realtime = mode == "realtime")
   if (any(stations == "all")) {

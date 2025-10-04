@@ -106,7 +106,8 @@ build_abgov_data_args <- function(
   # Build column selector
   selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |>
     paste(collapse = ",")
-  if (length(value_cols) == 1) { # TODO: what if "all"?
+  if (length(value_cols) == 1) {
+    # TODO: what if "all"?
     selected_cols <- selected_cols |>
       stringr::str_remove(",ParameterName")
   }
@@ -176,7 +177,7 @@ abgov_make_raw_date_filter <- function(
   # Setup
   tzone <- "America/Edmonton" # TODO: confirm
   max_duration <- paste(days_per_call, "days")
-  date_filter_template <- "ReadingDate ge datetime'%s'" |> 
+  date_filter_template <- "ReadingDate ge datetime'%s'" |>
     paste("ReadingDate le datetime'%s'", sep = " and ")
 
   # Split date_range as needed, and build filter for each

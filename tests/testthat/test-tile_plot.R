@@ -7,7 +7,8 @@ test_that("Plot created without error", {
   expect_no_error(
     obs |>
       dplyr::mutate(pm25_1hr = as.numeric(pm25_1hr)) |> # drop units
-      tile_plot( # TODO: handle z units properly
+      tile_plot(
+        # TODO: handle z units properly
         x = "hour",
         y = "day",
         z = "pm25_1hr",
