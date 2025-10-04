@@ -10,18 +10,21 @@ get_abgov_data_raw <- function(
   api_endpoint <- "StationMeasurements"
 
   # Handle input variables
-  value_cols <- .abgov_columns$values[.abgov_columns$values != "PM2.5 Mass"] # qaqc API column
-  all_variables <- names(value_cols) |>
-    stringr::str_remove("_1hr")
+  value_cols <- .abgov_columns$values[
+    .abgov_columns$values != "PM2.5 Mass" # drop qaqc API column
+  ]
   variables <- variables |>
-    standardize_input_vars(all_variables)
+    standardize_input_vars(
+      all_variables = names(value_cols) |>
+        stringr::str_remove("_1hr")
+    )
   value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
 
   # Make request(s) as needed to load all desired data
-  api_args <- stations |>
+  api_args <- date_range |>
     build_abgov_data_args(
-      date_range = date_range,
-      variables = variables,
+      stations = stations,
+      value_cols = value_cols,
       stations_per_call = stations_per_call,
       days_per_call = days_per_call
     )
@@ -39,10 +42,28 @@ get_abgov_data_raw <- function(
   return(raw_data)
 }
 
+abgov_get_raw_data_request <- function(api_request) {
+  stopifnot(is.character(api_request), length(api_request) == 1)
+
+  # Make request
+  api_request <- api_request |>
+    xml2::read_xml() |>
+    xml2::as_list()
+
+  # Extract data from response
+  api_request$feed[-(1:4)] |>
+    lapply(\(entry) {
+      e <- unlist(entry$content$properties)
+      if (!is.null(e)) tibble::tibble(data.frame(t(e)))
+    }) |>
+    dplyr::bind_rows()
+}
+
 format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
-  if (nrow(raw_data) == 0) {
-    return(NULL)
-  }
+  stopifnot(is.data.frame(raw_data), nrow(raw_data) > 0)
+  stopifnot(lubridate::is.POSIXct(date_range), length(date_range) == 2)
+  stopifnot(is.character(desired_cols), length(desired_cols) > 0)
+
   tzone <- "America/Edmonton" # TODO: confirm this?
 
   raw_data |>
@@ -66,95 +87,48 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
     dplyr::select(dplyr::any_of(desired_cols)) |>
     # Insert units and standardize if needed
     standardize_obs_units(
-      default_units = default_units,
-      input_units = abgov_units
+      input_units = abgov_units,
+      default_units = default_units
     )
 }
 
 build_abgov_data_args <- function(
-  stations = "all",
   date_range,
-  variables = "all",
+  stations = "all",
+  value_cols, # TODO: rename to parameters?
   stations_per_call = 3,
   days_per_call = 3,
   time_out = 36000
 ) {
-  # Handle input variables
-  value_cols <- .abgov_columns$values[.abgov_columns$values != "PM2.5 Mass"] # qaqc API column
-  all_variables <- names(value_cols) |>
-    stringr::str_remove("_1hr")
-  variables <- variables |>
-    standardize_input_vars(all_variables)
-  get_all_vars <- all(all_variables %in% variables)
-  value_cols <- value_cols[names(value_cols) %in% paste0(variables, "_1hr")]
+  stopifnot(is.character(value_cols), length(value_cols) > 0)
+  stopifnot(is.numeric(time_out), length(time_out) == 1)
 
   # Build column selector
   selected_cols <- c("StationName", "ParameterName", "ReadingDate", "Value") |>
     paste(collapse = ",")
-  if (length(variables) == 1) {
+  if (length(value_cols) == 1) { # TODO: what if "all"?
     selected_cols <- selected_cols |>
       stringr::str_remove(",ParameterName")
   }
 
-  # Build station(s) filter
-  station_filter_template <- "indexof('%s', StationName) ge %s" # site_name, -1|0
-  if (stations == "all") {
-    station_filters <- station_filter_template |>
-      sprintf("t", -1)
-  } else {
-    station_filters <- seq(1, length(stations), stations_per_call) |>
-      sapply(\(start) {
-        end <- start + stations_per_call
-        end <- (end > length(stations)) |>
-          ifelse(length(stations), end)
-        filter <- station_filter_template |>
-          sprintf(stations[start:end], 0) |>
-          paste(collapse = " or ")
-        paste0("(", filter, ")")
-      })
-  }
-
-  # Build date filter(s)
-  tzone <- "America/Edmonton"
-  date_filter_template <- "ReadingDate ge datetime'%s' and ReadingDate le datetime'%s'"
+  # Build filters
+  station_filters <- stations |>
+    abgov_make_raw_station_filter(stations_per_call = stations_per_call)
   date_filters <- date_range |>
-    lubridate::with_tz(tzone) |>
-    handyr::split_date_range(max_duration = paste(days_per_call, "days")) |>
-    apply(1, \(desired_range) {
-      desired_range <- desired_range |>
-        lubridate::as_datetime() |>
-        format("%FT%T")
-      date_filter_template |>
-        sprintf(desired_range[1], desired_range[2])
-    })
-
-  # Build parameter filter
-  param_filter_template <- "indexof('%s', ParameterName) ge %s"
-  if (get_all_vars) {
-    param_filter <- param_filter_template |>
-      sprintf("t", -1)
-  } else {
-    param_filter <- param_filter_template |>
-      sprintf(value_cols, 0) |>
-      paste(collapse = " or ")
-    param_filter <- paste0("(", param_filter, ")")
-  }
-
-  # Combine filters
+    abgov_make_raw_date_filter(days_per_call = days_per_call)
+  param_filter <- value_cols |> # TODO: will never be "all", but expects that
+    abgov_make_raw_param_filter()
   filters <- station_filters |>
     sapply(\(station_filter) {
-      date_filters |>
-        sapply(\(date_filter) {
-          paste(station_filter, date_filter, param_filter, sep = " and ")
-        })
+      station_filter |>
+        paste(date_filters, param_filter, sep = " and ")
     }) |>
     unlist() |>
-    unname() |>
+    unname() |> # TODO: needed?
     paste("and Value ne null")
 
   # Insert into template, cleanup symbols for url
-  args_template <- "$filter=%s&$select=%s&Connection Timeout=%s"
-  args_template |>
+  "$filter=%s&$select=%s&Connection Timeout=%s" |>
     sprintf(filters, selected_cols, time_out) |>
     utils::URLencode(reserved = TRUE) |> # TODO: reevaluate encoding here
     stringr::str_replace_all("%3D", "=") |>
@@ -163,21 +137,73 @@ build_abgov_data_args <- function(
     stringr::str_replace_all("%24", "$")
 }
 
-abgov_get_raw_data_request <- function(api_request) {
-  api_request <- api_request |>
-    xml2::read_xml() |>
-    xml2::as_list() |>
-    # server sends 400 error when no data in query
-    handyr::on_error(.return = NULL)
+abgov_make_raw_station_filter <- function(
+  stations = "all",
+  stations_per_call = 3
+) {
+  stopifnot(is.character(stations), length(stations) > 0)
+  stopifnot(is.numeric(stations_per_call), length(stations_per_call) == 1)
 
-  if (is.null(api_request)) {
-    return(NULL)
+  station_filter_template <- "indexof('%s', StationName) ge %s" # site_name, -1|0
+
+  # Don't filter by site if "all" stations
+  if (any(stations == "all")) {
+    return(
+      station_filter_template |> sprintf("t", -1)
+    )
   }
 
-  api_request$feed[-(1:4)] |>
-    lapply(\(entry) {
-      e <- unlist(entry$content$properties)
-      if (!is.null(e)) tibble::tibble(data.frame(t(e)))
-    }) |>
-    dplyr::bind_rows()
+  # Split stations up as needed, and build filter for each
+  seq(1, length(stations), stations_per_call) |>
+    sapply(\(start) {
+      end <- start + stations_per_call
+      end <- (end > length(stations)) |>
+        ifelse(length(stations), end)
+      filter <- station_filter_template |>
+        sprintf(stations[start:end], 0) |>
+        paste(collapse = " or ")
+      paste0("(", filter, ")")
+    })
+}
+
+abgov_make_raw_date_filter <- function(
+  date_range,
+  days_per_call = 3
+) {
+  stopifnot(lubridate::is.POSIXct(date_range), length(date_range) == 2)
+  stopifnot(is.numeric(days_per_call), length(days_per_call) == 1)
+
+  # Setup
+  tzone <- "America/Edmonton" # TODO: confirm
+  max_duration <- paste(days_per_call, "days")
+  date_filter_template <- "ReadingDate ge datetime'%s'" |> 
+    paste("ReadingDate le datetime'%s'", sep = " and ")
+
+  # Split date_range as needed, and build filter for each
+  date_range |>
+    lubridate::with_tz(tzone) |>
+    handyr::split_date_range(max_duration = max_duration) |>
+    apply(1, \(dr) {
+      dr <- dr |>
+        lubridate::as_datetime() |>
+        format("%FT%T")
+      date_filter_template |> sprintf(dr[1], dr[2])
+    })
+}
+
+abgov_make_raw_param_filter <- function(parameters = "all") {
+  stopifnot(is.character(parameters), length(parameters) > 0)
+
+  param_filter_template <- "indexof('%s', ParameterName) ge %s"
+
+  # Don't filter by site if "all" parameters
+  if (any(parameters == "all")) {
+    return(param_filter_template |> sprintf("t", -1))
+  }
+
+  # Build filter
+  param_filter <- param_filter_template |>
+    sprintf(parameters, 0) |>
+    paste(collapse = " or ")
+  paste0("(", param_filter, ")")
 }

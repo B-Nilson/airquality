@@ -100,11 +100,13 @@ abgov_submit_qaqc_requests <- function(
     )
 
   # Get API keys for our stations/parameters
-  desired_var_cols <- value_cols[
-    stringr::str_remove(names(value_cols), "_1hr") %in% variables
-  ]
   keys <- stations |>
-    abgov_get_qaqc_keys(parameters = desired_var_cols, mode = mode)
+    abgov_get_qaqc_keys(
+      parameters = value_cols[
+        stringr::str_remove(names(value_cols), "_1hr") %in% variables
+      ],
+      mode = mode
+    )
 
   # Handle date_range inputs
   date_range <- date_range |>
@@ -265,39 +267,37 @@ abgov_init_data_request <- function(
 }
 
 abgov_get_qaqc_operators <- function(
-  select_operators = "all",
   select_parameter = NULL,
   continuous = TRUE
 ) {
   api_url <- "https://datamanagementplatform.alberta.ca/Ambient/"
-  endpoint_stations <- "AreaOperatorAmbientMultipleParameters"
-  endpoint_parameters <- "GetAOAreaOperatorsForParameter"
 
-  if (is.null(select_parameter)) {
+  # Handle inputs
+  mode <- is.null(select_parameter) |>
+    ifelse(yes = "stations", no = "parameters")
+  endpoint <- list(
+    stations = "AreaOperatorAmbientMultipleParameters",
+    parameters = "GetAOAreaOperatorsForParameter"
+  )[[mode]]
+  is_continuous <- continuous |>
+    ifelse("Continuous", "Non Continuous")
+
+  if (mode == "stations") {
     # Simulate session and extract operator options
-    operators <- api_url |>
-      simulate_session(endpoint = endpoint_stations) |>
+    api_url |>
+      simulate_session(endpoint = endpoint) |>
       extract_options(html_id = "AreaOperatorKeys")
   } else {
-    request_body <- list(
-      ParameterKey = unname(select_parameter),
-      CollectionType = continuous |>
-        ifelse("Continuous", "Non Continuous")
-    )
-    operators <- api_url |>
+    api_url |>
       abgov_post_request(
-        endpoint = endpoint_parameters,
-        request_body = request_body
+        endpoint = endpoint,
+        request_body = list(
+          ParameterKey = unname(select_parameter),
+          CollectionType = is_continuous
+        )
       ) |>
       unlist()
   }
-  # Filter to desired operators
-  if (!"all" %in% select_operators) {
-    is_selected <-
-      operators %in% select_operators | names(operators) %in% select_operators
-    operators <- operators[is_selected]
-  }
-  return(operators)
 }
 
 abgov_get_qaqc_parameters <- function() {
@@ -321,8 +321,8 @@ abgov_get_qaqc_parameters <- function() {
 abgov_make_key_args <- function(keys, key_name) {
   keys <- unique(keys)
   names <- rep(key_name, length(keys))
-  keys |> 
-    as.list() |> 
+  keys |>
+    as.list() |>
     stats::setNames(names)
 }
 
@@ -469,9 +469,8 @@ abgov_get_qaqc_keys <- function(
   operator_keys <- abgov_get_qaqc_operators()
 
   # Get keys for selected stations by operator
-  station_keys <- abgov_get_qaqc_stations(
-    operator_keys = operator_keys
-  )
+  station_keys <- operator_keys |>
+    abgov_get_qaqc_stations()
 
   # Drop keys for non-selected operators
   if (mode == "stations") {
@@ -592,9 +591,7 @@ abgov_wait_for_request <- function(request_token, max_tries = 25) {
   invisible(request_token)
 }
 
-abgov_parse_qaqc_data <- function(
-  data_stream
-) {
+abgov_parse_qaqc_data <- function(data_stream) {
   # Remove metadata header
   header_row <- which(data_stream[, 1] == "Data Origin: ")
   if (length(header_row) == 0) {
