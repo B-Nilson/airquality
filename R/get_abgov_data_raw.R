@@ -52,7 +52,6 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
       ReadingDate = .data$ReadingDate |>
         lubridate::ymd_hms(tz = tzone) |>
         lubridate::with_tz("UTC"),
-      Value = as.numeric(.data$Value),
       quality_assured = FALSE
     ) |>
     dplyr::filter(
