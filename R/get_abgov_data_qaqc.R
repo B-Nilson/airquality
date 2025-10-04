@@ -128,13 +128,9 @@ abgov_submit_qaqc_requests <- function(
   date_range |>
     handyr::split_date_range(max_duration = max_duration, as_list = TRUE) |>
     handyr::for_each(
-      .show_progress = FALSE,
+      .show_progress = !quiet,
       \(d_range) {
         d_range <- d_range |> sapply(format, format = "%F") |> unname()
-        if (!quiet) {
-          "Requesting data for:" |>
-            handyr::log_step(d_range[1], "-", d_range[2])
-        }
         mode_name <- ifelse(mode == "stations", "station", "parameter")
         mode_keys <- unique(keys[[mode_name]])
         mode_keys |>
@@ -169,10 +165,6 @@ abgov_read_qaqc_data <- function(request_tokens, max_tries, quiet) {
       .enumerate = TRUE,
       .show_progress = !quiet,
       \(tokens, i) {
-        if (!quiet) {
-          "Downloading data for request:" |>
-            handyr::log_step(i, "/", length(request_tokens))
-        }
         tokens |>
           handyr::for_each(
             .bind = TRUE,

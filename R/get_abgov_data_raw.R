@@ -29,7 +29,6 @@ get_abgov_data_raw <- function(
     paste0(api_endpoint, "?", api_args) |>
     handyr::for_each(
       abgov_get_raw_data_request,
-      quiet = quiet,
       .show_progress = !quiet,
       .bind = TRUE
     )
@@ -164,10 +163,7 @@ build_abgov_data_args <- function(
     stringr::str_replace_all("%24", "$")
 }
 
-abgov_get_raw_data_request <- function(api_request, quiet = FALSE) {
-  if (!quiet) {
-    message(api_request)
-  }
+abgov_get_raw_data_request <- function(api_request) {
   api_request <- api_request |>
     xml2::read_xml() |>
     xml2::as_list() |>
