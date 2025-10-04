@@ -41,7 +41,7 @@ get_abgov_stations <- function(..., use_sf = FALSE, quiet = FALSE) {
   # Get raw station metadata from the AB gov API
   raw_stations <- api_url |>
     paste0(api_endpoint, "?") |>
-    abgov_get_raw_data_request(quiet = quiet)
+    abgov_get_raw_data_request()
 
   # Standardize formatting
   stations <- raw_stations |>
