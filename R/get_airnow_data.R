@@ -99,14 +99,18 @@ get_airnow_data <- function(
   ]
 
   # Get hourly data files for desired date range
+  if (!quiet) {
+    handyr::log_step("Getting hourly files")
+  }
   airnow_data <- date_range |>
     make_airnow_filepaths(quiet = quiet) |>
     handyr::for_each(
       .bind = TRUE,
       .parallel = fast,
+      .show_progress = !quiet,
       \(airnow_file_path) {
         airnow_file_path |>
-          read_airnow_data_file(quiet = quiet) |>
+          read_airnow_data_file(quiet = TRUE) |>
           handyr::on_error(.return = NULL)
       }
     ) |>
@@ -137,8 +141,11 @@ get_airnow_data <- function(
 
   # Get meta for stations within date_range for adding date_local
   if (!fast) {
+    if (!quiet) {
+      handyr::log_step("Getting station metadata")
+    }
     known_stations <- date_range |>
-      get_airnow_stations(time_step = "25 days")
+      get_airnow_stations(time_step = "25 days", quiet = quiet)
   } else {
     known_stations <- NULL
   }

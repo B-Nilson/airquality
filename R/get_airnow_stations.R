@@ -71,11 +71,13 @@ get_airnow_stations <- function(
   stations <- names(airnow_paths) |>
     handyr::for_each(
       .bind = TRUE,
+      .show_progress = !quiet,
       \(d) {
-        airnow_paths[names(airnow_paths) == as.character(d)] |>
-          read_airnow_meta_file(quiet = quiet) |>
+        path <- airnow_paths[names(airnow_paths) == as.character(d)]
+        path |>
+          read_airnow_meta_file(quiet = TRUE) |>
           dplyr::mutate(file_date = d) |>
-          handyr::on_error(.return = NULL, .warn = TRUE)
+          handyr::on_error(.return = NULL, .warn = paste0("Could not read file: ", path))
       }
     ) |>
     tibble::as_tibble() |>
