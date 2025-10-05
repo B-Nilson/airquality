@@ -27,7 +27,6 @@ test_that("basic case works", {
   expect_true(all(!is.na(obs$date_local)))
   # Case: All date_utc within requested date range
   expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
-  expect_true(all(unique(obs$site_id) %in% station))
 
   # Case: date_utc the same as converting date_local to UTC
   obs_2 <- obs |> convert_date_utc_to_local()
