@@ -110,9 +110,9 @@ bcgov_make_raw_paths <- function(
 
   # Force binary mode if many stations relative to variables
   if (
-    (length(variables) == 1 & length(stations) > 3) |
-      (length(variables) == 2 & length(stations) > 10) &
-        mode != "realtime"
+    ((length(variables) == 1 & length(stations) > 3) |
+      (length(variables) == 2 & length(stations) > 10)) &
+      mode != "realtime"
   ) {
     mode <- "binary"
   }
