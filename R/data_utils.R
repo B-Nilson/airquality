@@ -411,11 +411,11 @@ drop_missing_obs_rows <- function(obs, where_fn = \(x) "units" %in% class(x)) {
 }
 
 standardize_obs_units <- function(obs, default_units, input_units = NULL) {
-  cols_to_convert <- is.null(input_units) |>
-    ifelse(
-      yes = names(default_units),
-      no = names(input_units)
-    )
+  if (is.null(input_units)) {
+    cols_to_convert <- names(default_units)
+  }else {
+    cols_to_convert <- names(input_units)
+  }
   obs |>
     dplyr::mutate(
       dplyr::across(
