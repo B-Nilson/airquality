@@ -1,11 +1,6 @@
 test_that("an error/warning is not thrown in normal usaage", {
-  date_range <- "2019-02-01 00:00:00"
-  obs <- expect_no_warning(expect_no_error(
-    get_airnow_data(
-      stations = "000010102",
-      date_range = date_range,
-      quiet = TRUE
-    )
+  expect_no_warning(expect_no_error(
+    get_airnow_data(quiet = TRUE)
   ))
 })
 
