@@ -34,6 +34,29 @@ test_that("basic case works", {
   expect_equal(obs_2$date_utc, obs_2$date_utc_from_local)
 })
 
+test_that("times lineup across sources", {
+  raw_parquets <- bcgov_get_raw_data(variables = "pm2.5", mode = "binary") |>
+    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
+  realtime_csv <- bcgov_get_raw_data(variables = "pm2.5", mode = "realtime") |>
+    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
+  qaqc_parquets <- (lubridate::year(raw_parquets$date_utc[1]) - 1) |>
+    bcgov_get_qaqc_data(stations = "all", variables = "pm2.5", mode = "binary") |>
+    dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
+
+  raw_overlap <- raw_parquets |> 
+    dplyr::inner_join(realtime_csv, by = c("site_id", "date_utc"))
+
+  expect_identical(
+    raw_overlap$pm25_1hr.x |> as.numeric(),
+    raw_overlap$pm25_1hr.y |> as.numeric()
+  )
+  expect_equal(
+    min(raw_parquets$date_utc),
+    max(qaqc_parquets$date_utc) + lubridate::hours(1)
+  )
+  expect_true(max(realtime_csv$date_utc) <= Sys.time())
+})
+
 # Input: stations ---------------------------------------------------------
 
 test_that("unknown stations cause warning", {

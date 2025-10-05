@@ -115,8 +115,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       # Convert date to UTC backward looking
       date_utc = .data$DATE_PST |>
         lubridate::as_datetime(tz = "Etc/GMT+8") |>
-        lubridate::with_tz("UTC") +
-        lubridate::hours(1) # TODO: confirm valid
+        lubridate::with_tz("UTC")
     ) |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::select(dplyr::all_of(desired_cols)) |>
