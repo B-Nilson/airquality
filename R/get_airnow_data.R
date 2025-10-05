@@ -280,7 +280,7 @@ read_airnow_data_file <- function(airnow_file_path, quiet = FALSE) {
     cot_1hr = "COT", # t == "trace"
     # Met data
     rh_1hr = "RHUM",
-    t_1hr = "TEMP",
+    temp_1hr = "TEMP",
     wd_1hr = "WD",
     ws_1hr = "WS",
     precip_1hr = "PRECIP",

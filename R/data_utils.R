@@ -291,31 +291,43 @@ insert_date_local <- function(obs, stations_meta, by = "site_name") {
     dplyr::select(-"tz_local")
 }
 
-# TODO: any missing? This is copied from bcmoe data
 default_units <- c(
   # Particulate Matter
   pm25_1hr = "ug/m3",
   pm10_1hr = "ug/m3",
+  bc_1hr = "ug/m3",
   # Ozone
   o3_1hr = "ppb",
   # Nitrogen Pollutants
   no_1hr = "ppb",
+  no2t_1hr = "ppb", # t == "true measure"
   no2_1hr = "ppb",
+  no2y_1hr = "ppb", # y == "reactive"
   nox_1hr = "ppb",
+  noy_1hr = "ppb", # y == "reactive"
+  no3_1hr = "ppb",
+  nh3_1hr = "ppb", # TODO: check this (abgov)
   # Sulfur Pollutants
   so2_1hr = "ppb",
+  so2t_1hr = "ppb", # t == "trace"
+  so4_1hr = "ppb",
   trs_1hr = "ppb",
   h2s_1hr = "ppb",
   # Carbon Monoxide
   co_1hr = "ppb",
+  cot_1hr = "ppb", # t == "trace"
+  # Methane
+  ch4_1hr = "ppb",
   # Met data
   rh_1hr = "%",
   temp_1hr = "degC",
   wd_1hr = "degrees",
   wd_unitvector_1hr = "degrees",
+  wd_sd_1hr = "degrees",
   ws_1hr = "m/s",
   ws_vector_1hr = "m/s",
   precip_1hr = "mm",
+  solar_1hr = "W/m2",
   snow_1hr = "mm",
   snowdepth_1hr = "cm",
   pressure_1hr = "kPa",

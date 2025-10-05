@@ -174,7 +174,7 @@ get_abgov_data <- function(
     hc_nm_1hr = "Non-methane Hydrocarbons",
     # Met data
     rh_1hr = "Relative Humidity",
-    t_1hr = "Outdoor Air Temperature",
+    temp_1hr = "Outdoor Air Temperature",
     wd_1hr = "Wind Direction",
     wd_sd_1hr = "Std. Dev. of Wind Direction",
     ws_1hr = "Wind Speed",
@@ -208,7 +208,7 @@ abgov_units <- c(
   hcnm_1hr = "ppm",
   # Met data
   rh_1hr = "percent",
-  t_1hr = "degC",
+  temp_1hr = "degC",
   wd_1hr = "degrees",
   ws_1hr = "km/h",
   solar_1hr = NA # check
