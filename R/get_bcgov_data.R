@@ -97,6 +97,9 @@ get_bcgov_data <- function(
   # Get realtime data if needed
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
+    if (!quiet) {
+      handyr::log_step("Getting realtime data")
+    }
     realtime_data <- stations |>
       bcgov_get_raw_data(
         variables = variables,
@@ -121,6 +124,9 @@ get_bcgov_data <- function(
 
   # Get raw/qaqc data as needed
   if (!is_all_realtime) {
+    if (!quiet) {
+      handyr::log_step("Getting archived data")
+    }
     archived_data <- date_range_new |>
       bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
       handyr::for_each(
@@ -131,7 +137,7 @@ get_bcgov_data <- function(
         stations = stations,
         variables = variables,
         qaqc_years = qaqc_years,
-        quiet = quiet
+        quiet = TRUE
       )
   } else {
     archived_data <- NULL
