@@ -253,7 +253,6 @@ read_airnow_data_file <- function(airnow_file_path, quiet = FALSE) {
   meta = c(
     date_utc = "date_utc", # Added by get_airnow_data()
     site_id = "siteID",
-    site_name = "site",
     quality_assured = "quality_assured" # Added by get_airnow_data()
   ),
   values = c(
