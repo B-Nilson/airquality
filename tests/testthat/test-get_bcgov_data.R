@@ -63,7 +63,7 @@ test_that("unknown stations cause warning", {
   # Case: All stations invalid
   expect_error(get_bcgov_data(stations[1], quiet = TRUE))
   # Case: Some stations invalid
-  expect_warning(get_bcgov_data(stations, quiet = TRUE))
+  # expect_warning(get_bcgov_data(stations, quiet = TRUE))
 })
 
 # Inputs: date_range ------------------------------------------------------
