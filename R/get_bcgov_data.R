@@ -68,7 +68,7 @@ get_bcgov_data <- function(
     paste0("-01-01 01:00:00")
   allowed_date_range[2] <- "now"
   realtime_start <- handyr::check_date_range("now") -
-    lubridate::days(30)
+    lubridate::days(1) # actually 30, but binaries are < 1 day old and faster to load
 
   # Handle date_range input
   date_range <- date_range |>

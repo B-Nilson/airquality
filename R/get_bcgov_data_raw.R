@@ -144,7 +144,7 @@ bcgov_make_raw_paths <- function(
         get_file_list(full_path = TRUE)
       all_ages <- raw_directories$realtime |>
         get_file_ages(units = "days")
-      data_paths <- all_paths[all_paths %in% data_paths & all_ages < 30]
+      data_paths <- all_paths[all_paths %in% data_paths & all_ages < 3]
     }
   }
 
