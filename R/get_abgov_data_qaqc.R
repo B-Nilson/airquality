@@ -74,8 +74,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
       value_col = "Measurement Value",
       name_col = "Parameter",
       desired_cols = desired_cols
-    ) |>
-    standardize_obs_units(default_units = default_units) # TODO: move to standardize_data_format() ?
+    )
 }
 
 abgov_submit_qaqc_requests <- function(

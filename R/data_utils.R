@@ -356,7 +356,9 @@ standardize_data_format <- function(
     # Drop any all NA (obs) rows
     drop_missing_obs_rows() |>
     # Drop any all NA columns
-    dplyr::select_if(\(x) !all(is.na(x)))
+    dplyr::select_if(\(x) !all(is.na(x))) |> 
+    # Standarsdize units
+    standardize_obs_units(default_units = default_units)
 
   if (nrow(formatted) == 0) {
     stop("No data available after reformatting.")
