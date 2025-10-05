@@ -307,7 +307,7 @@ format_bcgov_raw_data <- function(
     raw_data <- raw_data |>
       dplyr::mutate(
         dplyr::across(
-          dplyr::all_of(value_cols[i]),
+          dplyr::all_of(unname(value_cols[i])),
           \(x) {
             as.numeric(x) |>
               suppressWarnings() |> # NAs introduced by coercion
