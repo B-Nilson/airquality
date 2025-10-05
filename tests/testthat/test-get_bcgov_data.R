@@ -1,10 +1,10 @@
 test_that("basic case works", {
-  station <- "0450307"
   date_range <- handyr::check_date_range("now")
   date_range[1] <- date_range[1] - lubridate::hours(2)
+  date_range <- date_range - lubridate::days(365)
   obs <- expect_no_warning(expect_no_error(
     get_bcgov_data(
-      stations = station,
+      variables = "pm2.5",
       date_range = date_range,
       quiet = TRUE
     )
