@@ -40,7 +40,10 @@ bcgov_get_raw_data <- function(
         .bind = TRUE,
         .show_progress = !quiet
       ) |>
-      format_bcgov_raw_data(mode = mode)
+      format_bcgov_raw_data(
+        variables = variables,
+        mode = mode
+      )
   }
 }
 
@@ -237,6 +240,7 @@ read_raw_bcgov_data <- function(bcgov_path) {
 
 format_bcgov_raw_data <- function(
   raw_data,
+  variables = "all",
   mode = "binary"
 ) {
   stopifnot(is.data.frame(raw_data), nrow(raw_data) > 0)
@@ -248,6 +252,17 @@ format_bcgov_raw_data <- function(
 
   bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
 
+  # Standardize common var names
+  is_all_variables <- any(variables == "all")
+  variables <- variables |>
+    standardize_input_vars(
+      all_variables = names(.bcgov_columns$values) |>
+        stringr::str_remove("_1hr")
+    )
+  value_cols <- .bcgov_columns$values[
+    names(.bcgov_columns$values) %in% paste0(variables, "_1hr")
+  ]
+
   # binary/variables modes have same format as QAQC data - so use that function
   if (mode %in% c("variables", "binary")) {
     return(
@@ -255,8 +270,17 @@ format_bcgov_raw_data <- function(
     )
   }
 
+  # Drop unnecessary variables
+  raw_data <- raw_data |>
+    dplyr::select(
+      dplyr::any_of(unname(.bcgov_columns$meta)),
+      "DATE_PST",
+      dplyr::any_of(unname(value_cols)),
+      dplyr::any_of(unname(value_cols) |> paste0("_UNIT")),
+      dplyr::any_of(unname(value_cols) |> paste0("_INSTRUMENT"))
+    )
+
   # Get value/unit column names and insert unit columns if needed
-  value_cols <- names(raw_data)[names(raw_data) %in% .bcgov_columns$values]
   if (mode != "stations") {
     # Insert default units as unit columns as no units provided within file
     unit_cols <- paste0(value_cols, "_UNIT")
