@@ -368,7 +368,7 @@ standardize_data_format <- function(
     # Drop any all NA (obs) rows
     drop_missing_obs_rows() |>
     # Drop any all NA columns
-    dplyr::select_if(\(x) !all(is.na(x))) |> 
+    dplyr::select_if(\(x) !all(is.na(x))) |>
     # Standarsdize units
     standardize_obs_units(default_units = default_units)
 
@@ -427,7 +427,7 @@ drop_missing_obs_rows <- function(obs, where_fn = \(x) "units" %in% class(x)) {
 standardize_obs_units <- function(obs, default_units, input_units = NULL) {
   if (is.null(input_units)) {
     cols_to_convert <- names(default_units)
-  }else {
+  } else {
     cols_to_convert <- names(input_units)
   }
   obs |>

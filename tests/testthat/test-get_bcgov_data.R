@@ -39,10 +39,14 @@ test_that("times lineup across sources", {
   realtime_csv <- bcgov_get_raw_data(variables = "pm2.5", mode = "realtime") |>
     dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
   qaqc_parquets <- (lubridate::year(raw_parquets$date_utc[1]) - 1) |>
-    bcgov_get_qaqc_data(stations = "all", variables = "pm2.5", mode = "binary") |>
+    bcgov_get_qaqc_data(
+      stations = "all",
+      variables = "pm2.5",
+      mode = "binary"
+    ) |>
     dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))
 
-  raw_overlap <- raw_parquets |> 
+  raw_overlap <- raw_parquets |>
     dplyr::inner_join(realtime_csv, by = c("site_id", "date_utc"))
 
   expect_identical(

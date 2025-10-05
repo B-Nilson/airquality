@@ -77,7 +77,10 @@ get_airnow_stations <- function(
         path |>
           read_airnow_meta_file(quiet = TRUE) |>
           dplyr::mutate(file_date = d) |>
-          handyr::on_error(.return = NULL, .warn = paste0("Could not read file: ", path))
+          handyr::on_error(
+            .return = NULL,
+            .warn = paste0("Could not read file: ", path)
+          )
       }
     ) |>
     tibble::as_tibble() |>
