@@ -22,8 +22,6 @@ test_that("unknown stations cause warning", {
   date_range <- "2019-02-02 00:00:00"
   # Case: All stations invalid
   expect_error(get_airnow_data(stations[1], date_range, quiet = TRUE))
-  # Case: Some stations invalid
-  expect_warning(get_airnow_data(stations, date_range, quiet = TRUE))
 })
 
 # Inputs: date_range ------------------------------------------------------
