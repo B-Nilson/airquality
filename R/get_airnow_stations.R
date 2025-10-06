@@ -132,11 +132,14 @@ read_airnow_meta_file <- function(airnow_file_path, quiet = FALSE) {
     "UNKNOWN",
     "UNKNOWN"
   )
-  data.table::fread(
-    file = airnow_file_path,
-    encoding = "UTF-8",
-    showProgress = !quiet
-  ) |>
+  airnow_file_path |>
+    readr::read_delim(
+      locale = readr::locale(encoding = "CP437"),
+      delim = "|",
+      col_names = FALSE,
+      progress = !quiet,
+      show_col_types = FALSE
+    ) |>
     stats::setNames(file_header) |>
     dplyr::select(-dplyr::starts_with("UNKNOWN"))
 }
