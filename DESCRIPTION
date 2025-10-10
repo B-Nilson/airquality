@@ -41,7 +41,7 @@ Imports:
     withr,
     xml2
 RoxygenNote: 7.3.3
-URL: https://github.com/B-Nilson/airquality
+URL: https://github.com/B-Nilson/airquality, https://b-nilson.github.io/airquality/
 BugReports: https://github.com/B-Nilson/airquality/issues
 Remotes: 
     github::B-Nilson/handyr

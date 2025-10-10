@@ -1,5 +1,5 @@
 
-# airquality
+# airquality <a href="https://b-nilson.github.io/airquality/"><img src="man/figures/logo.svg" align="right" height="139" alt="airquality website" /></a>
 
 <!-- badges: start -->
 <!-- badges: end -->
