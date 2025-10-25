@@ -96,23 +96,35 @@ get_thingspeak_data <- function(
   meta |> c(list(params = params, data = data))
 }
 
-get_thingspeak_public_channels <- function(page = 1) {
-  # Build url to desired page of channels
-  url <- "https://thingspeak.mathworks.com/channels/public?page=%s" |>
-    sprintf(page)
+get_thingspeak_public_channels <- function(pages = 1, quiet = FALSE) {
+  stopifnot(is.numeric(pages) | !is.na(as.integer(pages)), length(pages) > 0)
+  stopifnot(is.logical(quiet), length(quiet) == 1)
+
+  # Build url to desired page(s) of channels
+  urls <- "https://thingspeak.mathworks.com/channels/public?page=%s" |>
+    sprintf(as.integer(pages))
 
   # Scrape text content
-  page_lines <- url |>
-    rvest::read_html() |>
-    rvest::html_text() |>
-    stringr::str_split_1("\n")
+  page_lines <- urls |>
+    handyr::for_each(
+      .show_progress = !quiet,
+      \(url) {
+        url |>
+          rvest::read_html() |>
+          rvest::html_text()
+      }
+    ) |>
+    stringr::str_split("\n") |>
+    unlist()
 
-  # Extract channel IDs
+  # Extract channel IDs and titles
   id_entries <- page_lines |>
-    stringr::str_which("^ *Channel ID:") +
-    1L
-  page_lines[id_entries] |>
-    as.numeric()
+    stringr::str_which("^ *Channel ID:")
+  titles <- page_lines[id_entries - 5L] |>
+    stringr::str_trim()
+  page_lines[id_entries + 1L] |>
+    as.numeric() |>
+    setNames(object = titles)
 }
 
 insert_thingspeak_params <- function(url, params) {
