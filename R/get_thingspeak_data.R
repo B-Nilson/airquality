@@ -22,6 +22,11 @@ get_thingspeak_data <- function(
   try_to_include_units = TRUE
 ) {
   stopifnot(
+    is.numeric(channel_id) | !is.na(as.integer(channel_id)),
+    length(channel_id) == 1
+  )
+  stopifnot(is.logical(try_to_include_units), length(try_to_include_units) == 1)
+  stopifnot(
     "`read_params` must be created using `ThingSpeakReadParams()`" = "airquality::ThingSpeakReadParams" %in%
       class(read_params) |
       is.null(read_params)
@@ -29,7 +34,7 @@ get_thingspeak_data <- function(
 
   # Build basic channel url
   template <- "https://api.thingspeak.com/channels/%s/feeds.json"
-  url <- template |> sprintf(channel_id)
+  url <- template |> sprintf(as.integer(channel_id))
 
   # Add parameters if any
   if (is.null(read_params)) {
