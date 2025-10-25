@@ -1,5 +1,5 @@
 test_that("basic case works", {
-  channel <- 357142
+  channel <- get_thingspeak_public_channels()[1]
 
   test <- get_thingspeak_data(channel = channel) |> 
     expect_no_error() |>

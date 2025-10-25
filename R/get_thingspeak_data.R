@@ -93,6 +93,25 @@ get_thingspeak_data <- function(
   meta |> c(list(params = params, data = data))
 }
 
+get_thingspeak_public_channels <- function(page = 1) {
+  # Build url to desired page of channels
+  url <- "https://thingspeak.mathworks.com/channels/public?page=%s" |>
+    sprintf(page)
+
+  # Scrape text content
+  page_lines <- url |>
+    rvest::read_html() |>
+    rvest::html_text() |>
+    stringr::str_split_1("\n")
+
+  # Extract channel IDs
+  id_entries <- page_lines |>
+    stringr::str_which("^ *Channel ID:") +
+    1L
+  page_lines[id_entries] |>
+    as.numeric()
+}
+
 insert_thingspeak_params <- function(url, params) {
   if (length(params) == 0) {
     return(url)
