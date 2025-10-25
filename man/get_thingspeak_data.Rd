@@ -6,21 +6,24 @@
 \usage{
 get_thingspeak_data(
   channel_id,
-  try_to_include_units = TRUE,
   read_params = NULL,
-  ...
+  ...,
+  try_to_include_units = TRUE
 )
 }
 \arguments{
 \item{channel_id}{ThingSpeak channel ID}
 
-\item{try_to_include_units}{If TRUE, the function will try to include units in the response by looking for "\[unit\]" in the column names.}
-
 \item{read_params}{(Optional) parameters to include in the request created using [ThingSpeakReadParams()].
-See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].}
+See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].
+Defaults to NULL, which uses `...` to build `read_params` instead.}
 
 \item{...}{(Optional) Named parameters to include in the request if read_params is NULL.
-See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].}
+See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].
+Will be used to build `read_params` using [ThingSpeakReadParams()].
+Default (nothing passed) is equivalent to `read_params = ThingSpeakReadParams()`.}
+
+\item{try_to_include_units}{If TRUE, the function will try to include units in the response by looking for "\[unit\]" in the column names.}
 }
 \value{
 A list with channel metadata and a tibble containing the data from the ThingSpeak channel.
@@ -30,6 +33,6 @@ Get data from a ThingSpeak channel
 }
 \examples{
 \dontrun{
-data <- get_thingspeak_data(channel_id = "123456")
+data <- get_thingspeak_data(channel_id = 123456)
 }
 }

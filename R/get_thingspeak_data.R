@@ -1,22 +1,25 @@
 #' Get data from a ThingSpeak channel
 #'
 #' @param channel_id ThingSpeak channel ID
-#' @param try_to_include_units If TRUE, the function will try to include units in the response by looking for "\[unit\]" in the column names.
 #' @param read_params (Optional) parameters to include in the request created using [ThingSpeakReadParams()].
 #'   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].
+#'   Defaults to NULL, which uses `...` to build `read_params` instead.
 #' @param ... (Optional) Named parameters to include in the request if read_params is NULL.
 #'   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for valid parameters or [ThingSpeakReadParams()].
+#'   Will be used to build `read_params` using [ThingSpeakReadParams()].
+#'   Default (nothing passed) is equivalent to `read_params = ThingSpeakReadParams()`.
+#' @param try_to_include_units If TRUE, the function will try to include units in the response by looking for "\[unit\]" in the column names.
 #' @return A list with channel metadata and a tibble containing the data from the ThingSpeak channel.
 #' @examples
 #' \dontrun{
-#' data <- get_thingspeak_data(channel_id = "123456")
+#' data <- get_thingspeak_data(channel_id = 123456)
 #' }
 #' @export
 get_thingspeak_data <- function(
   channel_id,
-  try_to_include_units = TRUE,
   read_params = NULL,
-  ...
+  ...,
+  try_to_include_units = TRUE
 ) {
   stopifnot(
     "`read_params` must be created using `ThingSpeakReadParams()`" = "airquality::ThingSpeakReadParams" %in%
@@ -194,36 +197,67 @@ class_ts_datestring <- S7::class_character |>
     }
   })
 
+#' An S7 class to represent parameters for the ThingSpeak API.
+#' @description 
+#'   Provides a structured way to specify parameters for the ThingSpeak API. 
+#'   Intended to be used with [get_thingspeak_data()] for building queries. 
+#' 
+#'   Note: The `results` parameter has the highest precedence. 
+#'   Using `results` with the parameters `min`, `max`, `timescale`, `sum`, `average`, or `median` can cause less records than `results` to be returned.
+#'   The results parameter determines the maximum number of entries to be used for a query, up to 8000. 
+#'   For example, a request to a channel with one entry per minute with the parameters `results = 120` and `sum = 60` returns only two records, and not 120.
+#' 
+#'   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for more information.
+#' @slot api_key Required for private channels. Specify the Read API Key found on the API Keys tab of the channel view. (string)
+#' @slot results Optional. Number of entries to retrieve. Maximum is 8,000. (integer)
+#' @slot days Optional. Number of 24-hour periods before now to include. Default is 1. (integer)
+#' @slot minutes Optional. Number of 60-second periods before now to include. Default is 1440. (integer)
+#' @slot start Optional. Start date in format YYYY-MM-DD HH:NN:SS. (datetime)
+#' @slot end Optional. End date in format YYYY-MM-DD HH:NN:SS. (datetime)
+#' @slot timezone Optional. Identifier from Time Zones Reference. (string)
+#' @slot offset Optional. Timezone offset for displaying results. Use `timezone` for greater accuracy. (integer)
+#' @slot status Optional. Include status updates by setting `status = TRUE`. (logical)
+#' @slot metadata Optional. Include channel metadata by setting `metadata = TRUE`. (logical)
+#' @slot location Optional. Include latitude, longitude, and elevation by setting `location = TRUE`. (logical)
+#' @slot min Optional. Minimum value to include. (numeric)
+#' @slot max Optional. Maximum value to include. (numeric)
+#' @slot round Optional. Round values to this many decimal places. (integer)
+#' @slot timescale Optional. Get first value in this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)
+#' @slot sum Optional. Get sum over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)
+#' @slot average Optional. Get average over this many minutes. NaN values are treated as 0. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)
+#' @slot median Optional. Get median over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)
+#'
+#' @import S7
 #' @export
-ThingSpeakReadParams <- S7::new_class(
+ThingSpeakReadParams <- new_class(
   "ThingSpeakReadParams",
   properties = list(
-    api_key = S7::class_character,
-    results = S7::class_integer |>
-      S7::new_property(validator = \(value) {
+    api_key = class_character,
+    results = class_integer |>
+      new_property(validator = \(value) {
         if (length(value)) {
           if (value > 8000) {
             "must be 8000 or less"
           }
         }
       }),
-    days = S7::class_integer |>
-      S7::new_property(default = 1L),
-    minutes = S7::class_integer |>
-      S7::new_property(default = 1440L),
+    days = class_integer |>
+      new_property(default = 1L),
+    minutes = class_integer |>
+      new_property(default = 1440L),
     start = class_ts_datestring,
     end = class_ts_datestring,
-    timezone = S7::class_character,
-    offset = S7::class_integer,
-    fields = S7::class_character,
-    status = S7::class_logical,
-    metadata = S7::class_logical |>
-      S7::new_property(default = TRUE),
-    location = S7::class_logical |>
-      S7::new_property(default = TRUE),
-    min = S7::class_numeric,
-    max = S7::class_numeric,
-    round = S7::class_integer,
+    timezone = class_character,
+    offset = class_integer,
+    fields = class_character,
+    status = class_logical,
+    metadata = class_logical |>
+      new_property(default = TRUE),
+    location = class_logical |>
+      new_property(default = TRUE),
+    min = class_numeric,
+    max = class_numeric,
+    round = class_integer,
     timescale = class_ts_timescale,
     sum = class_ts_timescale,
     average = class_ts_timescale,
