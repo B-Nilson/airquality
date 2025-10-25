@@ -32,6 +32,7 @@ Imports:
     methods,
     osmdata,
     readr,
+    rjson,
     rlang,
     rvest,
     stringr,
