@@ -64,7 +64,14 @@ get_thingspeak_data <- function(
   # Extract any other metadata
   meta <- result$channel[
     field_pattern |> grep(x = names(result$channel), invert = TRUE)
-  ]
+  ] |>
+    lapply(\(x) x |> type.convert(as.is = TRUE))
+  if ("created_at" %in% names(meta)) {
+    meta$created_at <- lubridate::as_datetime(meta$created_at)
+  }
+  if ("updated_at" %in% names(meta)) {
+    meta$updated_at <- lubridate::as_datetime(meta$updated_at)
+  }
 
   # Extract data and format values
   data <- result$feeds |>
