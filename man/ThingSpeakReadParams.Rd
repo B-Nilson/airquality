@@ -27,12 +27,12 @@ ThingSpeakReadParams(
 )
 }
 \description{
-Provides a structured way to specify parameters for the ThingSpeak API. 
-  Intended to be used with [get_thingspeak_data()] for building queries. 
+Provides a structured way to specify parameters for the ThingSpeak API.
+  Intended to be used with [get_thingspeak_data()] for building queries.
 
-  Note: The `results` parameter has the highest precedence. 
+  Note: The `results` parameter has the highest precedence.
   Using `results` with the parameters `min`, `max`, `timescale`, `sum`, `average`, or `median` can cause less records than `results` to be returned.
-  The results parameter determines the maximum number of entries to be used for a query, up to 8000. 
+  The results parameter determines the maximum number of entries to be used for a query, up to 8000.
   For example, a request to a channel with one entry per minute with the parameters `results = 120` and `sum = 60` returns only two records, and not 120.
 
   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for more information.

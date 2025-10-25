@@ -215,15 +215,15 @@ class_ts_datestring <- S7::class_character |>
   })
 
 #' An S7 class to represent parameters for the ThingSpeak API.
-#' @description 
-#'   Provides a structured way to specify parameters for the ThingSpeak API. 
-#'   Intended to be used with [get_thingspeak_data()] for building queries. 
-#' 
-#'   Note: The `results` parameter has the highest precedence. 
+#' @description
+#'   Provides a structured way to specify parameters for the ThingSpeak API.
+#'   Intended to be used with [get_thingspeak_data()] for building queries.
+#'
+#'   Note: The `results` parameter has the highest precedence.
 #'   Using `results` with the parameters `min`, `max`, `timescale`, `sum`, `average`, or `median` can cause less records than `results` to be returned.
-#'   The results parameter determines the maximum number of entries to be used for a query, up to 8000. 
+#'   The results parameter determines the maximum number of entries to be used for a query, up to 8000.
 #'   For example, a request to a channel with one entry per minute with the parameters `results = 120` and `sum = 60` returns only two records, and not 120.
-#' 
+#'
 #'   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for more information.
 #' @slot api_key Required for private channels. Specify the Read API Key found on the API Keys tab of the channel view. (string)
 #' @slot results Optional. Number of entries to retrieve. Maximum is 8,000. (integer)
