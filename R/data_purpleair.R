@@ -201,6 +201,7 @@ purpleair_api <- function(
     pa_data <- api_response$data |>
       handyr::for_each(
         .bind = TRUE,
+        .show_progress = !quiet,
         \(entry) {
           entry |>
             stats::setNames(response_fields)
