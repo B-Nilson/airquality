@@ -149,8 +149,8 @@ If `raw = FALSE` (default), the returned data will be in a standardized format a
 <span class="r-in"><span><span class="co"># Get data for all stations for first 3 hours (UTC) of Jan 2019</span></span></span>
 <span class="r-in"><span><span class="fu">get_airnow_data</span><span class="op">(</span><span class="st">"all"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2019-01-01 01:00:00"</span>, <span class="st">"2019-01-01 03:00:00"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-10-28 01:56:31: Getting hourly files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-10-28 01:56:34: Getting station metadata</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-11-05 17:23:21: Getting hourly files</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-11-05 17:23:21: Getting station metadata</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There was 1 warning in `dplyr::mutate()`.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> In argument: `date_local = format(...)`.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> In group 36: `tz_local = <span style="color: #BB0000;">NA</span>`.</span>
@@ -178,8 +178,8 @@ If `raw = FALSE` (default), the returned data will be in a standardized format a
 <span class="r-in"><span><span class="co"># Get data for two specific stations for first 3 hours (UTC) of Jan 2019</span></span></span>
 <span class="r-in"><span><span class="fu">get_airnow_data</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"000010102"</span>, <span class="st">"000010401"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2019-01-01 01:00:00"</span>, <span class="st">"2019-01-01 03:00:00"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-10-28 01:56:36: Getting hourly files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-10-28 01:56:39: Getting station metadata</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-11-05 17:23:24: Getting hourly files</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2025-11-05 17:23:24: Getting station metadata</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 6</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   date_utc            date_local         site_id quality_assured pm25_1hr o3_1hr</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>           <span style="color: #949494;">[ug/m^3]</span>  <span style="color: #949494;">[ppb]</span></span>
