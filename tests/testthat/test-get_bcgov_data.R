@@ -33,6 +33,18 @@ test_that("basic case works", {
   expect_equal(obs_2$date_utc, obs_2$date_utc_from_local)
 })
 
+test_that("multi-value entries handled properly", {
+  date_range <- c("2008-01-01 00", "2008-12-31 23") |> 
+    lubridate::ymd_h(tz = "UTC")
+  obs <- get_bcgov_data(
+    variables = "pm2.5",
+    date_range = date_range,
+    quiet = TRUE
+  ) |> 
+    expect_no_error() |>
+    expect_no_warning()
+})
+
 test_that("times lineup across sources", {
   raw_parquets <- bcgov_get_raw_data(variables = "pm2.5", mode = "binary") |>
     dplyr::select(dplyr::any_of(unlist(unname(.bcgov_columns))))

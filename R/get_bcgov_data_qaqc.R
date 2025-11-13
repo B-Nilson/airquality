@@ -112,16 +112,20 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
   qaqc_data |>
     remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
     dplyr::mutate(
+      # Pad left side of id with 0s if needed
+      EMS_ID = EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left"),
       # Convert date to UTC backward looking
-      date_utc = .data$DATE_PST |>
-        lubridate::as_datetime(tz = "Etc/GMT+8") |>
+      date_utc = .data$DATE |>
+        format("%F") |> 
+        paste(.data$TIME |> format("%H:%M:%S")) |>
+        lubridate::ymd_hms(tz = "Etc/GMT+8") |>
         lubridate::with_tz("UTC")
     ) |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::select(dplyr::all_of(desired_cols)) |>
     dplyr::filter(!is.na(.data$VALUE)) |>
-    # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989)
-    dplyr::distinct() |>
+    # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989, PM25 for E246240 in 2008)
+    dplyr::distinct(date_utc, EMS_ID, PARAMETER, INSTRUMENT, .keep_all = TRUE) |>
     # Set units of value column and convert to default unit
     dplyr::mutate(
       VALUE = as.numeric(.data$VALUE) |>
