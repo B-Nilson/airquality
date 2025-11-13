@@ -116,9 +116,9 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       EMS_ID = .data$EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left"),
       # Convert date to UTC backward looking
       date_utc = .data$DATE |>
-        format("%Y-%m-%d") |> 
-        paste(.data$TIME |> format("%H:%M:%S")) |>
-        lubridate::ymd_hms(tz = "Etc/GMT+8") |>
+        as.character() |> 
+        paste(.data$TIME |> as.character()) |>
+        lubridate::as_datetime(tz = "Etc/GMT+8") |>
         lubridate::with_tz("UTC")
     ) |>
     # drop unnecessary rows/columns for memory-saving
