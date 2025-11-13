@@ -113,7 +113,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
     dplyr::mutate(
       # Pad left side of id with 0s if needed
-      EMS_ID = EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left"),
+      EMS_ID = .data$EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left"),
       # Convert date to UTC backward looking
       date_utc = .data$DATE |>
         format("%Y-%m-%d") |> 
@@ -125,7 +125,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::select(dplyr::all_of(desired_cols)) |>
     dplyr::filter(!is.na(.data$VALUE)) |>
     # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989, PM25 for E246240 in 2008)
-    dplyr::distinct(date_utc, EMS_ID, PARAMETER, INSTRUMENT, .keep_all = TRUE) |>
+    dplyr::distinct(.data$date_utc, .data$EMS_ID, .data$PARAMETER, .data$INSTRUMENT, .keep_all = TRUE) |>
     # Set units of value column and convert to default unit
     dplyr::mutate(
       VALUE = as.numeric(.data$VALUE) |>

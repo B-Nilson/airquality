@@ -73,7 +73,7 @@ get_thingspeak_data <- function(
   meta <- result$channel[
     field_pattern |> grep(x = names(result$channel), invert = TRUE)
   ] |>
-    lapply(\(x) x |> type.convert(as.is = TRUE))
+    lapply(\(x) x |> utils::type.convert(as.is = TRUE))
   if ("created_at" %in% names(meta)) {
     meta$created_at <- lubridate::as_datetime(meta$created_at)
   }
@@ -86,7 +86,7 @@ get_thingspeak_data <- function(
     dplyr::bind_rows() |>
     dplyr::mutate(
       created_at = lubridate::as_datetime(.data$created_at),
-      dplyr::across(-.data$created_at, \(x) x |> type.convert(as.is = TRUE))
+      dplyr::across(-.data$created_at, \(x) x |> utils::type.convert(as.is = TRUE))
     )
 
   # Rename data columns if fields are present
@@ -129,7 +129,7 @@ get_thingspeak_public_channels <- function(pages = 1, quiet = FALSE) {
     stringr::str_trim()
   page_lines[id_entries + 1L] |>
     as.numeric() |>
-    setNames(object = titles)
+    stats::setNames(object = titles)
 }
 
 insert_thingspeak_params <- function(url, params) {

@@ -35,6 +35,7 @@ Imports:
     rjson,
     rlang,
     rvest,
+    S7,
     stringr,
     tibble,
     tidyr,
