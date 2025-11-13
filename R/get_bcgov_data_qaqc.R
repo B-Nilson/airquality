@@ -109,7 +109,6 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
   ]
 
   # Reformat and return
-  message(qaqc_data[1, ] |> unlist() |> paste(collapse = ","))
   qaqc_data |>
     remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
     dplyr::mutate(
