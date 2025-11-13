@@ -116,7 +116,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       EMS_ID = EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left"),
       # Convert date to UTC backward looking
       date_utc = .data$DATE |>
-        format("%F") |> 
+        format("%Y-%m-%d") |> 
         paste(.data$TIME |> format("%H:%M:%S")) |>
         lubridate::ymd_hms(tz = "Etc/GMT+8") |>
         lubridate::with_tz("UTC")
