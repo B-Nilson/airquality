@@ -108,7 +108,7 @@ station <- "0450307" # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
 get_bcgov_data(station, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2025-11-13 22:02:29: Getting archived data
+#> 2025-11-13 22:50:01: Getting archived data
 #> # A tibble: 17,541 × 26
 #>    date_utc            date_local      site_id quality_assured pm25_1hr pm10_1hr
 #>    <dttm>              <chr>           <chr>   <lgl>           [ug/m^3] [ug/m^3]
@@ -136,7 +136,7 @@ stations <- c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bcgov_data(stations, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2025-11-13 22:06:30: Getting archived data
+#> 2025-11-13 22:53:25: Getting archived data
 #> # A tibble: 167 × 23
 #>    date_utc            date_local      site_id quality_assured pm25_1hr pm10_1hr
 #>    <dttm>              <chr>           <chr>   <lgl>           [ug/m^3] [ug/m^3]
