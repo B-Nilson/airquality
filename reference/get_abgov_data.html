@@ -129,19 +129,19 @@ Columns returned will vary depending on available data from station(s).</p>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>[get_abgov_stations]</p>
 <p>Other Data Collection:
-<code><a href="get_abgov_stations.html">get_abgov_stations</a>()</code>,
-<code><a href="get_airnow_data.html">get_airnow_data</a>()</code>,
-<code><a href="get_airnow_stations.html">get_airnow_stations</a>()</code>,
-<code><a href="get_bcgov_data.html">get_bcgov_data</a>()</code>,
-<code><a href="get_bcgov_stations.html">get_bcgov_stations</a>()</code>,
-<code><a href="purpleair_api.html">purpleair_api</a>()</code></p></div>
+<code><a href="get_abgov_stations.html">get_abgov_stations()</a></code>,
+<code><a href="get_airnow_data.html">get_airnow_data()</a></code>,
+<code><a href="get_airnow_stations.html">get_airnow_stations()</a></code>,
+<code><a href="get_bcgov_data.html">get_bcgov_data()</a></code>,
+<code><a href="get_bcgov_stations.html">get_bcgov_stations()</a></code>,
+<code><a href="purpleair_api.html">purpleair_api()</a></code></p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu">get_abgov_data</span><span class="op">(</span>quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Failed to open 'https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/StationMeasurements?$filter=indexof%28%27t%27,%20StationName%29%20ge%20-1%20and%20ReadingDate%20ge%20datetime%272025-11-05T10%3A00%3A00%27%20and%20ReadingDate%20le%20datetime%272025-11-05T10%3A00%3A00%27%20and%20%28indexof%28%27Fine%20Particulate%20Matter%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Ozone%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Nitric%20Oxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Nitrogen%20Dioxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Oxides%20of%20Nitrogen%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Ammonia%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Sulphur%20Dioxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Reduced%20Sulphur%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Hydrogen%20Sulphide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Carbon%20Monoxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Methane%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Hydrocarbons%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Non-methane%20Hydrocarbons%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Relative%20Humidity%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Outdoor%20Air%20Temperature%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Wind%20Direction%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Std.%20Dev.%20of%20Wind%20Direction%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Wind%20Speed%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Solar%20Radiation%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Barometric%20Pressure%20%28non-adjusted%29%27,%20ParameterName%29%20ge%200%29%20and%20Value%20ne%20null&amp;$select=StationName,ParameterName,ReadingDate,Value&amp;Connection%20Timeout=36000': The requested URL returned error: 400</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Failed to open 'https://data.environment.alberta.ca/Services/AirQualityV2/AQHI.svc/StationMeasurements?$filter=indexof%28%27t%27,%20StationName%29%20ge%20-1%20and%20ReadingDate%20ge%20datetime%272025-11-13T14%3A00%3A00%27%20and%20ReadingDate%20le%20datetime%272025-11-13T14%3A00%3A00%27%20and%20%28indexof%28%27Fine%20Particulate%20Matter%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Ozone%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Nitric%20Oxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Nitrogen%20Dioxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Oxides%20of%20Nitrogen%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Ammonia%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Sulphur%20Dioxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Reduced%20Sulphur%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Hydrogen%20Sulphide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Carbon%20Monoxide%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Methane%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Total%20Hydrocarbons%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Non-methane%20Hydrocarbons%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Relative%20Humidity%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Outdoor%20Air%20Temperature%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Wind%20Direction%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Std.%20Dev.%20of%20Wind%20Direction%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Wind%20Speed%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Solar%20Radiation%27,%20ParameterName%29%20ge%200%20or%20indexof%28%27Barometric%20Pressure%20%28non-adjusted%29%27,%20ParameterName%29%20ge%200%29%20and%20Value%20ne%20null&amp;$select=StationName,ParameterName,ReadingDate,Value&amp;Connection%20Timeout=36000': The requested URL returned error: 400</span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in standardize_data_format(dplyr::bind_rows(qaqc_data, raw_data),     date_range = date_range, known_stations = known_stations,     desired_cols = names(unlist(unname(.abgov_columns))), id_cols = "site_name",     fast = fast, raw = raw):</span> No data available before reformatting.</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
@@ -155,7 +155,7 @@ Columns returned will vary depending on available data from station(s).</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

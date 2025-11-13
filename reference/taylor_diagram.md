@@ -1,0 +1,235 @@
+# Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.
+
+Blah Blah Blah Taylor (2001) Blah Blah Blah TODO: Add description
+
+## Usage
+
+``` r
+taylor_diagram(
+  dat,
+  data_cols = c(obs = "obs", mod = "mod"),
+  group_by,
+  facet_by = NULL,
+  facet_rows = 1,
+  obs_colour = "purple",
+  obs_shape = 16,
+  obs_size = 1.5,
+  obs_stroke = 1,
+  obs_label = "Obs.",
+  mod_colours = "default",
+  mod_fills = "default",
+  mod_shapes = "default",
+  mod_size = 1.5,
+  mod_stroke = 1,
+  cor_minimum = NULL,
+  cor_step = 0.1,
+  cor_colour = "grey30",
+  cor_linetype = "longdash",
+  cor_label = "Correlation",
+  rmse_minimum = 0,
+  rmse_step = "default",
+  rmse_colour = "brown",
+  rmse_linetype = "dotted",
+  rmse_label = "Centered RMS Error",
+  rmse_label_pos = "default",
+  sd_maximum = NULL,
+  sd_step = "default",
+  sd_colour = "black",
+  sd_linetypes = c(obs = "dashed", other = "dashed"),
+  sd_label = "Standard Deviation",
+  plot_padding = 0.5,
+  labels_padding = 2
+)
+```
+
+## Arguments
+
+- dat:
+
+  Paired observation and model data with (at least) all columns in
+  \`data_cols\`, \`group_by\`, and (if provided) \`facet_by\`.
+
+- data_cols:
+
+  (Optional) a character vector with 2 values indication column names in
+  \`dat\` to get observed and modelled values. Default assumes columns
+  "obs" and "mod" exist.
+
+- group_by:
+
+  a character vector with between 1 and 3 column names to use as groups.
+  The first value will be used for \`colour\`, the second (if present)
+  will be used for \`shape\`, and the third (if present) will be used
+  for \`fill\` when adding model data points. If names are present they
+  will be used as the corresponding legend titles.
+
+- facet_by:
+
+  (Optional) a character vector with 1 or 2 column names to use as
+  facets in \`ggplot2::facet_wrap()\`. If names are present they will be
+  used as the corresponding facet titles. Default (NULL) does not facet
+  the plot.
+
+- facet_rows:
+
+  (Optional) a single numeric value indicating the number of rows to use
+  in facetting if \`facet_by\` values provided. Default is a single row.
+
+- obs_colour, obs_shape, obs_size, obs_stroke:
+
+  (Optional) a single value indicating the colour/shape/size/stroke of
+  the observed data point. Default is a full-colour purple circle.
+
+- obs_label:
+
+  (Optional) a single character value indicating the text to display for
+  the observed point. Default is "Obs."
+
+- mod_colours, mod_shapes, mod_fills:
+
+  (Optional) a named vector of colours/shapes to use for the provided
+  \`group_by\` where the names correspond to values in that group column
+  to assign each colour/shape to (i.e \`c("group_1" = "red", ...)\`).
+  Default uses "good looking" colours/shapes/fills.
+
+- mod_size, mod_stroke:
+
+  (Optional) a single numeric value indicating the size/stroke of the
+  model data points. Default matches the size/stroke of the observed
+  point.
+
+- cor_minimum:
+
+  (Optional) a single numeric value indicating the minimum correlation
+  value to display (from -1 to +1). Default uses the nearest 0.1 below
+  the minimum correlation.
+
+- cor_step:
+
+  (Optional) a single value indicating the spacing between each
+  correlation line. Default is a step of 0.1 (10%).
+
+- cor_colour, cor_linetype:
+
+  (Optional) a single value indicating the colour/linetype of the
+  correlation grid lines. Default is grey long-dash lines.
+
+- cor_label:
+
+  (Optional) a single character value indicating the text to display for
+  the correlation axis title. Default is "Correlation".
+
+- rmse_minimum:
+
+  (Optional) a single numeric value indicating the minimum rmse line to
+  display (\>= 0). Default is 0 (meaning the first line to display is at
+  \`rmse_step\`).
+
+- rmse_step:
+
+  (Optional) a single value indicating the spacing between each rmse
+  line. Default produces approximatley 4 lines with "pretty" spacing.
+
+- rmse_colour, rmse_linetype:
+
+  (Optional) a single value indicating the colour/linetype of the rmse
+  circles originating from the observed point. Default is brown dotted
+  lines.
+
+- rmse_label:
+
+  (Optional) a single character value indicating the text to display for
+  the RMSE axis title. Default is "Centered RMS Error".
+
+- rmse_label_pos:
+
+  (Optional) a single value (0-1) indicating the location of the labels
+  for the rmse circles (0 == far left along x-axis, 0.5 = top of cirles,
+  1 = far right along x-axis). Default is 10% greater than the minimum
+  correlation.
+
+- sd_maximum:
+
+  (Optional) a single numeric value indicating the maximum standard
+  deviation value to display (\>= 0). Default is the nearest "pretty"
+  value above the maximum standard deviation.
+
+- sd_step:
+
+  (Optional) a single value indicating the spacing between each standard
+  deviation line. Default produces approximatley 4 lines with "pretty"
+  spacing.
+
+- sd_colour:
+
+  (Optional) a single value indicating the colour of the standard
+  deviation arcs. Default is black.
+
+- sd_linetypes:
+
+  (Optional) a character vector with 2 line types and names \`"obs",
+  "other"\` indicating the line types of standard deviation arcs.
+  Default is dashed for the observed line, dotted for others.
+
+- sd_label:
+
+  (Optional) a single character value indicating the text to display for
+  the standard deviation axis title. Default is "Standard Deviation".
+
+- plot_padding, labels_padding:
+
+  (Optional) a single numeric value indicating how much spacing
+  (standard deviation units) to add to most text labels. Default is 2
+  for both, likely needs to be adjusted depeding on the figure size and
+  number of facets.
+
+## Value
+
+A ggplot object of your taylor diagram.
+
+## See also
+
+Other Data Visualisation:
+[`tile_plot()`](https://b-nilson.github.io/airquality/reference/tile_plot.md),
+[`wind_rose()`](https://b-nilson.github.io/airquality/reference/wind_rose.md)
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Make test data
+data <- as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
+  dplyr::filter(.data$Chick == 1) |>
+  tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
+  dplyr::full_join(
+    as.data.frame(datasets::ChickWeight) |>
+      dplyr::filter(.data$Chick != 1)
+  ) |>
+  dplyr::rename(obs = `1`, mod = "weight") |>
+  dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
+# Basic usage
+taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
+# Force 0 on left axis
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  cor_minimum = 0, rmse_label_pos = 130
+) # TODO: fix this
+# Change colours / shapes
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  mod_colours = c("AB" = "pink", "BC" = "blue"),
+  mod_fills = c("EGG" = "white", "PA" = "darkgrey"), # TODO: update this
+  mod_shapes = c("FALSE" = 23, "TRUE" = 22),
+  mod_size = 4, mod_stroke = 6,
+  obs_colour = "brown", obs_shape = 23, obs_size = 6,
+  cor_colour = "orange", cor_linetype = "dotdash",
+  rmse_colour = "green", rmse_linetype = "longdash",
+  sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
+)
+# Adjust text positioning
+taylor_diagram(data,
+  group_by = c(Diet = "Diet", Chick = "Chick"),
+  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
+)
+} # }
+```
