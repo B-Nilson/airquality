@@ -98,8 +98,8 @@ get_station_data(locations = "Fort St. John, BC, Canada", date_range = "2019-02-
 #> Error in standardize_data_format(dplyr::bind_rows(archived_data, realtime_data), : No data available before reformatting.
 #> FEM - AirNow : 1 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2025-11-13 21:07:47: Getting hourly files
-#> 2025-11-13 21:07:47: Getting station metadata
+#> 2025-11-13 21:28:09: Getting hourly files
+#> 2025-11-13 21:28:09: Getting station metadata
 #> Error in data_fun(stations = site_ids, date_range, quiet = quiet): No data available for desired stations during specified date range.
 #> $stations
 #> Simple feature collection with 5 features and 4 fields
@@ -131,8 +131,8 @@ get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
 #> Warning: Adding a search buffer of 25 km to each location (see arg `buffer_dist`)
 #> FEM - AirNow : 2 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2025-11-13 21:07:54: Getting hourly files
-#> 2025-11-13 21:07:54: Getting station metadata
+#> 2025-11-13 21:28:19: Getting hourly files
+#> 2025-11-13 21:28:19: Getting station metadata
 #> $stations
 #> Simple feature collection with 2 features and 4 fields
 #> Geometry type: POINT
