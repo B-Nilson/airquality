@@ -121,8 +121,16 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
       # Convert date to UTC backward looking
       date_utc = (as.numeric(.data$DATE) *
         (60 * 60 * 24) +
-        as.numeric(.data$TIME) + (8 * 3600)) |>
-        lubridate::as_datetime()
+        as.numeric(.data$TIME) +
+        (8 * 3600)) |>
+        lubridate::as_datetime() |>
+        # Try DATE_PST column if that fails
+        handyr::on_error(
+          .return = .data$DATE_PST |>
+            lubridate::ymd_hms(tz = "Etc/GMT+8") |>
+            lubridate::with_tz("UTC") |>
+            handyr::silence()
+        )
     ) |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::select(dplyr::all_of(desired_cols)) |>
