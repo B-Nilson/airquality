@@ -127,18 +127,31 @@ get_bcgov_data <- function(
     if (!quiet) {
       handyr::log_step("Getting archived data")
     }
-    archived_data <- date_range_new |>
-      bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
-      handyr::for_each(
-        .bind = TRUE,
-        # .parallel = fast, # TODO: test if works
-        .show_progress = !quiet,
-        bcgov_get_annual_data,
-        stations = stations,
-        variables = variables,
-        qaqc_years = qaqc_years,
-        quiet = TRUE
-      )
+    years_to_get <- date_range_new |>
+      bcgov_determine_years_to_get(qaqc_years = qaqc_years)
+    if (any(years_to_get %in% qaqc_years)) {
+      qaqc_data <- stations |>
+        bcgov_get_qaqc_data(
+          years = years_to_get[years_to_get %in% qaqc_years],
+          variables = variables,
+          quiet = TRUE
+        ) |>
+        dplyr::mutate(quality_assured = TRUE)
+    } else {
+      qaqc_data <- NULL
+    }
+    if (any(!years_to_get %in% qaqc_years)) {
+      raw_data <- stations |>
+        bcgov_get_raw_data(
+          variables = variables,
+          quiet = TRUE
+        ) |>
+        dplyr::mutate(quality_assured = FALSE)
+    } else {
+      raw_data <- NULL
+    }
+    archived_data <- qaqc_data |>
+      dplyr::bind_rows(raw_data)
   } else {
     archived_data <- NULL
   }
@@ -157,9 +170,9 @@ get_bcgov_data <- function(
 
 .bcgov_columns <- list(
   meta = c(
-    date_utc = "date_utc", # Added by bcgov_get_annual_data()
+    date_utc = "date_utc", # Added by get_bcgov_data()
     site_id = "EMS_ID",
-    quality_assured = "quality_assured" # Added by bcgov_get_annual_data()
+    quality_assured = "quality_assured" # Added by get_bcgov_data()
   ),
   values = c(
     # Particulate Matter
@@ -232,46 +245,4 @@ bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
   years_to_get <- years[is_qaqc_year] |>
     c(years[!is_qaqc_year][1])
   years_to_get[!is.na(years_to_get)]
-}
-
-# Workhorse function for getting annual raw/qaqc data as needed
-bcgov_get_annual_data <- function(
-  stations = "all",
-  variables = "all",
-  year,
-  qaqc_years = NULL,
-  quiet = FALSE
-) {
-  # Determine mode (raw or qaqc) for this year
-  if (is.null(qaqc_years)) {
-    qaqc_years <- bcgov_get_qaqc_years()
-  }
-  is_qaqc_year <- year %in% qaqc_years
-
-  # Get data for desired stations for this year
-  if (is_qaqc_year) {
-    # Get qaqc data
-    stations_data <- stations |>
-      bcgov_get_qaqc_data(
-        years = year,
-        variables = variables,
-        quiet = TRUE
-      )
-  } else {
-    # Get raw data
-    stations_data <- stations |>
-      bcgov_get_raw_data(
-        variables = variables,
-        quiet = quiet
-      )
-  }
-
-  # Handle no data returned
-  if (nrow(stations_data) == 0) {
-    stop(paste("No data available for provided station(s) for", year))
-  }
-
-  # Add quality assured flag
-  stations_data |>
-    dplyr::mutate(quality_assured = is_qaqc_year)
 }
