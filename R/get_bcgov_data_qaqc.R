@@ -113,8 +113,11 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
     dplyr::mutate(
       # Pad left side of id with 0s if needed
-      EMS_ID = .data$EMS_ID |>
-        stringr::str_pad(pad = "0", width = 7, side = "left"),
+      EMS_ID = ifelse(
+        nchar(.data$EMS_ID) == 3,
+        .data$EMS_ID, # for sites 598, etc
+        .data$EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left")
+      ),
       # Convert date to UTC backward looking
       date_utc = (as.numeric(.data$DATE) *
         (60 * 60 * 24) +
