@@ -5,7 +5,7 @@
     Output
       # A tibble: 50 x 14
          date_utc            date_local        site_id quality_assured pm25_1hr rh_1hr
-         <dttm>              <chr>             <chr>   <lgl>            [ug/m3]    [%]
+         <dttm>              <chr>             <chr>   <lgl>           [ug/m^3]    [%]
        1 2019-02-01 00:00:00 2019-01-31 16:00~ E269223 TRUE                 2.8   95  
        2 2019-02-01 01:00:00 2019-01-31 17:00~ E269223 TRUE                 5     96.4
        3 2019-02-01 02:00:00 2019-01-31 18:00~ E269223 TRUE                 7     96.7
