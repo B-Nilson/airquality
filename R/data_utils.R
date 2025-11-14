@@ -362,7 +362,7 @@ standardize_data_format <- function(
       .keep_all = TRUE
     ) |>
     dplyr::filter(
-      .data$date_utc |> dplyr::between(date_range[1], date_range[2])
+      .data$date_utc |> handyr::is_within(date_range)
     ) |>
     dplyr::mutate(dplyr::across(dplyr::ends_with("_instrument"), factor)) |>
     # Drop any all NA (obs) rows

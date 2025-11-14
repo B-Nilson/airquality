@@ -118,7 +118,7 @@ test_that("all dates non-na and within requested period", {
   # Case: All date_local non-NA
   expect_true(all(!is.na(obs$date_local)))
   # Case: All date_utc within requested date range
-  expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
+  expect_true(all(obs$date_utc |> handyr::is_within(date_range)))
 })
 
 test_that("date_local converts to date_utc correctly", {

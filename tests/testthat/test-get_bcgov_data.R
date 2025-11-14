@@ -26,7 +26,7 @@ test_that("basic case works", {
   # Case: All date_local non-NA
   expect_true(all(!is.na(obs$date_local)))
   # Case: All date_utc within requested date range
-  expect_true(all(obs$date_utc |> dplyr::between(date_range[1], date_range[2])))
+  expect_true(all(obs$date_utc |> handyr::is_within(date_range)))
 
   # Case: date_utc the same as converting date_local to UTC
   obs_2 <- obs |> convert_date_utc_to_local()
@@ -231,7 +231,7 @@ test_that("able to differentiate qaqc/raw years", {
   years <- 1980:(Sys.Date() |> lubridate::year())
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- date_range |>
-    bcgov_determine_years_to_get(qaqc_years = qaqc_years) |>
+    get_bcgov_data_years(qaqc_years = qaqc_years) |>
     expect_no_error() |>
     expect_no_warning()
   expect_true(length(years_to_get) %in% (length(qaqc_years) + c(0, 1)))

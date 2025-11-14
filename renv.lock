@@ -1005,13 +1005,16 @@
       "Config/testthat/edition": "3",
       "URL": "https://github.com/B-Nilson/handyr, https://b-nilson.github.io/handyr/",
       "BugReports": "https://github.com/B-Nilson/handyr/issues",
+      "Depends": [
+        "R (>= 4.1.0)"
+      ],
       "Author": "Brayden Nilson [aut, cre]",
       "Maintainer": "Brayden Nilson <nilson.brayden@gmail.com>",
       "RemoteType": "github",
       "RemoteUsername": "B-Nilson",
       "RemoteRepo": "handyr",
       "RemoteRef": "main",
-      "RemoteSha": "59647f8ff4a013cec0db15eb8200b10631c6a2fa",
+      "RemoteSha": "d9790717259edf66f0986b547d347b1717759b8a",
       "RemoteHost": "api.github.com"
     },
     "hms": {

@@ -74,10 +74,7 @@ format_abgov_raw_data <- function(raw_data, date_range, desired_cols) {
         lubridate::with_tz("UTC"),
       quality_assured = FALSE
     ) |>
-    dplyr::filter(
-      .data$ReadingDate |>
-        dplyr::between(date_range[1], date_range[2])
-    ) |>
+    dplyr::filter(.data$ReadingDate |> handyr::is_within(date_range)) |>
     dplyr::distinct() |>
     # Long -> wide, standardize column names
     tidyr::pivot_wider(

@@ -66,7 +66,7 @@ abgov_format_qaqc_data <- function(qaqc_data, date_range, desired_cols) {
       quality_assured = is.na(.data$Flags)
     ) |>
     dplyr::filter(
-      .data$ReadingDate |> dplyr::between(date_range[1], date_range[2])
+      .data$ReadingDate |> handyr::is_within(date_range)
     ) |>
     # Cleanup
     widen_with_units(
