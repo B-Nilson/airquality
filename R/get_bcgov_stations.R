@@ -48,7 +48,7 @@ get_bcgov_stations <- function(
   # Determine years to get (files are annual, raw data covers recent 1+ year(s))
   qaqc_years <- bcgov_get_qaqc_years()
   years_to_get <- date_range |>
-    bcgov_determine_years_to_get(qaqc_years)
+    get_bcgov_data_years(qaqc_years)
 
   # Get annual station metadata as needed
   stations <- years_to_get |>

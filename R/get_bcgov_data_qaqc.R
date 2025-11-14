@@ -3,7 +3,7 @@ bcgov_get_qaqc_data <- function(
   variables = "all",
   years,
   mode = "binary",
-  use_rounded_value = TRUE, # TODO: is FALSE better?
+  use_rounded_value = TRUE,
   quiet = FALSE
 ) {
   stopifnot(is.character(stations), length(stations) > 0)

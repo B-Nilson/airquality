@@ -128,7 +128,7 @@ get_bcgov_data <- function(
       handyr::log_step("Getting archived data")
     }
     years_to_get <- date_range_new |>
-      bcgov_determine_years_to_get(qaqc_years = qaqc_years)
+      get_bcgov_data_years(qaqc_years = qaqc_years)
     if (any(years_to_get %in% qaqc_years)) {
       qaqc_data <- stations |>
         bcgov_get_qaqc_data(
@@ -150,15 +150,14 @@ get_bcgov_data <- function(
     } else {
       raw_data <- NULL
     }
-    archived_data <- qaqc_data |>
-      dplyr::bind_rows(raw_data)
   } else {
-    archived_data <- NULL
+      qaqc_data <- NULL
+      raw_data <- NULL
   }
 
   # Combine and standardize formatting
-  archived_data |>
-    dplyr::bind_rows(realtime_data) |>
+  qaqc_data |>
+    dplyr::bind_rows(raw_data, realtime_data) |>
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
@@ -224,13 +223,12 @@ bcgov_get_qaqc_years <- function() {
 }
 
 # Returns all years in qaqc_years and one additional year that is not qaqc (if present)
-bcgov_determine_years_to_get <- function(date_range, qaqc_years = NULL) {
-  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
-
+get_bcgov_data_years <- function(date_range, qaqc_years = NULL) {
   # Get years in date_range
-  date_range <- handyr::check_date_range(date_range, tz = bcgov_tzone)
-  years <- date_range[1] |>
-    seq(date_range[2], by = "1 days") |>
+  date_range <- handyr::check_date_range(date_range, tz = "Etc/GMT+8")
+  years <- date_range |>
+    handyr::as_interval() |> 
+    seq(by = "1 days") |>
     lubridate::year() |>
     unique() |>
     sort()
