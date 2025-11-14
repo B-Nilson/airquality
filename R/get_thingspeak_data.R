@@ -86,7 +86,9 @@ get_thingspeak_data <- function(
     dplyr::bind_rows() |>
     dplyr::mutate(
       created_at = lubridate::as_datetime(.data$created_at),
-      dplyr::across(-.data$created_at, \(x) x |> utils::type.convert(as.is = TRUE))
+      dplyr::across(-dplyr::any_of("created_at"), \(x) {
+        x |> utils::type.convert(as.is = TRUE)
+      })
     )
 
   # Rename data columns if fields are present
