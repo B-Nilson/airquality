@@ -59,14 +59,12 @@ get_bcgov_data <- function(
   stopifnot(is.logical(fast), length(fast) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
-  data_citation("BCgov", quiet = quiet)
-
   # Constants/setup
-  bcgov_tzone <- "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
+  data_citation("BCgov", quiet = quiet)
   qaqc_years <- bcgov_get_qaqc_years()
   allowed_date_range <- min(qaqc_years) |>
-    paste0("-01-01 01:00:00")
-  allowed_date_range[2] <- "now"
+    paste0("-01-01 01:00:00") |>
+    c("now")
   realtime_start <- handyr::check_date_range("now") -
     lubridate::days(1) # actually 30, but binaries are < 1 day old and faster to load
 
@@ -75,7 +73,7 @@ get_bcgov_data <- function(
     handyr::check_date_range(
       within = allowed_date_range,
       now_time_step = "1 hours",
-      tz = bcgov_tzone
+      tz = "Etc/GMT+8" # PST (confirmed: raw/qaqc data files have col "DATE_PST")
     )
 
   # Filter search to existing stations only
@@ -95,12 +93,11 @@ get_bcgov_data <- function(
   }
 
   # Get realtime data if needed
+  obs <- list() # initialize
   need_realtime <- any(date_range > realtime_start)
   if (need_realtime) {
-    if (!quiet) {
-      handyr::log_step("Getting realtime data")
-    }
-    realtime_data <- stations |>
+    handyr::log_step("Getting realtime data", quiet = quiet)
+    obs$realtime <- stations |>
       bcgov_get_raw_data(
         variables = variables,
         quiet = quiet,
@@ -108,56 +105,43 @@ get_bcgov_data <- function(
       ) |>
       dplyr::mutate(quality_assured = FALSE) |>
       handyr::on_error(.return = NULL, .warn = "Could not get realtime data:")
-  } else {
-    realtime_data <- NULL
-    is_all_realtime <- FALSE
   }
 
   # Alter date_range to account for retrieved realtime data
   date_range_new <- date_range
-  if (!is.null(realtime_data)) {
-    date_range_new[2] <- realtime_data |>
-      dplyr::summarise(min_date = min(.data$date_utc)) |>
-      dplyr::pull("min_date")
+  if (!is.null(obs$realtime)) {
+    date_range_new[2] <- min(obs$realtime$date_utc)
   }
-  is_all_realtime <- date_range_new[1] >= date_range_new[2]
 
   # Get raw/qaqc data as needed
+  is_all_realtime <- date_range_new[1] >= date_range_new[2]
   if (!is_all_realtime) {
-    if (!quiet) {
-      handyr::log_step("Getting archived data")
-    }
+    handyr::log_step("Getting archived data", quiet = quiet)
     years_to_get <- date_range_new |>
       get_bcgov_data_years(qaqc_years = qaqc_years)
-    if (any(years_to_get %in% qaqc_years)) {
-      qaqc_data <- stations |>
+    is_qaqc <- years_to_get %in% qaqc_years
+
+    # Get qaqc data
+    if (any(is_qaqc)) {
+      obs$qaqc <- stations |>
         bcgov_get_qaqc_data(
-          years = years_to_get[years_to_get %in% qaqc_years],
           variables = variables,
+          years = years_to_get[is_qaqc],
           quiet = TRUE
         ) |>
         dplyr::mutate(quality_assured = TRUE)
-    } else {
-      qaqc_data <- NULL
     }
-    if (any(!years_to_get %in% qaqc_years)) {
-      raw_data <- stations |>
-        bcgov_get_raw_data(
-          variables = variables,
-          quiet = TRUE
-        ) |>
+
+    # Get raw data
+    if (any(!is_qaqc)) {
+      obs$raw <- stations |>
+        bcgov_get_raw_data(variables = variables, quiet = TRUE) |>
         dplyr::mutate(quality_assured = FALSE)
-    } else {
-      raw_data <- NULL
     }
-  } else {
-      qaqc_data <- NULL
-      raw_data <- NULL
   }
 
   # Combine and standardize formatting
-  qaqc_data |>
-    dplyr::bind_rows(raw_data, realtime_data) |>
+  dplyr::bind_rows(obs) |>
     standardize_data_format(
       date_range = date_range,
       known_stations = known_stations,
