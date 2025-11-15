@@ -26,6 +26,45 @@ ThingSpeakReadParams(
   median = integer(0)
 )
 }
+\arguments{
+\item{api_key}{Required for private channels. Specify the Read API Key found on the API Keys tab of the channel view. (string)}
+
+\item{results}{Optional. Number of entries to retrieve. Maximum is 8,000. (integer)}
+
+\item{days}{Optional. Number of 24-hour periods before now to include. Default is 1. (integer)}
+
+\item{minutes}{Optional. Number of 60-second periods before now to include. Default is 1440. (integer)}
+
+\item{start}{Optional. Start date in format YYYY-MM-DD HH:NN:SS. (datetime)}
+
+\item{end}{Optional. End date in format YYYY-MM-DD HH:NN:SS. (datetime)}
+
+\item{timezone}{Optional. Identifier from Time Zones Reference. (string)}
+
+\item{offset}{Optional. Timezone offset for displaying results. Use `timezone` for greater accuracy. (integer)}
+
+\item{fields}{Optional. Character vector of field names to collect. (string)}
+
+\item{status}{Optional. Include status updates by setting `status = TRUE`. (logical)}
+
+\item{metadata}{Optional. Include channel metadata by setting `metadata = TRUE`. (logical)}
+
+\item{location}{Optional. Include latitude, longitude, and elevation by setting `location = TRUE`. (logical)}
+
+\item{min}{Optional. Minimum value to include. (numeric)}
+
+\item{max}{Optional. Maximum value to include. (numeric)}
+
+\item{round}{Optional. Round values to this many decimal places. (integer)}
+
+\item{timescale}{Optional. Get first value in this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
+
+\item{sum}{Optional. Get sum over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
+
+\item{average}{Optional. Get average over this many minutes. NaN values are treated as 0. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
+
+\item{median}{Optional. Get median over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
+}
 \description{
 Provides a structured way to specify parameters for the ThingSpeak API.
   Intended to be used with [get_thingspeak_data()] for building queries.
@@ -37,43 +76,3 @@ Provides a structured way to specify parameters for the ThingSpeak API.
 
   See \href{https://www.mathworks.com/help/thingspeak/readdata.html}{the thingspeak documentation} for more information.
 }
-\section{Slots}{
-
-\describe{
-\item{\code{api_key}}{Required for private channels. Specify the Read API Key found on the API Keys tab of the channel view. (string)}
-
-\item{\code{results}}{Optional. Number of entries to retrieve. Maximum is 8,000. (integer)}
-
-\item{\code{days}}{Optional. Number of 24-hour periods before now to include. Default is 1. (integer)}
-
-\item{\code{minutes}}{Optional. Number of 60-second periods before now to include. Default is 1440. (integer)}
-
-\item{\code{start}}{Optional. Start date in format YYYY-MM-DD HH:NN:SS. (datetime)}
-
-\item{\code{end}}{Optional. End date in format YYYY-MM-DD HH:NN:SS. (datetime)}
-
-\item{\code{timezone}}{Optional. Identifier from Time Zones Reference. (string)}
-
-\item{\code{offset}}{Optional. Timezone offset for displaying results. Use `timezone` for greater accuracy. (integer)}
-
-\item{\code{status}}{Optional. Include status updates by setting `status = TRUE`. (logical)}
-
-\item{\code{metadata}}{Optional. Include channel metadata by setting `metadata = TRUE`. (logical)}
-
-\item{\code{location}}{Optional. Include latitude, longitude, and elevation by setting `location = TRUE`. (logical)}
-
-\item{\code{min}}{Optional. Minimum value to include. (numeric)}
-
-\item{\code{max}}{Optional. Maximum value to include. (numeric)}
-
-\item{\code{round}}{Optional. Round values to this many decimal places. (integer)}
-
-\item{\code{timescale}}{Optional. Get first value in this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
-
-\item{\code{sum}}{Optional. Get sum over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
-
-\item{\code{average}}{Optional. Get average over this many minutes. NaN values are treated as 0. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
-
-\item{\code{median}}{Optional. Get median over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)}
-}}
-
