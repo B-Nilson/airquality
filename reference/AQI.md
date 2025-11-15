@@ -116,10 +116,10 @@ AQI(o3_8hr_ppm = 0.078, o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #> # A tibble: 1 × 4
 #>   date                  AQI risk_category                  principal_pol
 #>   <dttm>              <dbl> <fct>                          <fct>        
-#> 1 2025-11-13 00:00:00   126 Unhealthy for Sensitive Groups o3           
+#> 1 2025-11-15 00:00:00   126 Unhealthy for Sensitive Groups o3           
 AQI(o3_1hr_ppm = 0.104, pm25_24hr_ugm3 = 35.9)
 #> # A tibble: 1 × 4
 #>   date                  AQI risk_category                  principal_pol
 #>   <dttm>              <dbl> <fct>                          <fct>        
-#> 1 2025-11-13 00:00:00   102 Unhealthy for Sensitive Groups pm25         
+#> 1 2025-11-15 00:00:00   102 Unhealthy for Sensitive Groups pm25         
 ```
