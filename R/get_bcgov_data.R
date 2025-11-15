@@ -211,7 +211,7 @@ get_bcgov_data_years <- function(date_range, qaqc_years = NULL) {
   # Get years in date_range
   date_range <- handyr::check_date_range(date_range, tz = "Etc/GMT+8")
   years <- date_range |>
-    handyr::as_interval() |> 
+    handyr::as_interval() |>
     seq(by = "1 days") |>
     lubridate::year() |>
     unique() |>

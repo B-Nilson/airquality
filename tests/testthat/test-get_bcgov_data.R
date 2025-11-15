@@ -34,13 +34,13 @@ test_that("basic case works", {
 })
 
 test_that("multi-value entries handled properly", {
-  date_range <- c("2008-01-01 00", "2008-12-31 23") |> 
+  date_range <- c("2008-01-01 00", "2008-12-31 23") |>
     lubridate::ymd_h(tz = "UTC")
   obs <- get_bcgov_data(
     variables = "pm2.5",
     date_range = date_range,
     quiet = TRUE
-  ) |> 
+  ) |>
     expect_no_error() |>
     expect_no_warning()
 })

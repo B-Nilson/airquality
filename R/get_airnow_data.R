@@ -212,7 +212,7 @@ make_airnow_filepaths <- function(date_range, quiet = FALSE) {
 
   # Get forward looking dates for each hour in range
   dates <- date_range |>
-    handyr::as_interval() |> 
+    handyr::as_interval() |>
     seq(by = "1 hours") -
     lubridate::hours(1)
   dates <- dates |> lubridate::with_tz("UTC")
