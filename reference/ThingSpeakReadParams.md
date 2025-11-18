@@ -42,88 +42,92 @@ ThingSpeakReadParams(
 )
 ```
 
-## Slots
+## Arguments
 
-- `api_key`:
+- api_key:
 
   Required for private channels. Specify the Read API Key found on the
   API Keys tab of the channel view. (string)
 
-- `results`:
+- results:
 
   Optional. Number of entries to retrieve. Maximum is 8,000. (integer)
 
-- `days`:
+- days:
 
   Optional. Number of 24-hour periods before now to include. Default
   is 1. (integer)
 
-- `minutes`:
+- minutes:
 
   Optional. Number of 60-second periods before now to include. Default
   is 1440. (integer)
 
-- `start`:
+- start:
 
   Optional. Start date in format YYYY-MM-DD HH:NN:SS. (datetime)
 
-- `end`:
+- end:
 
   Optional. End date in format YYYY-MM-DD HH:NN:SS. (datetime)
 
-- `timezone`:
+- timezone:
 
   Optional. Identifier from Time Zones Reference. (string)
 
-- `offset`:
+- offset:
 
   Optional. Timezone offset for displaying results. Use \`timezone\` for
   greater accuracy. (integer)
 
-- `status`:
+- fields:
+
+  Optional. Character vector of field names to collect. (string)
+
+- status:
 
   Optional. Include status updates by setting \`status = TRUE\`.
   (logical)
 
-- `metadata`:
+- metadata:
 
   Optional. Include channel metadata by setting \`metadata = TRUE\`.
   (logical)
 
-- `location`:
+- location:
 
   Optional. Include latitude, longitude, and elevation by setting
   \`location = TRUE\`. (logical)
 
-- `min`:
+- min:
 
   Optional. Minimum value to include. (numeric)
 
-- `max`:
+- max:
 
   Optional. Maximum value to include. (numeric)
 
-- `round`:
+- round:
 
   Optional. Round values to this many decimal places. (integer)
 
-- `timescale`:
+- timescale:
 
   Optional. Get first value in this many minutes. Valid values: 10, 15,
   20, 30, 60, 240, 720, 1440, "daily". (integer or string)
 
-- `sum`:
+- sum:
 
   Optional. Get sum over this many minutes. Valid values: 10, 15, 20,
   30, 60, 240, 720, 1440, "daily". (integer or string)
 
-- `average`:
+- average:
 
   Optional. Get average over this many minutes. NaN values are treated
   as 0. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily".
   (integer or string)
 
-- `median`:
+- median:
 
   Optional. Get median over this many minutes. Valid values: 10, 15, 20,
   30, 60, 240, 720, 1440, "daily". (integer or string)

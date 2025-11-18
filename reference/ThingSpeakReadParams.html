@@ -79,80 +79,83 @@ See the thingspeak documentation for more information."><meta property="og:image
     </div>
 
     <div class="section level2">
-    <h2 id="slots">Slots<a class="anchor" aria-label="anchor" href="#slots"></a></h2>
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt><code>api_key</code></dt>
+<dl><dt id="arg-api-key">api_key<a class="anchor" aria-label="anchor" href="#arg-api-key"></a></dt>
 <dd><p>Required for private channels. Specify the Read API Key found on the API Keys tab of the channel view. (string)</p></dd>
 
 
-<dt><code>results</code></dt>
+<dt id="arg-results">results<a class="anchor" aria-label="anchor" href="#arg-results"></a></dt>
 <dd><p>Optional. Number of entries to retrieve. Maximum is 8,000. (integer)</p></dd>
 
 
-<dt><code>days</code></dt>
+<dt id="arg-days">days<a class="anchor" aria-label="anchor" href="#arg-days"></a></dt>
 <dd><p>Optional. Number of 24-hour periods before now to include. Default is 1. (integer)</p></dd>
 
 
-<dt><code>minutes</code></dt>
+<dt id="arg-minutes">minutes<a class="anchor" aria-label="anchor" href="#arg-minutes"></a></dt>
 <dd><p>Optional. Number of 60-second periods before now to include. Default is 1440. (integer)</p></dd>
 
 
-<dt><code>start</code></dt>
+<dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
 <dd><p>Optional. Start date in format YYYY-MM-DD HH:NN:SS. (datetime)</p></dd>
 
 
-<dt><code>end</code></dt>
+<dt id="arg-end">end<a class="anchor" aria-label="anchor" href="#arg-end"></a></dt>
 <dd><p>Optional. End date in format YYYY-MM-DD HH:NN:SS. (datetime)</p></dd>
 
 
-<dt><code>timezone</code></dt>
+<dt id="arg-timezone">timezone<a class="anchor" aria-label="anchor" href="#arg-timezone"></a></dt>
 <dd><p>Optional. Identifier from Time Zones Reference. (string)</p></dd>
 
 
-<dt><code>offset</code></dt>
+<dt id="arg-offset">offset<a class="anchor" aria-label="anchor" href="#arg-offset"></a></dt>
 <dd><p>Optional. Timezone offset for displaying results. Use `timezone` for greater accuracy. (integer)</p></dd>
 
 
-<dt><code>status</code></dt>
+<dt id="arg-fields">fields<a class="anchor" aria-label="anchor" href="#arg-fields"></a></dt>
+<dd><p>Optional. Character vector of field names to collect. (string)</p></dd>
+
+
+<dt id="arg-status">status<a class="anchor" aria-label="anchor" href="#arg-status"></a></dt>
 <dd><p>Optional. Include status updates by setting `status = TRUE`. (logical)</p></dd>
 
 
-<dt><code>metadata</code></dt>
+<dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
 <dd><p>Optional. Include channel metadata by setting `metadata = TRUE`. (logical)</p></dd>
 
 
-<dt><code>location</code></dt>
+<dt id="arg-location">location<a class="anchor" aria-label="anchor" href="#arg-location"></a></dt>
 <dd><p>Optional. Include latitude, longitude, and elevation by setting `location = TRUE`. (logical)</p></dd>
 
 
-<dt><code>min</code></dt>
+<dt id="arg-min">min<a class="anchor" aria-label="anchor" href="#arg-min"></a></dt>
 <dd><p>Optional. Minimum value to include. (numeric)</p></dd>
 
 
-<dt><code>max</code></dt>
+<dt id="arg-max">max<a class="anchor" aria-label="anchor" href="#arg-max"></a></dt>
 <dd><p>Optional. Maximum value to include. (numeric)</p></dd>
 
 
-<dt><code>round</code></dt>
+<dt id="arg-round">round<a class="anchor" aria-label="anchor" href="#arg-round"></a></dt>
 <dd><p>Optional. Round values to this many decimal places. (integer)</p></dd>
 
 
-<dt><code>timescale</code></dt>
+<dt id="arg-timescale">timescale<a class="anchor" aria-label="anchor" href="#arg-timescale"></a></dt>
 <dd><p>Optional. Get first value in this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)</p></dd>
 
 
-<dt><code>sum</code></dt>
+<dt id="arg-sum">sum<a class="anchor" aria-label="anchor" href="#arg-sum"></a></dt>
 <dd><p>Optional. Get sum over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)</p></dd>
 
 
-<dt><code>average</code></dt>
+<dt id="arg-average">average<a class="anchor" aria-label="anchor" href="#arg-average"></a></dt>
 <dd><p>Optional. Get average over this many minutes. NaN values are treated as 0. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)</p></dd>
 
 
-<dt><code>median</code></dt>
+<dt id="arg-median">median<a class="anchor" aria-label="anchor" href="#arg-median"></a></dt>
 <dd><p>Optional. Get median over this many minutes. Valid values: 10, 15, 20, 30, 60, 240, 720, 1440, "daily". (integer or string)</p></dd>
-
 
 </dl></div>
 
