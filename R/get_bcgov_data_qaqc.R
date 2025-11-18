@@ -110,15 +110,10 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
 
   # Reformat and return
   qaqc_data |>
+    # Swap "UNSPECIFIED" and "" with NA
     remove_na_placeholders(na_placeholders = c("UNSPECIFIED", "")) |>
+    # Convert date to UTC backward looking
     dplyr::mutate(
-      # Pad left side of id with 0s if needed
-      EMS_ID = ifelse(
-        nchar(.data$EMS_ID) == 3,
-        .data$EMS_ID, # for sites 598, etc
-        .data$EMS_ID |> stringr::str_pad(pad = "0", width = 7, side = "left")
-      ),
-      # Convert date to UTC backward looking
       date_utc = (as.numeric(.data$DATE) *
         (60 * 60 * 24) +
         as.numeric(.data$TIME) +
@@ -129,28 +124,29 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
           .return = .data$DATE_PST |>
             lubridate::ymd_hms(tz = "Etc/GMT+8") |>
             lubridate::with_tz("UTC") |>
-            handyr::silence()
+            handyr::silence() # in case it fails here instead of initially
         )
     ) |>
     # drop unnecessary rows/columns for memory-saving
     dplyr::select(dplyr::all_of(desired_cols)) |>
     dplyr::filter(!is.na(.data$VALUE)) |>
     # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989, PM25 for E246240 in 2008)
-    dplyr::distinct(
-      .data$date_utc,
-      .data$EMS_ID,
-      .data$PARAMETER,
-      .data$INSTRUMENT,
-      .keep_all = TRUE
-    ) |>
-    # Set units of value column and convert to default unit
+    dplyr::distinct(-.data$VALUE, .keep_all = TRUE) |>
+    # Set units of value column and convert to default unit / fix site id
     dplyr::mutate(
       VALUE = as.numeric(.data$VALUE) |>
         handyr::convert_units(
           from = unit,
           to = default_unit,
           keep_units = TRUE
-        )
+        ),
+      # Pad left side of id with 0s if needed so it matches format of meta files
+      EMS_ID = ifelse(
+        nchar(.data$EMS_ID) == 3,
+        yes = .data$EMS_ID, # for sites 598, etc
+        no = .data$EMS_ID |>
+          stringr::str_pad(pad = "0", width = 7, side = "left")
+      )
     ) |>
     # PARAMETER, INSTRUMENT, VALUE -> `PARAMETER`, `PARAMETER`_INSTRUMENT
     tidyr::pivot_wider(names_from = "PARAMETER", values_from = "VALUE") |>
