@@ -207,7 +207,7 @@ purpleair_api <- function(
             stats::setNames(response_fields)
         }
       ) |>
-      dplyr::select(dplyr::all_of(response_fields)) |>
+      dplyr::select(dplyr::any_of(response_fields)) |>
       dplyr::mutate(
         dplyr::across(
           dplyr::any_of(c("time_stamp", "last_seen", "date_created")),
