@@ -2,11 +2,6 @@
 
 ## All functions
 
-- [`AQI()`](https://b-nilson.github.io/airquality/reference/AQI.md) :
-  Calculate the US AQI from pollutant observations
-- [`CAAQS()`](https://b-nilson.github.io/airquality/reference/CAAQS.md)
-  : Assess the attainment of the Canadian Ambient Air Quality Standards
-  (CAAQS)
 - [`ThingSpeakReadParams()`](https://b-nilson.github.io/airquality/reference/ThingSpeakReadParams.md)
   : An S7 class to represent parameters for the ThingSpeak API.
 - [`get_abgov_data()`](https://b-nilson.github.io/airquality/reference/get_abgov_data.md)

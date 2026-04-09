@@ -108,7 +108,7 @@ station <- "0450307" # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
 get_bcgov_data(station, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2025-11-18 19:46:06: Getting archived data
+#> 2026-04-09 00:16:08: Getting archived data
 #> # A tibble: 241 × 20
 #>    date_utc            date_local      site_id quality_assured pm25_1hr pm10_1hr
 #>    <dttm>              <chr>           <chr>   <lgl>           [ug/m^3] [ug/m^3]
@@ -136,7 +136,7 @@ stations <- c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bcgov_data(stations, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2025-11-18 19:49:48: Getting archived data
+#> 2026-04-09 00:19:45: Getting archived data
 #> Error in standardize_data_format(dplyr::bind_rows(obs), date_range = date_range,     known_stations = known_stations, desired_cols = unlist(unname(.bcgov_columns)),     fast = fast, raw = raw): No data available after reformatting.
 # }
 ```

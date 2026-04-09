@@ -100,8 +100,7 @@ Other Data Collection:
 [`get_bcgov_data()`](https://b-nilson.github.io/airquality/reference/get_bcgov_data.md),
 [`get_bcgov_stations()`](https://b-nilson.github.io/airquality/reference/get_bcgov_stations.md)
 
-Other Canadian Air Quality:
-[`CAAQS()`](https://b-nilson.github.io/airquality/reference/CAAQS.md)
+Other Canadian Air Quality: `CAAQS()`
 
 ## Examples
 
