@@ -209,7 +209,7 @@ bcgov_make_qaqc_paths <- function(years, variables, mode = "binary") {
   # Build paths to each vailable parameter file for each year
   all_params <- .bcgov_columns$values[paste0(variables, "_1hr")]
   paths <- years |>
-    sapply(
+    lapply(
       \(year) {
         # Filter for valid parameters
         available_params <- bcgov_get_qaqc_year_params(year) |>
