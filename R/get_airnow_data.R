@@ -15,6 +15,13 @@
 #'   A character vector of one or more variables to try and get data for.
 #'   All variables are downloaded regardless of this parameter, but only data for desired variables is returned.
 #'   Default is "all", i.e. all available variables.
+#' @param download_cache (Optional).
+#'   Locations to save downloaded files to. Will be read from as needed if `check_cache = TRUE`.
+#'   Default is `tempdir()`.
+#' @param check_cache (Optional).
+#'   A single logical (TRUE or FALSE) value indicating if
+#'   downloaded data files should be checked for existence in `download_cache`.
+#'   Default is TRUE.
 #' @param raw (Optional).
 #'   A single logical (TRUE or FALSE) value indicating if
 #'   raw data files are desired (i.e. without a standardized format).
@@ -69,6 +76,8 @@ get_airnow_data <- function(
   stations = "all",
   date_range = "now",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -102,6 +111,7 @@ get_airnow_data <- function(
   if (!quiet) {
     handyr::log_step("Getting hourly files")
   }
+  dir.create(download_cache, showWarnings = FALSE, recursive = TRUE)
   airnow_data <- date_range |>
     make_airnow_filepaths(quiet = quiet) |>
     handyr::for_each(
@@ -109,7 +119,13 @@ get_airnow_data <- function(
       .parallel = fast,
       .show_progress = !quiet,
       \(airnow_file_path) {
-        airnow_file_path |>
+        local_path <- download_cache |> 
+          file.path(basename(airnow_file_path))
+        if (!(check_cache && file.exists(local_path))) {
+          airnow_file_path |>
+            download.file(destfile = local_path, mode = "wb", quiet = quiet)
+        }
+        local_path |> 
           read_airnow_data_file(quiet = TRUE) |>
           handyr::on_error(.return = NULL)
       }

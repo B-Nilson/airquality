@@ -8,6 +8,8 @@ get_airnow_data(
   stations = "all",
   date_range = "now",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -31,6 +33,15 @@ Default is "now" (the current hour).}
 A character vector of one or more variables to try and get data for.
 All variables are downloaded regardless of this parameter, but only data for desired variables is returned.
 Default is "all", i.e. all available variables.}
+
+\item{download_cache}{(Optional).
+Locations to save downloaded files to. Will be read from as needed if `check_cache = TRUE`.
+Default is `tempdir()`.}
+
+\item{check_cache}{(Optional).
+A single logical (TRUE or FALSE) value indicating if
+downloaded data files should be checked for existence in `download_cache`.
+Default is TRUE.}
 
 \item{raw}{(Optional).
 A single logical (TRUE or FALSE) value indicating if
