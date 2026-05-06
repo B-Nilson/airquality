@@ -148,7 +148,7 @@ bcgov_format_qaqc_data <- function(qaqc_data, use_rounded_value = TRUE) {
     dplyr::select(dplyr::all_of(desired_cols)) |>
     dplyr::filter(!is.na(.data$VALUE)) |>
     # some sites in some files have duplicated rows (i.e. TEMP_MEAN for 0450307 in 1989, PM25 for E246240 in 2008)
-    dplyr::distinct(-.data$VALUE, .keep_all = TRUE) |>
+    dplyr::distinct(dplyr::pick(-dplyr::any_of("VALUE")), .keep_all = TRUE) |>
     # Set units of value column and convert to default unit / fix site id
     dplyr::mutate(
       VALUE = as.numeric(.data$VALUE) |>
