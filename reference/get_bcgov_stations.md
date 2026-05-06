@@ -79,7 +79,7 @@ get_bcgov_stations(use_sf = TRUE)
 #> Simple feature collection with 404 features and 7 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -132.2875 ymin: 48.3094 xmax: -114.8877 ymax: 58.8103
+#> Bounding box:  xmin: -132.2875 ymin: 48.3094 xmax: -114.8876 ymax: 58.8103
 #> Geodetic CRS:  WGS 84
 #> # A tibble: 404 × 8
 #>    site_id naps_id site_name             elev date_created date_removed tz_local

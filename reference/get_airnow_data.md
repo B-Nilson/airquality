@@ -26,6 +26,8 @@ get_airnow_data(
   stations = "all",
   date_range = "now",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -57,6 +59,17 @@ get_airnow_data(
   data for. All variables are downloaded regardless of this parameter,
   but only data for desired variables is returned. Default is "all",
   i.e. all available variables.
+
+- download_cache:
+
+  (Optional). Locations to save downloaded files to. Will be read from
+  as needed if \`check_cache = TRUE\`. Default is \`tempdir()\`.
+
+- check_cache:
+
+  (Optional). A single logical (TRUE or FALSE) value indicating if
+  downloaded data files should be checked for existence in
+  \`download_cache\`. Default is TRUE.
 
 - raw:
 
@@ -103,8 +116,8 @@ Other Data Collection:
 # Get data for all stations for first 3 hours (UTC) of Jan 2019
 get_airnow_data("all", c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-04-09 00:15:46: Getting hourly files
-#> 2026-04-09 00:15:48: Getting station metadata
+#> 2026-05-06 05:11:16: Getting hourly files
+#> 2026-05-06 05:11:19: Getting station metadata
 #> Warning: There was 1 warning in `dplyr::mutate()`.
 #> ℹ In argument: `date_local = format(...)`.
 #> ℹ In group 36: `tz_local = NA`.
@@ -132,8 +145,8 @@ get_airnow_data("all", c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 # Get data for two specific stations for first 3 hours (UTC) of Jan 2019
 get_airnow_data(c("000010102", "000010401"), c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-04-09 00:15:50: Getting hourly files
-#> 2026-04-09 00:15:51: Getting station metadata
+#> 2026-05-06 05:11:23: Getting hourly files
+#> 2026-05-06 05:11:23: Getting station metadata
 #> # A tibble: 6 × 6
 #>   date_utc            date_local         site_id quality_assured pm25_1hr o3_1hr
 #>   <dttm>              <chr>              <chr>   <lgl>           [ug/m^3]  [ppb]

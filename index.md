@@ -11,6 +11,7 @@ You can install the development version of airquality from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("B-Nilson/airquality")
 ```
@@ -20,6 +21,7 @@ devtools::install_github("B-Nilson/airquality")
 A few useful functions for working with air quality data.
 
 ``` r
+
 library(airquality)
 
 # Convert between units
@@ -37,6 +39,7 @@ and maintenance costs these stations tend to be prioritized for areas
 with more people.
 
 ``` r
+
 library(airquality)
 
 # All FEM data sources for (a) location(s)
@@ -69,6 +72,7 @@ ensure unrealistic observations are properly flagged and removed before
 analysis.
 
 ``` r
+
 library(airquality)
 
 # All LCM networks for (a) location(s)
@@ -97,6 +101,7 @@ assess air quality impacts in their region. Here are ways you can
 calculate these standards with observation data:
 
 ``` r
+
 library(airquality)
 
 # Canadian AQHI
@@ -116,6 +121,7 @@ AQI(pm25 = 25)
 Here are ways you can make useful analysis plots built using ggplot2:
 
 ``` r
+
 library(airquality)
 
 # Taylor Diagrams
