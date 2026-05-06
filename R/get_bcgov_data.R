@@ -50,6 +50,8 @@ get_bcgov_data <- function(
   stations = "all",
   date_range = "now",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -100,6 +102,8 @@ get_bcgov_data <- function(
     obs$realtime <- stations |>
       bcgov_get_raw_data(
         variables = variables,
+        download_cache = download_cache,
+        check_cache = check_cache,
         quiet = quiet,
         mode = "realtime"
       ) |>
@@ -127,6 +131,8 @@ get_bcgov_data <- function(
         bcgov_get_qaqc_data(
           variables = variables,
           years = years_to_get[is_qaqc],
+          download_cache = download_cache,
+          check_cache = check_cache,
           quiet = TRUE
         ) |>
         dplyr::mutate(quality_assured = TRUE)
@@ -135,7 +141,12 @@ get_bcgov_data <- function(
     # Get raw data
     if (any(!is_qaqc)) {
       obs$raw <- stations |>
-        bcgov_get_raw_data(variables = variables, quiet = TRUE) |>
+        bcgov_get_raw_data(
+          variables = variables,
+          download_cache = download_cache,
+          check_cache = check_cache,
+          quiet = TRUE
+        ) |>
         dplyr::mutate(quality_assured = FALSE)
     }
   }

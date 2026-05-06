@@ -2,6 +2,8 @@ bcgov_get_qaqc_data <- function(
   stations = "all",
   variables = "all",
   years,
+  download_cache = tempdir(),
+  check_cache = TRUE,
   mode = "binary",
   use_rounded_value = TRUE,
   quiet = FALSE
@@ -13,9 +15,26 @@ bcgov_get_qaqc_data <- function(
   stopifnot(is.logical(use_rounded_value), length(use_rounded_value) == 1)
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
-  # Download, format, and join data
-  qaqc_data <- years |>
-    bcgov_make_qaqc_paths(variables = variables, mode = mode) |>
+  download_cache <- file.path(download_cache, "qaqc", mode) # differentiate from other bcgov data
+  dir.create(download_cache, showWarnings = FALSE, recursive = TRUE)
+
+  data_paths <- years |>
+    bcgov_make_qaqc_paths(variables = variables, mode = mode)
+
+  # Download and cache files locally as needed
+  path_years <- data_paths |>
+    stringr::str_extract("/(\\d{4})/", 1)
+  local_paths <- download_cache |>
+    file.path(paste(path_years, basename(data_paths), sep = "_") )
+  for (i in seq_along(data_paths)) {
+    local_path <- local_paths[i]
+    if (!(check_cache && file.exists(local_path))) {
+      data_paths[i] |>
+        download.file(destfile = local_path, mode = "wb", quiet = quiet)
+    }
+  }
+
+  qaqc_data <- local_paths |>
     handyr::for_each(
       read_bcgov_qaqc_file,
       use_rounded_value = use_rounded_value,
@@ -76,9 +95,7 @@ read_bcgov_qaqc_file <- function(
 get_parquet_file <- function(url) {
   rlang::check_installed("arrow")
   rlang::check_installed("tzdb")
-  rlang::check_installed("RCurl")
   url |>
-    RCurl::getBinaryURL() |>
     arrow::read_parquet() |>
     handyr::on_error(
       .return = NULL,

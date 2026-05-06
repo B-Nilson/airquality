@@ -1,6 +1,8 @@
 bcgov_get_raw_data <- function(
   stations = "all",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   mode = "binary",
   quiet = FALSE
 ) {
@@ -13,6 +15,9 @@ bcgov_get_raw_data <- function(
   )
   stopifnot(is.logical(quiet), length(quiet) == 1)
 
+  download_cache <- file.path(download_cache, "raw", mode) # differentiate from other bcgov data
+  dir.create(download_cache, showWarnings = FALSE, recursive = TRUE)
+
   # Get raw data file paths
   data_paths <- stations |>
     bcgov_make_raw_paths(
@@ -21,10 +26,21 @@ bcgov_get_raw_data <- function(
       quiet = quiet
     )
 
+  # Download and cache files locally as needed
+  local_paths <- download_cache |>
+    file.path(basename(data_paths))
+  for (i in seq_along(data_paths)) {
+    local_path <- local_paths[i]
+    if (!(check_cache && file.exists(local_path))) {
+      data_paths[i] |>
+        download.file(destfile = local_path, mode = "wb", quiet = quiet)
+    }
+  }
+
   is_parquet <- tools::file_ext(data_paths[1]) == "parquet"
   if (mode %in% c("variables", "binary") | is_parquet) {
     # Download/format each variables file and join together
-    data_paths |>
+    local_paths |>
       handyr::for_each(
         read_bcgov_qaqc_file,
         use_rounded_value = TRUE,
@@ -34,7 +50,7 @@ bcgov_get_raw_data <- function(
       )
   } else {
     # Download each stations file and bind together, then format
-    data_paths |>
+    local_paths |>
       handyr::for_each(
         read_raw_bcgov_data,
         .bind = TRUE,
