@@ -29,6 +29,8 @@ get_bcgov_data(
   stations = "all",
   date_range = "now",
   variables = "all",
+  download_cache = tempdir(),
+  check_cache = TRUE,
   raw = FALSE,
   fast = FALSE,
   quiet = FALSE
@@ -59,6 +61,17 @@ get_bcgov_data(
   data for. All variables are downloaded regardless of this parameter,
   but only data for desired variables is returned. Default is "all",
   i.e. all available variables.
+
+- download_cache:
+
+  (Optional). Locations to save downloaded files to. Will be read from
+  as needed if \`check_cache = TRUE\`. Default is \`tempdir()\`.
+
+- check_cache:
+
+  (Optional). A single logical (TRUE or FALSE) value indicating if
+  downloaded data files should be checked for existence in
+  \`download_cache\`. Default is TRUE.
 
 - raw:
 
@@ -108,27 +121,27 @@ station <- "0450307" # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2020-12-31 23"), tz = "Etc/GMT+8")
 get_bcgov_data(station, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2026-05-06 05:11:48: Getting archived data
-#> # A tibble: 241 × 20
+#> 2026-05-06 19:31:23: Getting archived data
+#> # A tibble: 17,541 × 26
 #>    date_utc            date_local      site_id quality_assured pm25_1hr pm10_1hr
 #>    <dttm>              <chr>           <chr>   <lgl>           [ug/m^3] [ug/m^3]
-#>  1 2019-01-08 23:00:00 2019-01-08 15:… 0450307 TRUE                48.9     NA  
-#>  2 2019-01-14 15:00:00 2019-01-14 07:… 0450307 TRUE                NA       NA  
-#>  3 2019-01-28 22:00:00 2019-01-28 14:… 0450307 TRUE                43.3     NA  
-#>  4 2019-01-29 00:00:00 2019-01-28 16:… 0450307 TRUE                NA       NA  
-#>  5 2019-01-29 02:00:00 2019-01-28 18:… 0450307 TRUE                NA       77  
-#>  6 2019-01-29 06:00:00 2019-01-28 22:… 0450307 TRUE                NA       58.8
-#>  7 2019-01-29 18:00:00 2019-01-29 10:… 0450307 TRUE                45.3     NA  
-#>  8 2019-01-30 03:00:00 2019-01-29 19:… 0450307 TRUE                NA       88.4
-#>  9 2019-02-06 17:00:00 2019-02-06 09:… 0450307 TRUE                59.3     NA  
-#> 10 2019-02-11 13:00:00 2019-02-11 05:… 0450307 TRUE                50.3     NA  
-#> # ℹ 231 more rows
-#> # ℹ 14 more variables: o3_1hr [ppb], no_1hr [ppb], no2_1hr [ppb],
-#> #   nox_1hr [ppb], so2_1hr [ppb], trs_1hr [ppb], pm25_1hr_instrument <fct>,
-#> #   pm10_1hr_instrument <fct>, o3_1hr_instrument <fct>,
-#> #   no_1hr_instrument <fct>, no2_1hr_instrument <fct>,
-#> #   nox_1hr_instrument <fct>, so2_1hr_instrument <fct>,
-#> #   trs_1hr_instrument <fct>
+#>  1 2019-01-01 09:00:00 2019-01-01 01:… 0450307 TRUE                 2.7      9.6
+#>  2 2019-01-01 10:00:00 2019-01-01 02:… 0450307 TRUE                 2.4     19.4
+#>  3 2019-01-01 11:00:00 2019-01-01 03:… 0450307 TRUE                 2.6      6.9
+#>  4 2019-01-01 12:00:00 2019-01-01 04:… 0450307 TRUE                 2.6      6.1
+#>  5 2019-01-01 13:00:00 2019-01-01 05:… 0450307 TRUE                 2.2      6  
+#>  6 2019-01-01 14:00:00 2019-01-01 06:… 0450307 TRUE                 2.1      4.8
+#>  7 2019-01-01 15:00:00 2019-01-01 07:… 0450307 TRUE                 3.1      6.4
+#>  8 2019-01-01 16:00:00 2019-01-01 08:… 0450307 TRUE                 4        6.1
+#>  9 2019-01-01 17:00:00 2019-01-01 09:… 0450307 TRUE                 3.9      4.2
+#> 10 2019-01-01 18:00:00 2019-01-01 10:… 0450307 TRUE                 3.6      6.6
+#> # ℹ 17,531 more rows
+#> # ℹ 20 more variables: o3_1hr [ppb], no_1hr [ppb], no2_1hr [ppb],
+#> #   nox_1hr [ppb], so2_1hr [ppb], trs_1hr [ppb], rh_1hr [%], temp_1hr [°C],
+#> #   wd_1hr [°], wd_unitvector_1hr [°], ws_1hr [m/s], ws_vector_1hr [m/s],
+#> #   pm25_1hr_instrument <fct>, pm10_1hr_instrument <fct>,
+#> #   o3_1hr_instrument <fct>, no_1hr_instrument <fct>, no2_1hr_instrument <fct>,
+#> #   nox_1hr_instrument <fct>, so2_1hr_instrument <fct>, …
 
 # For multiple stations
 stations <- c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
@@ -136,7 +149,26 @@ stations <- c("0450307", "E206898") # EMS IDs - see get_bcgov_stations()
 date_range <- lubridate::ymd_h(c("2019-01-01 00", "2019-01-07 23"), tz = "Etc/GMT+8")
 get_bcgov_data(stations, date_range)
 #> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
-#> 2026-05-06 05:17:37: Getting archived data
-#> Error in standardize_data_format(dplyr::bind_rows(obs), date_range = date_range,     known_stations = known_stations, desired_cols = unlist(unname(.bcgov_columns)),     fast = fast, raw = raw): No data available after reformatting.
+#> 2026-05-06 19:37:15: Getting archived data
+#> # A tibble: 167 × 23
+#>    date_utc            date_local      site_id quality_assured pm25_1hr pm10_1hr
+#>    <dttm>              <chr>           <chr>   <lgl>           [ug/m^3] [ug/m^3]
+#>  1 2019-01-01 09:00:00 2019-01-01 01:… 0450307 TRUE                 2.7      9.6
+#>  2 2019-01-01 10:00:00 2019-01-01 02:… 0450307 TRUE                 2.4     19.4
+#>  3 2019-01-01 11:00:00 2019-01-01 03:… 0450307 TRUE                 2.6      6.9
+#>  4 2019-01-01 12:00:00 2019-01-01 04:… 0450307 TRUE                 2.6      6.1
+#>  5 2019-01-01 13:00:00 2019-01-01 05:… 0450307 TRUE                 2.2      6  
+#>  6 2019-01-01 14:00:00 2019-01-01 06:… 0450307 TRUE                 2.1      4.8
+#>  7 2019-01-01 15:00:00 2019-01-01 07:… 0450307 TRUE                 3.1      6.4
+#>  8 2019-01-01 16:00:00 2019-01-01 08:… 0450307 TRUE                 4        6.1
+#>  9 2019-01-01 17:00:00 2019-01-01 09:… 0450307 TRUE                 3.9      4.2
+#> 10 2019-01-01 18:00:00 2019-01-01 10:… 0450307 TRUE                 3.6      6.6
+#> # ℹ 157 more rows
+#> # ℹ 17 more variables: o3_1hr [ppb], no_1hr [ppb], no2_1hr [ppb],
+#> #   nox_1hr [ppb], so2_1hr [ppb], trs_1hr [ppb], rh_1hr [%], temp_1hr [°C],
+#> #   ws_1hr [m/s], pm25_1hr_instrument <fct>, pm10_1hr_instrument <fct>,
+#> #   o3_1hr_instrument <fct>, no_1hr_instrument <fct>, no2_1hr_instrument <fct>,
+#> #   nox_1hr_instrument <fct>, so2_1hr_instrument <fct>,
+#> #   trs_1hr_instrument <fct>
 # }
 ```
