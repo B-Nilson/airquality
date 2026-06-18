@@ -228,7 +228,11 @@ make_wind_rose_base <- function(
   gg <- ggplot2::ggplot(rose_data) |>
     facet_plot(by = facet_by, rows = facet_rows) |>
     add_default_theme() +
-    ggplot2::theme(legend.position = "right", legend.direction = "vertical") +
+    ggplot2::theme(
+      axis.line.x = ggplot2::element_line(colour = colour),
+      legend.position = "right",
+      legend.direction = "vertical"
+    ) +
     ggplot2::coord_radial(
       r.axis.inside = as.integer(freq_labels_position),
       start = -handyr::convert_units(
@@ -237,14 +241,13 @@ make_wind_rose_base <- function(
         to = "radians"
       )
     ) +
-    ggplot2::geom_hline(yintercept = most_frequent * 1.05, colour = colour) +
     ggplot2::scale_x_discrete(
       expand = ggplot2::expansion(0),
       labels = \(x) ifelse(nchar(x) < 3, x, "")
     ) +
     ggplot2::scale_y_continuous(
       limits = c(0, NA),
-      expand = ggplot2::expansion(c(0, 0.02)),
+      expand = ggplot2::expansion(c(0, 0.05)),
       labels = \(x) ifelse(x > 0, paste0(round(x * 100), "%"), "")
     ) +
     ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
