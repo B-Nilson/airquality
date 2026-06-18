@@ -26,7 +26,7 @@
 #' @param freq_labels_position A single numeric value in \[0, 360\] specifying
 #'   the compass bearing (degrees) at which the frequency-axis labels are
 #'   placed. Values are snapped to the nearest cardinal direction. Defaults to
-#'   `360` (North).
+#'   `NULL`, which places labels at the least busy cardinal direction.
 #' @param ws_min Minimum wind speed to include. Observations below this
 #'   threshold are dropped before plotting. Units are inferred from the data or
 #'   from `ws_out_units`. Defaults to `0`.
@@ -71,7 +71,7 @@ wind_rose <- function(
   facet_by = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
-  freq_labels_position = 360,
+  freq_labels_position = NULL,
   ws_min = 0,
   ws_step = 2,
   ws_out_units = "m/s",
@@ -89,7 +89,7 @@ wind_rose <- function(
     is.null(names(facet_by)) | is.character(facet_by),
     length(facet_rows) == 1 & is.numeric(facet_rows),
     length(wd_nbins) == 1 & is.numeric(wd_nbins) & wd_nbins %in% c(16, 8, 4),
-    length(freq_labels_position) == 1 & is.numeric(freq_labels_position),
+    is.null(freq_labels_position) | (length(freq_labels_position) == 1 & is.numeric(freq_labels_position)),
     freq_labels_position >= 0 & freq_labels_position <= 360,
     length(ws_min) == 1 & is.numeric(ws_min),
     length(ws_step) == 1 & is.numeric(ws_step) & ws_step > 0,
@@ -197,20 +197,31 @@ make_wind_rose_base <- function(
   rose_data,
   facet_by = NULL,
   facet_rows = 1,
-  freq_labels_position = 360,
+  freq_labels_position = NULL,
   wd_step = 22.5,
   ws_out_units = "m/s",
   fills = "default",
   colour = "black"
 ) {
-  freq_labels_position <- freq_labels_position |> get_cardinal_direction()
+  if (is.null(freq_labels_position)) {
+    dir_totals <- rose_data |>
+      dplyr::group_by(.data$wd_bin) |>
+      dplyr::summarise(
+        max_p = max(.data$p, na.rm = TRUE),
+        sum_p = sum(.data$p, na.rm = TRUE)
+      )
+    freq_labels_position <- dir_totals |>
+      dplyr::filter(.data$max_p == min(.data$max_p, na.rm = TRUE)) |>
+      dplyr::pull("wd_bin") |>
+      dplyr::first()
+  } else {
+    freq_labels_position <- freq_labels_position |> get_cardinal_direction()
+  }
 
   # Determine most frequent direction across all facets
-  most_frequent <- rose_data |>
-    dplyr::group_by(.data$wd_bin) |>
-    dplyr::summarise(p = sum(.data$p, na.rm = TRUE)) |>
-    dplyr::filter(.data$p == max(.data$p, na.rm = TRUE)) |>
-    dplyr::pull("p") |>
+  most_frequent <- dir_totals |>
+    dplyr::filter(.data$sum_p == max(.data$sum_p, na.rm = TRUE)) |>
+    dplyr::pull("sum_p") |>
     dplyr::first()
 
   # Make base plot
