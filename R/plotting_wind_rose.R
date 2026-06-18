@@ -48,6 +48,9 @@
 #' @param bar_width A single numeric value in \[0, 1\] controlling the relative
 #'   width of each directional bar. A value of `1` makes adjacent bars touch.
 #'   Defaults to `1`.
+#' @param show_missing A single logical value indicating whether to display a text label of 
+#'   the proportion of observations missing a wind direction or wind speed.
+#'   Defaults to `TRUE`.
 #' @param ... Additional arguments passed to [ggplot2::geom_col()], such as
 #'   `linewidth` or `linetype`.
 #'
@@ -79,6 +82,7 @@ wind_rose <- function(
   colour = "black",
   alpha = 0.8,
   bar_width = 1,
+  show_missing = TRUE,
   ...
 ) {
   # fmt: skip
@@ -97,7 +101,8 @@ wind_rose <- function(
     length(fills) >= 1 & is.character(fills),
     length(colour) == 1 & is.character(colour),
     length(alpha) == 1 & is.numeric(alpha) & alpha >= 0 & alpha <= 1,
-    length(bar_width) == 1 & is.numeric(bar_width) & bar_width >= 0 & bar_width <= 1
+    length(bar_width) == 1 & is.numeric(bar_width) & bar_width >= 0 & bar_width <= 1,
+    length(show_missing) == 1 & is.logical(show_missing)
   )
 
   # Handle inputs
@@ -112,6 +117,17 @@ wind_rose <- function(
 
   rose_data <- obs |>
     dplyr::select(dplyr::all_of(c(data_cols, facet_by)))
+
+  if (show_missing) {
+    missing_p <- rose_data |>
+      dplyr::group_by(dplyr::across(dplyr::all_of(facet_by))) |>
+      dplyr::summarise(
+        p = round(sum(is.na(.data$ws)) / dplyr::n() * 100, 2),
+        .groups = "drop"
+      )
+  } else {
+    missing_p <- NULL
+  }
   facet_by <- names(facet_by)
 
   rose_data <- rose_data |>
@@ -121,11 +137,11 @@ wind_rose <- function(
       wd = .data$wd |>
         units::set_units("degrees")
     ) |>
-    # Drop too low of winds and make ws/wd bins
-    dplyr::filter(.data$ws >= ws_min, !is.na(.data$wd))
+    # Drop missing wd
+    dplyr::filter(!is.na(.data$wd))
 
   if (nrow(rose_data) == 0) {
-    "No observations where wind speed >= %s %s and wind direction is not NA" |>
+    "No observations where wind direction is not NA" |>
       sprintf(ws_min, ws_out_units) |>
       stop()
   }
@@ -159,7 +175,8 @@ wind_rose <- function(
       wd_step = wd_step,
       ws_out_units = ws_out_units,
       fills = fills,
-      colour = colour
+      colour = colour,
+      missing_p = missing_p
     ) +
     ggplot2::geom_col(
       ggplot2::aes(
@@ -184,6 +201,9 @@ wind_rose <- function(
 #' @param rose_data A summarised data frame produced inside [wind_rose()],
 #'   containing at minimum the columns `wd_bin`, `ws_bin`, `p`, and any
 #'   columns named in `facet_by`.
+#' @param missing_p A numeric vector of length 1 containing the proportion of
+#'   observations missing a wind direction or wind speed to be added to the plot.
+#'   If `NULL` (the default) then no text is added to the plot.
 #' @inheritParams wind_rose
 #' @param wd_step Arc width of each directional bin in degrees. Derived from
 #'   `wd_nbins` in [wind_rose()] as `360 / wd_nbins`.
@@ -200,6 +220,7 @@ make_wind_rose_base <- function(
   freq_labels_position = NULL,
   wd_step = 22.5,
   ws_out_units = "m/s",
+  missing_p = NULL,
   fills = "default",
   colour = "black"
 ) {
@@ -235,6 +256,7 @@ make_wind_rose_base <- function(
     ) +
     ggplot2::coord_radial(
       r.axis.inside = as.integer(freq_labels_position),
+      inner.radius = 0.2,
       start = -handyr::convert_units(
         wd_step / 2,
         from = "degrees",
@@ -256,6 +278,26 @@ make_wind_rose_base <- function(
       y = NULL,
       fill = "Wind Speed [%s]" %>% sprintf(ws_out_units),
     )
+
+  if (!is.null(missing_p)) {
+    missing_p <- missing_p |>
+      dplyr::mutate(
+        wd_bin = factor("SE", levels = levels(rose_data$wd_bin)),
+        y = 0.01
+      )
+    gg <- gg +
+      ggplot2::geom_text(
+        data = missing_p,
+        ggplot2::aes(
+          label = paste0("Missing:\n", p, "%"),
+          x = 1,
+          y = 0
+        ),
+        hjust = 0.5,
+        vjust = 1.7,
+        # nudge_y = -0.1
+      )
+  }
 
   # TODO: handle fill palletes
   # Add fill colours
@@ -289,6 +331,7 @@ cut_wind_speed <- function(ws, ws_min = 0, ws_step = 2) {
   speed_bins <- seq(ws_min, max_ws, by = ws_step) |>
     c(max_ws) |>
     unique()
+  speed_bins <- c(-1, speed_bins)
   speed_labels <- paste(
     speed_bins,
     "-",
@@ -296,6 +339,7 @@ cut_wind_speed <- function(ws, ws_min = 0, ws_step = 2) {
   )[
     1:(length(speed_bins) - 1)
   ]
+  speed_labels[speed_labels == paste("-1 -", ws_min)] <- "Calm (<= %s)" |> sprintf(ws_min)
 
   cut(ws, include.lowest = TRUE, breaks = speed_bins, labels = speed_labels)
 }
