@@ -1,14 +1,20 @@
 test_that("no errors thrown", {
-  date_range <- lubridate::ymd_h(
-    c("2019-02-01 00", "2019-02-28 23"),
-    tz = "America/Vancouver"
-  )
-  obs <- get_bcgov_data(
-    stations = "0450307",
-    date_range = c(Sys.time() - lubridate::days(10), Sys.time()),
-    quiet = TRUE
-  )
   expect_no_error(expect_no_warning(
-    wind_rose(obs, facet_by = "site_id")
+    print(wind_rose(obs = example_obs))
   ))
+})
+
+test_that("missing/insufficient data handled properly", {
+  expect_no_error(expect_no_warning(
+    print(wind_rose(obs = example_obs[1, ]))
+  ))
+
+  print(wind_rose(obs = example_obs[1, ][-1, ])) |> 
+    expect_error(regexp = "nrow\\(obs\\) > 0")
+
+  print(wind_rose(obs = example_obs |> dplyr::mutate(ws_1hr = NA))) |>
+    expect_error(regexp = "No observations where wind speed >= 0")
+
+  print(wind_rose(obs = example_obs |> dplyr::mutate(wd_1hr = NA))) |>
+    expect_error(regexp = "No observations where .* wind direction is not NA")
 })
