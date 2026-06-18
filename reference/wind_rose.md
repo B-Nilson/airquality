@@ -14,7 +14,7 @@ wind_rose(
   facet_by = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
-  freq_labels_position = 360,
+  freq_labels_position = NULL,
   ws_min = 0,
   ws_step = 2,
   ws_out_units = "m/s",
@@ -22,6 +22,7 @@ wind_rose(
   colour = "black",
   alpha = 0.8,
   bar_width = 1,
+  show_missing = TRUE,
   ...
 )
 ```
@@ -60,8 +61,8 @@ wind_rose(
 
   A single numeric value in \\0, 360\\ specifying the compass bearing
   (degrees) at which the frequency-axis labels are placed. Values are
-  snapped to the nearest cardinal direction. Defaults to \`360\`
-  (North).
+  snapped to the nearest cardinal direction. Defaults to \`NULL\`, which
+  places labels at the least busy cardinal direction.
 
 - ws_min:
 
@@ -104,6 +105,12 @@ wind_rose(
   A single numeric value in \\0, 1\\ controlling the relative width of
   each directional bar. A value of \`1\` makes adjacent bars touch.
   Defaults to \`1\`.
+
+- show_missing:
+
+  A single logical value indicating whether to display a text label of
+  the proportion of observations missing a wind direction or wind speed.
+  Defaults to \`TRUE\`.
 
 - ...:
 
