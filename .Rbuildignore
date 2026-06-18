@@ -1,5 +1,3 @@
-^renv$
-^renv\.lock$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
@@ -10,3 +8,6 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^uvr\.toml$
+^uvr\.lock$
+^\.uvr$

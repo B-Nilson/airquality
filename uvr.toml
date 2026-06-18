@@ -1,0 +1,39 @@
+[project]
+name = "airquality"
+r_version = ">=4.1.0"
+description = "Gather, Standardize, and Analyze Air Quality Data"
+
+[dependencies]
+S7 = "*"
+"data.table" = "*"
+dplyr = "*"
+forcats = "*"
+ggforce = "*"
+ggplot2 = "*"
+ggtext = "*"
+httr = "*"
+lubridate = "*"
+methods = "*"
+osmdata = "*"
+readr = "*"
+rjson = "*"
+rlang = "*"
+rvest = "*"
+stringr = "*"
+tibble = "*"
+tidyr = "*"
+units = "*"
+withr = "*"
+xml2 = "*"
+
+[dependencies.handyr]
+git = "B-Nilson/handyr"
+
+[dev-dependencies]
+arrow = "*"
+"future.apply" = "*"
+lutz = "*"
+pbapply = "*"
+sf = "*"
+testthat = ">=3.0.0"
+tzdb = "*"
