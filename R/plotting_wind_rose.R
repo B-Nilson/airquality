@@ -217,6 +217,7 @@ make_wind_rose_base <- function(
   gg <- ggplot2::ggplot(rose_data) |>
     facet_plot(by = facet_by, rows = facet_rows) |>
     add_default_theme() +
+    ggplot2::theme(legend.position = "right", legend.direction = "vertical") +
     ggplot2::coord_radial(
       r.axis.inside = as.integer(freq_labels_position),
       start = -handyr::convert_units(
