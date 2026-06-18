@@ -1,6 +1,9 @@
-# Create wind rose diagrams to assess patterns in wind speed and direction
+# Create wind rose diagrams
 
-TODO: Add description
+Generates polar bar charts (wind roses) that summarise the joint
+distribution of wind speed and direction. Bars are stacked by wind speed
+category and oriented toward the compass direction from which the wind
+originates.
 
 ## Usage
 
@@ -11,8 +14,10 @@ wind_rose(
   facet_by = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
+  freq_labels_position = 360,
   ws_min = 0,
   ws_step = 2,
+  ws_out_units = "m/s",
   fills = "default",
   colour = "black",
   alpha = 0.8,
@@ -25,72 +30,89 @@ wind_rose(
 
 - obs:
 
-  Observation data.frame with (at least) all columns in \`data_cols\`
-  and (if provided) \`facet_by\`.
+  A data frame with at least the columns named in \`data_cols\` and,
+  when supplied, \`facet_by\`. Must contain at least one row.
 
 - data_cols:
 
-  (Optional) a character vector with 2 values indicating column names in
-  \`obs\` to get wind speed (ws) and wind direction (wd) values. Default
-  assumes columns "ws_1hr" and "wd_1hr" exist.
+  A named character vector of length 2 mapping the logical roles
+  \`"ws"\` (wind speed) and \`"wd"\` (wind direction) to column names in
+  \`obs\`. Defaults to \`c(ws = "ws_1hr", wd = "wd_1hr")\`.
 
 - facet_by:
 
-  (Optional) a character vector with 1 or 2 column names to use as
-  facets in \`ggplot2::facet_wrap()\`. If names are present they will be
-  used as the corresponding facet titles. Default (NULL) does not facet
-  the plot.
+  A character vector of one or two column names in \`obs\` used as
+  faceting variables in \[ggplot2::facet_wrap()\]. Names, if present,
+  are used as strip labels. Defaults to \`NULL\` (no faceting).
 
 - facet_rows:
 
-  (Optional) a single numeric value indicating the number of rows to use
-  in facetting if \`facet_by\` values provided. Default is a single row.
+  A single positive integer giving the number of rows in the facet
+  layout. Ignored when \`facet_by\` is \`NULL\`. Defaults to \`1\`.
 
 - wd_nbins:
 
-  (Optional) a single value indicating the number of wind direction bars
-  to plot. Must be either 16 (N, NNE, NE, ENE, ...), 8 (N, NE, E, SE,
-  ...), or 4 (N, E, S, W). Default is 16.
+  Number of directional bins. Must be one of \`16\` (N, NNE, NE, ENE,
+  …), \`8\` (N, NE, E, SE, …), or \`4\` (N, E, S, W). Defaults to
+  \`16\`.
+
+- freq_labels_position:
+
+  A single numeric value in \\0, 360\\ specifying the compass bearing
+  (degrees) at which the frequency-axis labels are placed. Values are
+  snapped to the nearest cardinal direction. Defaults to \`360\`
+  (North).
 
 - ws_min:
 
-  (Optional) a single value indicating the minimum wind speed value to
-  include in the diagram. Default is 0 m/s.
+  Minimum wind speed to include. Observations below this threshold are
+  dropped before plotting. Units are inferred from the data or from
+  \`ws_out_units\`. Defaults to \`0\`.
 
 - ws_step:
 
-  (Optional) a single value indicating the spacing between each wind
-  speed category. Default is a step of 2 m/s.
+  Width of each wind speed bin in the units given by \`ws_out_units\`.
+  Defaults to \`2\`.
+
+- ws_out_units:
+
+  A single character string specifying the output units for wind speed
+  (e.g. \`"m/s"\`, \`"km/h"\`, \`"mph"\`). When the wind speed column
+  does not carry unit metadata it is assumed to be in m/s and converted
+  as needed. Defaults to \`"m/s"\`.
 
 - fills:
 
-  (Optional) a vector of colours to use for the wind speed breaks
-  Default uses "good looking" colours
+  A character vector of colours for the wind speed fill scale. Should
+  have at least as many values as there are wind speed bins. Pass
+  \`"default"\` to use \[ggplot2::scale_fill_viridis_d()\]. Defaults to
+  \`"default"\`.
 
 - colour:
 
-  (Optional) a single character value indicating the colour to use for
-  the . Default is a step of 2 m/s.
+  A single character string giving the colour used for bar outlines.
+  Defaults to \`"black"\`.
 
 - alpha:
 
-  (Optional) a single value from 0-1 indicating the alpha (opacity) of
-  the wind speed fill colours. Default is a step of 2 m/s.
+  A single numeric value in \\0, 1\\ controlling the opacity of the bar
+  fills. \`0\` is fully transparent; \`1\` is fully opaque. Defaults to
+  \`0.8\`.
 
 - bar_width:
 
-  (Optional) a single value from 0-1 indicating the relative width of
-  the observation data bars. Default is full width (=1).
+  A single numeric value in \\0, 1\\ controlling the relative width of
+  each directional bar. A value of \`1\` makes adjacent bars touch.
+  Defaults to \`1\`.
 
 - ...:
 
-  Any other named argument will be passed on to ggplot2::geom_col() when
-  drawing the observation data (See ?ggplot2::geom_col for possible
-  arguments)
+  Additional arguments passed to \[ggplot2::geom_col()\], such as
+  \`linewidth\` or \`linetype\`.
 
 ## Value
 
-A ggplot object of your wind rose.
+A \[ggplot2::ggplot()\] object.
 
 ## See also
 
@@ -102,17 +124,11 @@ Other Data Visualisation:
 
 ``` r
 if (FALSE) { # \dontrun{
-# Make test data
-date_range <- lubridate::ymd_h(c("2019-02-01 00", "2019-02-28 23"), tz = "America/Vancouver")
-obs <- get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
-  dplyr::select("date_local", "site_id", "ws_1hr_ms", "wd_1hr_degrees") |>
-  dplyr::distinct()
+
 # Basic usage
-gg <- wind_rose(obs, facet_by = c(Site = "site_id"))
-# Change titles
-gg + ggplot2::labs(
-  fill = "Legend Title", title = "Plot Title",
-  subtitle = "Plot Subtitle", caption = "Plot Caption"
-)
+wind_rose(example_obs)
+
+# Coarser 8-point rose with output in km/h
+wind_rose(example_obs, wd_nbins = 8, ws_out_units = "km/h", ws_step = 10)
 } # }
 ```

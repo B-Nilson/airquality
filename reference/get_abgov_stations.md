@@ -53,7 +53,7 @@ Other Data Collection:
 # \donttest{
 # Normal usage
 get_abgov_stations()
-#> # A tibble: 91 × 11
+#> # A tibble: 86 × 11
 #>    site_id site_name   type  description operated_by address airshed   lat   lng
 #>    <chr>   <chr>       <chr> <chr>       <chr>       <chr>   <chr>   <dbl> <dbl>
 #>  1 01AQY   Leduc Sens… Pilo…  NA         NA          NA      Albert…  53.2 -114.
@@ -66,16 +66,16 @@ get_abgov_stations()
 #>  8 02AQM   Calgary So… Oper…  NA         http://www… 49th A… Calgar…  51.0 -114.
 #>  9 02CAP   O’Morrow S… Oper… "Not an AQ… https://ca… NA      Capita…  54.9 -113.
 #> 10 02CRAZ  Cochrane-M… Port… "CRAZ PAML… https://cr… NA      Calgar…  51.2 -114.
-#> # ℹ 81 more rows
+#> # ℹ 76 more rows
 #> # ℹ 2 more variables: elev <dbl>, tz_local <chr>
 # if spatial object required
 get_abgov_stations(use_sf = TRUE)
-#> Simple feature collection with 91 features and 9 fields
+#> Simple feature collection with 86 features and 9 fields
 #> Geometry type: POINT
 #> Dimension:     XY
 #> Bounding box:  xmin: -119.3968 ymin: 49.46218 xmax: -110.2331 ymax: 58.7084
 #> Geodetic CRS:  WGS 84
-#> # A tibble: 91 × 10
+#> # A tibble: 86 × 10
 #>    site_id site_name         type  description operated_by address airshed  elev
 #>  * <chr>   <chr>             <chr> <chr>       <chr>       <chr>   <chr>   <dbl>
 #>  1 01AQY   Leduc Sensor      Pilo…  NA         NA          NA      Albert…    NA
@@ -88,7 +88,7 @@ get_abgov_stations(use_sf = TRUE)
 #>  8 02AQM   Calgary Southeast Oper…  NA         http://www… 49th A… Calgar…  1030
 #>  9 02CAP   O’Morrow Station… Oper… "Not an AQ… https://ca… NA      Capita…   571
 #> 10 02CRAZ  Cochrane-Mitford… Port… "CRAZ PAML… https://cr… NA      Calgar…    NA
-#> # ℹ 81 more rows
+#> # ℹ 76 more rows
 #> # ℹ 2 more variables: tz_local <chr>, geometry <POINT [°]>
 # }
 ```

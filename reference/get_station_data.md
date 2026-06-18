@@ -98,23 +98,28 @@ get_station_data(locations = "Fort St. John, BC, Canada", date_range = "2019-02-
 #> Error in standardize_data_format(dplyr::bind_rows(obs), date_range = date_range, : No data available before reformatting.
 #> FEM - AirNow : 1 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-05-06 19:38:13: Getting hourly files
-#> 2026-05-06 19:38:14: Getting station metadata
+#> 2026-06-18 05:14:28: Getting hourly files
+#> 2026-06-18 05:14:29: Getting station metadata
 #> Error in data_fun(stations = site_ids, date_range, quiet = quiet): No data available for desired stations during specified date range.
 #> $stations
-#> Simple feature collection with 5 features and 4 fields
+#> Simple feature collection with 10 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
 #> Bounding box:  xmin: -120.8561 ymin: 56.23179 xmax: -120.8094 ymax: 56.25772
 #> Geodetic CRS:  WGS 84
-#> # A tibble: 5 × 5
-#>   site_id       site_name               network source             geometry
-#>   <chr>         <chr>                   <chr>   <chr>           <POINT [°]>
-#> 1 E243516       Fort St John NP Cultur… FEM     BCgov   (-120.8489 56.2458)
-#> 2 E299830       Fort St John Key Learn… FEM     BCgov  (-120.8561 56.24472)
-#> 3 E304550       Fort St John 85th Aven… FEM     BCgov  (-120.8539 56.23179)
-#> 4 FSJ OGC CAMEL Fort St John Hospital   FEM     BCgov  (-120.8094 56.25772)
-#> 5 000105501     Fort St John NP Cultur… FEM     AirNow  (-120.8489 56.2458)
+#> # A tibble: 10 × 5
+#>    site_id       site_name              network source             geometry
+#>    <chr>         <chr>                  <chr>   <chr>           <POINT [°]>
+#>  1 E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)
+#>  2 E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)
+#>  3 E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)
+#>  4 FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)
+#>  5 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)
+#>  6 E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)
+#>  7 E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)
+#>  8 E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)
+#>  9 FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)
+#> 10 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)
 #> 
 #> $data
 #> # A tibble: 0 × 0
@@ -130,8 +135,8 @@ get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
 #> Warning: Adding a search buffer of 25 km to each location (see arg `buffer_dist`)
 #> FEM - AirNow : 2 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-05-06 19:38:20: Getting hourly files
-#> 2026-05-06 19:38:20: Getting station metadata
+#> 2026-06-18 05:14:34: Getting hourly files
+#> 2026-06-18 05:14:34: Getting station metadata
 #> $stations
 #> Simple feature collection with 2 features and 4 fields
 #> Geometry type: POINT

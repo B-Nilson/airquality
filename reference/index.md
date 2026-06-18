@@ -4,6 +4,8 @@
 
 - [`ThingSpeakReadParams()`](https://b-nilson.github.io/airquality/reference/ThingSpeakReadParams.md)
   : An S7 class to represent parameters for the ThingSpeak API.
+- [`example_obs`](https://b-nilson.github.io/airquality/reference/example_obs.md)
+  : Example airquality station observations
 - [`get_abgov_data()`](https://b-nilson.github.io/airquality/reference/get_abgov_data.md)
   : Download air quality station observations from the Alberta (Canada)
   Government
@@ -37,5 +39,4 @@
   : Create tiled summary diagrams to assess relationships in a variable
   based on two grouping variables
 - [`wind_rose()`](https://b-nilson.github.io/airquality/reference/wind_rose.md)
-  : Create wind rose diagrams to assess patterns in wind speed and
-  direction
+  : Create wind rose diagrams
