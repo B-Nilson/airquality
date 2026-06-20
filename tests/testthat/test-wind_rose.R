@@ -25,5 +25,9 @@ test_that("default saved plot looks good", {
   gg <- wind_rose(obs = example_obs)
   out_file <- tempfile(fileext = ".png")
   gg |> handyr::save_figure(out_path = out_file)
-  
+})
+
+test_that("extra features work", {
+  example_obs |>
+    wind_rose(facet_by = "month", facet_rows = 4, date_col = "date_local")
 })

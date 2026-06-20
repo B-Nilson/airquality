@@ -17,7 +17,14 @@
 #'   `obs`. Defaults to `c(ws = "ws_1hr", wd = "wd_1hr")`.
 #' @param facet_by A character vector of one or two column names in `obs` used
 #'   as faceting variables in [ggplot2::facet_wrap()]. Names, if present, are
-#'   used as strip labels. Defaults to `NULL` (no faceting).
+#'   used as strip labels.
+#'   If the column is not present in `obs`,
+#'   it will attempt to be calculated by applying the same named
+#'   `lubridate` function to `date_col`.
+#'   Defaults to `NULL` (no faceting).
+#' @param date_col A character value indicating the name of the column in `obs`
+#'   containing date-time values for if facetting by a date feature not already present in `obs`.
+#'   Defaults to `NULL` .
 #' @param facet_rows A single positive integer giving the number of rows in the
 #'   facet layout. Ignored when `facet_by` is `NULL`. Defaults to `1`.
 #' @param wd_nbins Number of directional bins. Must be one of `16`
@@ -72,6 +79,7 @@ wind_rose <- function(
   obs,
   data_cols = c(ws = "ws_1hr", wd = "wd_1hr"),
   facet_by = NULL,
+  date_col = NULL,
   facet_rows = 1,
   wd_nbins = c(16, 8, 4)[1],
   freq_labels_position = NULL,
@@ -116,6 +124,7 @@ wind_rose <- function(
   ws_min <- ws_min |> units::set_units(ws_out_units, mode = "standard")
 
   rose_data <- obs |>
+    add_features(facet_by, date_col = date_col) |> # calculate features as required
     dplyr::select(dplyr::all_of(c(data_cols, facet_by)))
 
   if (show_missing) {
