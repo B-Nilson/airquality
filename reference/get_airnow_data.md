@@ -116,8 +116,8 @@ Other Data Collection:
 # Get data for all stations for first 3 hours (UTC) of Jan 2019
 get_airnow_data("all", c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-06-18 07:13:01: Getting hourly files
-#> 2026-06-18 07:13:03: Getting station metadata
+#> 2026-06-20 03:58:19: Getting hourly files
+#> 2026-06-20 03:58:20: Getting station metadata
 #> Warning: There was 1 warning in `dplyr::mutate()`.
 #> ℹ In argument: `date_local = format(...)`.
 #> ℹ In group 36: `tz_local = NA`.
@@ -145,8 +145,8 @@ get_airnow_data("all", c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 # Get data for two specific stations for first 3 hours (UTC) of Jan 2019
 get_airnow_data(c("000010102", "000010401"), c("2019-01-01 01:00:00", "2019-01-01 03:00:00"))
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-06-18 07:13:06: Getting hourly files
-#> 2026-06-18 07:13:06: Getting station metadata
+#> 2026-06-20 03:58:23: Getting hourly files
+#> 2026-06-20 03:58:23: Getting station metadata
 #> # A tibble: 6 × 6
 #>   date_utc            date_local         site_id quality_assured pm25_1hr o3_1hr
 #>   <dttm>              <chr>              <chr>   <lgl>           [ug/m^3]  [ppb]
