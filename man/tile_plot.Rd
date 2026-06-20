@@ -2,72 +2,114 @@
 % Please edit documentation in R/plotting_tile_plot.R
 \name{tile_plot}
 \alias{tile_plot}
-\title{Create tiled summary diagrams to assess relationships in a variable based on two grouping variables}
+\title{Create tiled summary diagrams}
 \usage{
 tile_plot(
   obs,
   x,
   y,
   z,
-  date_col = "date_utc",
+  z_lims = c(NA, NA),
+  z_lab = z,
+  date_col = NULL,
   facet_by = NULL,
   facet_rows = 1,
   facet_scales = "fixed",
+  add_counts = FALSE,
+  colour = "black",
+  missing_colour = NA,
+  count_colour = colour,
   FUN = mean,
+  na.rm = TRUE,
   ...
 )
 }
 \arguments{
-\item{obs}{Observation data.frame with (at least) all columns in `data_cols` and (if provided) `facet_by`.}
+\item{obs}{A data frame containing at least all columns named in `x`, `y`,
+`z`, and (if provided) `facet_by`.}
 
-\item{x, y, z}{charactor values indicating column names in `obs` to summarise (`x` and `y`) values (`z`) by using `FUN`.
-If `x` or `y` are one of
-`"year", "quarter", "month", "day", "wday", "hour", "minute", "second"`,
-and those columns are not present in `obs` then they will be calulcated based on `date_col`}
+\item{x, y}{Character strings giving the column names in `obs` to use as the
+horizontal and vertical axes, respectively. If either value is a function found in the `lubridate` package, 
+and that column is absent from `obs`, it will be derived from `date_col`.}
 
-\item{date_col}{(Optional) a single charactor value indicating the column name in `obs` containing observation dates.
-Default assume "date_utc" exists.}
+\item{z}{A character string giving the column name in `obs` whose values are
+summarised by `FUN` for each `x`/`y` combination.}
 
-\item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
-If names are present they will be used as the corresponding facet titles.
-Default (NULL) does not facet the plot.}
+\item{z_lims}{A numeric vector of length 2 giving the lower and upper limits
+for the fill colour scale. Use `NA` for either value to defer to the data
+range. Default is `c(NA, NA)`.}
 
-\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
-Default is a single row.}
+\item{z_lab}{A character string for the fill legend label. Default is the
+value of `z`.}
 
-\item{facet_scales}{(Optional) a single character value indicating wheter the facet x/y scales should be "fixed", "free", "free_y", or "free_x".
-Default is "fixed" (each panel with have matching x/y scales).}
+\item{date_col}{A single character string giving the column name in `obs`
+containing observation dates. Used to derive temporal columns when `x` or
+`y` are date-part values (e.g. `"hour"`, `"month"`). Defaults to
+`NULL`.}
 
-\item{FUN}{(Optional) a function to use to summarise `z` values - must take a vector of values as it's first argument and return a single value.
-Default is to calculate the `mean` value.}
+\item{facet_by}{A character vector of one or two column names to use as
+faceting variables passed to [ggplot2::facet_wrap()]. Named elements will
+be used as the corresponding facet strip titles. 
+If any value matches a function found in the `lubridate` package, 
+and that column is absent from `obs`, it will be derived from `date_col`.
+Default (`NULL`) produces no facetting.}
 
-\item{...}{Any other named arguments will be passed on to `FUN()` when summarizing `z` values.}
+\item{facet_rows}{A single integer giving the number of rows to use when
+facetting. Default is `1`.}
+
+\item{facet_scales}{A single character string controlling axis scale
+behaviour across facet panels: `"fixed"`, `"free"`, `"free_x"`, or
+`"free_y"`. Default is `"fixed"`.}
+
+\item{add_counts}{Logical. If `TRUE`, the number of observations in each
+cell is overlaid as text. Default is `FALSE`.}
+
+\item{colour}{A character string giving the colour used for tile borders.
+Default is `"black"`.}
+
+\item{missing_colour}{A character string giving the fill colour for missing
+(`NA`) values. Default is `NA` (transparent).}
+
+\item{count_colour}{A character string giving the colour of the observation
+count text when `add_counts = TRUE`. Defaults to the value of `colour`.}
+
+\item{FUN}{A function used to summarise `z` values within each `x`/`y`
+combination. Must accept a vector as its first argument and return a
+single value. Default is [mean].}
+
+\item{na.rm}{Logical. If `TRUE`, missing values in `z` are removed before
+summarising. Default is `TRUE`.}
+
+\item{...}{Additional arguments passed to `FUN()`.}
 }
 \value{
-A ggplot object of your tile plot.
+A [ggplot2::ggplot()] object.
 }
 \description{
-TODO: Add description
+Assesses relationships in a variable based on two grouping variables by
+producing a tile (heatmap-style) plot that summarises a `z` variable across
+all combinations of `x` and `y`.
 }
 \examples{
 \dontrun{
-# Make test data
-date_range <- c("2019-02-01 00", "2019-03-28 23")
-obs <- get_station_data("Vanderhoof, BC, Canada", date_range, sources = "BCgov")$data |>
-  dplyr::select("date_utc", "site_id", "pm25_1hr_ugm3") |>
-  dplyr::distinct()
-# Basic usage
-gg <- obs |> tile_plot(
-  x = "day",
-  y = "hour",
-  z = "pm25_1hr_ugm3",
-  facet_by = c("Year" = "year", "Month" = "month")
-)
-# Change titles
-gg + ggplot2::labs(
-  fill = "Legend Title", title = "Plot Title",
-  subtitle = "Plot Subtitle", caption = "Plot Caption"
-)
+gg <- example_obs |>
+  tile_plot(
+    x = "hour",
+    y = "day",
+    z = "pm25_1hr",
+    date_col = "date_local"
+  )
+
+# Overlay observation counts on each cell
+gg <- example_obs |>
+  tile_plot(
+    x = "hour",
+    y = "day",
+    z = "pm25_1hr",
+    date_col = "date_local",
+    add_counts = TRUE,
+    count_colour = "white"
+  )
 }
 }
 \seealso{
