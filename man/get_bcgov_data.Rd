@@ -97,12 +97,12 @@ get_bcgov_data(stations, date_range)
 \seealso{
 [get_bcgov_stations()]
 
-Other Data Collection: 
-\code{\link{get_abgov_data}()},
-\code{\link{get_abgov_stations}()},
-\code{\link{get_airnow_data}()},
-\code{\link{get_airnow_stations}()},
-\code{\link{get_bcgov_stations}()},
-\code{\link{purpleair_api}()}
+Other Data Collection:
+\code{\link[=get_abgov_data]{get_abgov_data()}},
+\code{\link[=get_abgov_stations]{get_abgov_stations()}},
+\code{\link[=get_airnow_data]{get_airnow_data()}},
+\code{\link[=get_airnow_stations]{get_airnow_stations()}},
+\code{\link[=get_bcgov_stations]{get_bcgov_stations()}},
+\code{\link[=purpleair_api]{purpleair_api()}}
 }
 \concept{Data Collection}

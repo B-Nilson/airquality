@@ -71,8 +71,8 @@ gg + ggplot2::labs(
 }
 }
 \seealso{
-Other Data Visualisation: 
-\code{\link{taylor_diagram}()},
-\code{\link{wind_rose}()}
+Other Data Visualisation:
+\code{\link[=taylor_diagram]{taylor_diagram()}},
+\code{\link[=wind_rose]{wind_rose()}}
 }
 \concept{Data Visualisation}

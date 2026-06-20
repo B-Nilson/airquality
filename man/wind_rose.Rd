@@ -83,7 +83,7 @@ to `0.8`.}
 width of each directional bar. A value of `1` makes adjacent bars touch.
 Defaults to `1`.}
 
-\item{show_missing}{A single logical value indicating whether to display a text label of 
+\item{show_missing}{A single logical value indicating whether to display a text label of
 the proportion of observations missing a wind direction or wind speed.
 Defaults to `TRUE`.}
 
@@ -110,8 +110,8 @@ wind_rose(example_obs, wd_nbins = 8, ws_out_units = "km/h", ws_step = 10)
 }
 }
 \seealso{
-Other Data Visualisation: 
-\code{\link{taylor_diagram}()},
-\code{\link{tile_plot}()}
+Other Data Visualisation:
+\code{\link[=taylor_diagram]{taylor_diagram()}},
+\code{\link[=tile_plot]{tile_plot()}}
 }
 \concept{Data Visualisation}

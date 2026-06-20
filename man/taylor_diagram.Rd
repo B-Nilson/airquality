@@ -162,9 +162,9 @@ taylor_diagram(data,
 }
 }
 \seealso{
-Other Data Visualisation: 
-\code{\link{tile_plot}()},
-\code{\link{wind_rose}()}
+Other Data Visualisation:
+\code{\link[=tile_plot]{tile_plot()}},
+\code{\link[=wind_rose]{wind_rose()}}
 }
 \concept{Data Visualisation}
 \concept{Model Validation}

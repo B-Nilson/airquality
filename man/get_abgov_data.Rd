@@ -74,12 +74,12 @@ get_abgov_data(quiet = TRUE)
 \seealso{
 [get_abgov_stations]
 
-Other Data Collection: 
-\code{\link{get_abgov_stations}()},
-\code{\link{get_airnow_data}()},
-\code{\link{get_airnow_stations}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{get_bcgov_stations}()},
-\code{\link{purpleair_api}()}
+Other Data Collection:
+\code{\link[=get_abgov_stations]{get_abgov_stations()}},
+\code{\link[=get_airnow_data]{get_airnow_data()}},
+\code{\link[=get_airnow_stations]{get_airnow_stations()}},
+\code{\link[=get_bcgov_data]{get_bcgov_data()}},
+\code{\link[=get_bcgov_stations]{get_bcgov_stations()}},
+\code{\link[=purpleair_api]{purpleair_api()}}
 }
 \concept{Data Collection}

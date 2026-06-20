@@ -45,12 +45,12 @@ get_bcgov_stations(years = 1998:2000)
 \seealso{
 [get_bcgov_data]
 
-Other Data Collection: 
-\code{\link{get_abgov_data}()},
-\code{\link{get_abgov_stations}()},
-\code{\link{get_airnow_data}()},
-\code{\link{get_airnow_stations}()},
-\code{\link{get_bcgov_data}()},
-\code{\link{purpleair_api}()}
+Other Data Collection:
+\code{\link[=get_abgov_data]{get_abgov_data()}},
+\code{\link[=get_abgov_stations]{get_abgov_stations()}},
+\code{\link[=get_airnow_data]{get_airnow_data()}},
+\code{\link[=get_airnow_stations]{get_airnow_stations()}},
+\code{\link[=get_bcgov_data]{get_bcgov_data()}},
+\code{\link[=purpleair_api]{purpleair_api()}}
 }
 \concept{Data Collection}

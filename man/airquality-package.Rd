@@ -6,6 +6,8 @@
 \alias{airquality-package}
 \title{airquality: Gather, Standardize, and Analyze Air Quality Data}
 \description{
+\if{html}{\figure{logo.svg}{options: style='float: right' alt='logo' width='120'}}
+
 The goal of airquality is to reduce the burden of gathering, standardizing, and analyzing air quality data. This package is very much a work in progress, significant changes will occur and there is no gaurentee things will work as expected.
 }
 \seealso{
