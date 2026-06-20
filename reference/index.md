@@ -36,7 +36,6 @@
   relationship between correlation, standard deviation, and centered RMS
   error.
 - [`tile_plot()`](https://b-nilson.github.io/airquality/reference/tile_plot.md)
-  : Create tiled summary diagrams to assess relationships in a variable
-  based on two grouping variables
+  : Create tiled summary diagrams
 - [`wind_rose()`](https://b-nilson.github.io/airquality/reference/wind_rose.md)
   : Create wind rose diagrams
