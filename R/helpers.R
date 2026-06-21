@@ -13,10 +13,19 @@ add_features <- function(obs, features, date_col = NULL) {
     stopifnot(
       "date_col must be provided for lubridate features" = !is.null(date_col)
     )
+    features <- features[!features %in% lubridate_feats]
     for (feature in lubridate_feats) {
       FUN <- feature |> get(envir = asNamespace("lubridate"))
       obs <- obs |> dplyr::mutate(!!feature := FUN(get(date_col)))
     }
+  }
+
+  if ("season" %in% features) {
+    stopifnot(
+      "date_col must be provided for determining season" = !is.null(date_col)
+    )
+    obs$season <- obs[[date_col]] |>
+      handyr::get_season(as_factor = TRUE)
   }
   return(obs)
 }
