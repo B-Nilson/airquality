@@ -143,7 +143,12 @@ tile_plot <- function(
     ggplot2::geom_tile(ggplot2::aes(x = x, y = y, fill = z), colour = colour) +
     ggplot2::scale_x_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_y_discrete(expand = ggplot2::expansion(0)) +
-    ggplot2::scale_fill_viridis_c(na.value = missing_colour, limits = z_lims) +
+    ggplot2::scale_fill_viridis_c(
+      na.value = missing_colour,
+      limits = z_lims,
+      breaks = breaks_min_max,
+      labels = scales::label_number(drop0trailing = TRUE)
+    ) +
     ggplot2::labs(x = xlab, y = ylab, fill = z_lab)
 
   if (add_counts) {

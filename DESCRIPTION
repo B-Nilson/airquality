@@ -35,6 +35,7 @@ Imports:
     rlang,
     rvest,
     S7,
+    scales,
     stringr,
     tibble,
     tidyr,

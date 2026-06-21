@@ -29,3 +29,16 @@ add_features <- function(obs, features, date_col = NULL) {
   }
   return(obs)
 }
+
+# Used for ensureing fill scales in [ggplot2::ggplot()] show limits
+breaks_min_max <- function(x) {
+  pretty <- scales::breaks_pretty()(x)
+  step <- pretty[2] - pretty[1]
+
+  # Drop pretty breaks too close to the true min/max to avoid crowding
+  pretty <- pretty[
+    abs(pretty - x[1]) > step * 0.25 &
+      abs(pretty - x[2]) > step * 0.25
+  ]
+  sort(unique(c(x[1], pretty, x[2])))
+}
