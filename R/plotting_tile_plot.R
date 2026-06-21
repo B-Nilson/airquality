@@ -7,7 +7,7 @@
 #' @param obs A data frame containing at least all columns named in `x`, `y`,
 #'   `z`, and (if provided) `facet_by`.
 #' @param x,y Character strings giving the column names in `obs` to use as the
-#'   horizontal and vertical axes, respectively. If either value is a function found in the `lubridate` package, 
+#'   horizontal and vertical axes, respectively. If either value is a function found in the `lubridate` package,
 #'   and that column is absent from `obs`, it will be derived from `date_col`.
 #' @param z A character string giving the column name in `obs` whose values are
 #'   summarised by `FUN` for each `x`/`y` combination.
@@ -22,8 +22,8 @@
 #'   `NULL`.
 #' @param facet_by A character vector of one or two column names to use as
 #'   faceting variables passed to [ggplot2::facet_wrap()]. Named elements will
-#'   be used as the corresponding facet strip titles. 
-#'   If any value matches a function found in the `lubridate` package, 
+#'   be used as the corresponding facet strip titles.
+#'   If any value matches a function found in the `lubridate` package,
 #'   and that column is absent from `obs`, it will be derived from `date_col`.
 #'   Default (`NULL`) produces no facetting.
 #' @param facet_rows A single integer giving the number of rows to use when

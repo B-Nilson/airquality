@@ -55,7 +55,7 @@
 #' @param bar_width A single numeric value in \[0, 1\] controlling the relative
 #'   width of each directional bar. A value of `1` makes adjacent bars touch.
 #'   Defaults to `1`.
-#' @param show_missing A single logical value indicating whether to display a text label of 
+#' @param show_missing A single logical value indicating whether to display a text label of
 #'   the proportion of observations missing a wind direction or wind speed.
 #'   Defaults to `TRUE`.
 #' @param ... Additional arguments passed to [ggplot2::geom_col()], such as

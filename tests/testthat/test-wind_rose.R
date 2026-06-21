@@ -9,7 +9,7 @@ test_that("missing/insufficient data handled properly", {
     print(wind_rose(obs = example_obs[1, ]))
   ))
 
-  print(wind_rose(obs = example_obs[1, ][-1, ])) |> 
+  print(wind_rose(obs = example_obs[1, ][-1, ])) |>
     expect_error(regexp = "nrow\\(obs\\) > 0")
 
   print(wind_rose(obs = example_obs |> dplyr::mutate(ws_1hr = NA))) |>
