@@ -1267,11 +1267,11 @@ dev = true
 
 [[package]]
 name = "withr"
-version = "3.0.2"
+version = "3.0.3"
 source = "cran"
-raw_version = "3.0.2"
-url = "https://cran.r-project.org/src/contrib/withr_3.0.2.tar.gz"
-checksum = "md5:f2e3780a71f6258d6f9055f138d474f2"
+raw_version = "3.0.3"
+url = "https://cran.r-project.org/src/contrib/withr_3.0.3.tar.gz"
+checksum = "md5:121bf3699aadb9d1b47d648964b934f8"
 
 [[package]]
 name = "wk"
@@ -1284,11 +1284,11 @@ dev = true
 
 [[package]]
 name = "xfun"
-version = "0.58.0"
+version = "0.59.0"
 source = "cran"
-raw_version = "0.58"
-url = "https://cran.r-project.org/src/contrib/xfun_0.58.tar.gz"
-checksum = "md5:4997eeff0e261ede02c83474f58a01c3"
+raw_version = "0.59"
+url = "https://cran.r-project.org/src/contrib/xfun_0.59.tar.gz"
+checksum = "md5:5871bf1941a8ee14dfb8b21c43ec3e5c"
 
 [[package]]
 name = "xml2"
