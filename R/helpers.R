@@ -8,24 +8,34 @@ add_features <- function(obs, features, date_col = NULL) {
   }
 
   lubridate_funs <- getNamespaceExports("lubridate")
-  lubridate_feats <- lubridate_funs[lubridate_funs %in% features]
+  lubridate_feats <- lubridate_funs[lubridate_funs %in% tolower(features)] |>
+    sort()
+  lubridate_feats <- lubridate_feats |>
+    as.list() |>
+    setNames(sort(features[tolower(features) %in% lubridate_feats]))
   if (length(lubridate_feats) > 0) {
-    stopifnot(
-      "date_col must be provided for lubridate features" = !is.null(date_col)
-    )
-    features <- features[!features %in% lubridate_feats]
-    for (feature in lubridate_feats) {
-      FUN <- feature |> get(envir = asNamespace("lubridate"))
+    if (is.null(date_col)) {
+      feats_pretty <- paste0("`", names(lubridate_feats), "`") |>
+        stringr::str_flatten_comma(last = ", and ")
+      msg <- "Since %s specified and not present in data, `date_col` must be provided." |>
+        sprintf(feats_pretty)
+      stop(msg)
+    }
+    features <- features[!features %in% names(lubridate_feats)]
+    for (feature in names(lubridate_feats)) {
+      FUN <- lubridate_feats[[feature]] |> get(envir = asNamespace("lubridate"))
       obs <- obs |> dplyr::mutate(!!feature := FUN(get(date_col)))
     }
   }
 
-  if ("season" %in% features) {
-    stopifnot(
-      "date_col must be provided for determining season" = !is.null(date_col)
-    )
-    obs$season <- obs[[date_col]] |>
-      handyr::get_season(as_factor = TRUE)
+  if ("season" %in% tolower(features)) {
+    feature <- features[tolower(features) == "season"]
+    if (is.null(date_col)) {
+      msg <- "Since `%s` specified and not present in data, `date_col` must be provided." |>
+        sprintf(feature)
+      stop(msg)
+    }
+    obs[[feature]] <- obs[[date_col]] |> handyr::get_season(as_factor = TRUE)
   }
   return(obs)
 }
