@@ -1,4 +1,6 @@
-# TODO: handle other units
+# TODO: test other units, facetting, colour/fill changes
+# TODO: add mean speed and calm % as text in br of each panel - currenlty there but janky
+# TODO: add pollution_rose wrapper that subs ws for pollutant
 # TODO: Present amount of missing values inside center of plot
 # TODO: add data date range to subtitle or caption
 # TODO: handle when a facet doesn't have any data
@@ -127,6 +129,14 @@ wind_rose <- function(
     add_features(facet_by, date_col = date_col) |> # calculate features as required
     dplyr::select(dplyr::all_of(c(data_cols, facet_by)))
 
+  # Error clearly if there is no usable wind speed or direction data
+  if (all(is.na(rose_data$ws))) {
+    stop("No observations where wind speed is not NA")
+  }
+  if (all(is.na(rose_data$wd))) {
+    stop("No observations where wind direction is not NA")
+  }
+
   if (show_missing) {
     missing_p <- rose_data |>
       dplyr::group_by(dplyr::across(dplyr::all_of(facet_by))) |>
@@ -150,9 +160,11 @@ wind_rose <- function(
     dplyr::filter(!is.na(.data$wd))
 
   if (nrow(rose_data) == 0) {
-    "No observations where wind direction is not NA" |>
-      sprintf(ws_min, ws_out_units) |>
-      stop()
+    stop("No observations where wind direction is not NA")
+  }
+  # e.g. wind speed was only ever measured when direction was missing
+  if (all(is.na(rose_data$ws))) {
+    stop("No observations where wind speed is not NA")
   }
 
   rose_data <- rose_data |>
@@ -248,12 +260,6 @@ make_wind_rose_base <- function(
     freq_labels_position <- freq_labels_position |> get_cardinal_direction()
   }
 
-  # Determine most frequent direction across all facets
-  most_frequent <- dir_totals |>
-    dplyr::filter(.data$sum_p == max(.data$sum_p, na.rm = TRUE)) |>
-    dplyr::pull("sum_p") |>
-    dplyr::first()
-
   # Make base plot
   gg <- ggplot2::ggplot(rose_data) |>
     facet_plot(by = facet_by, rows = facet_rows) |>
@@ -348,7 +354,8 @@ cut_wind_speed <- function(ws, ws_min = 0, ws_step = 2) {
   )[
     1:(length(speed_bins) - 1)
   ]
-  speed_labels[speed_labels == paste("-1 -", ws_min)] <- "Calm (<= %s)" |> sprintf(ws_min)
+  speed_labels[speed_labels == paste("-1 -", ws_min)] <- "Calm (<= %s)" |>
+    sprintf(ws_min)
 
   cut(ws, include.lowest = TRUE, breaks = speed_bins, labels = speed_labels)
 }

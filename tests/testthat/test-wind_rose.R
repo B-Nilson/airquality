@@ -13,7 +13,7 @@ test_that("missing/insufficient data handled properly", {
     expect_error(regexp = "nrow\\(obs\\) > 0")
 
   print(wind_rose(obs = example_obs |> dplyr::mutate(ws_1hr = NA))) |>
-    expect_error(regexp = "No observations where wind speed >= 0")
+    expect_error(regexp = "No observations where wind speed is not NA")
 
   print(wind_rose(obs = example_obs |> dplyr::mutate(wd_1hr = NA))) |>
     expect_error(regexp = "No observations where .* wind direction is not NA")
