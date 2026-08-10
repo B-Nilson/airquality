@@ -1,7 +1,3 @@
-is_leap_year <- function(year) {
-  year %% 4 == 0
-}
-
 # Handle if any/all requested stations for a specific data source don't exist in its meta data
 # Returns stations with any unknown stations filtered out
 check_stations_exist <- function(stations, known_stations, source) {

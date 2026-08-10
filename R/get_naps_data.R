@@ -1,5 +1,6 @@
 #  TODO: test and finish this, need to evaluate time correctness (may not actually be LST for every site/year ...)
-get_NAPS_data = function(years, pollutants = "PM25") {
+# TODO: include method code details, filter to continuous methods using flag
+get_naps_data <- function(years, pollutants = "PM25") {
   base_url <- "https://data-donnees.az.ec.gc.ca/api/file"
   archive_dir <- "/air/monitor/national-air-pollution-surveillance-naps-program/Data-Donnees/%YEAR%/ContinuousData-DonneesContinu/HourlyData-DonneesHoraires/"
   file_paths <- years |>
@@ -62,6 +63,9 @@ get_NAPS_data = function(years, pollutants = "PM25") {
   naps_data_long |>
     dplyr::left_join(site_timezones, by = "site_id") |>
     dplyr::mutate(
+      date_raw = date |>
+        format("%F") |>
+        paste(hour_local),
       date_utc = date |>
         format("%F") |>
         paste(hour_local - 1) |> # hours are 1 - 24, backwards local ST
@@ -71,7 +75,19 @@ get_NAPS_data = function(years, pollutants = "PM25") {
       is_qced = TRUE,
       source = "naps"
     ) |>
-    dplyr::select(site_id, date = date_utc, pm25 = PM2.5, is_qced, source)
+    dplyr::select(
+      site_id,
+      method_code,
+      lat,
+      lng,
+      date_raw,
+      tz_local,
+      lst_offset,
+      date = date_utc,
+      pm25 = PM2.5, # TODO: abstract for other pols
+      is_qced,
+      source
+    )
 }
 
 tz_offset_to_hours <- function(tz_offsets = "+0000") {
