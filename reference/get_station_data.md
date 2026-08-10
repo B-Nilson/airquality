@@ -93,24 +93,33 @@ additional columns included not found in others.
 #  for the first hour of Feb 2019
 get_station_data(locations = "Fort St. John, BC, Canada", date_range = "2019-02-01 01:00:00")
 #> Warning: Adding a search buffer of 10 km to each location (see arg `buffer_dist`)
-#> Warning: URL 'ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//AnnualSummary/': Timeout of 60 seconds was reached
-#> Error in file(con, "r"): cannot open the connection to 'ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//AnnualSummary/'
+#> FEM - BCgov : 4 station(s) to check for data
+#> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.
+#> Error in standardize_data_format(dplyr::bind_rows(obs), date_range = date_range, : No data available before reformatting.
 #> FEM - AirNow : 1 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-08-10 20:16:15: Getting hourly files
-#> 2026-08-10 20:16:16: Getting station metadata
+#> 2026-08-10 20:24:52: Getting hourly files
+#> 2026-08-10 20:24:52: Getting station metadata
 #> Error in data_fun(stations = site_ids, date_range, quiet = quiet): No data available for desired stations during specified date range.
 #> $stations
-#> Simple feature collection with 2 features and 4 fields
+#> Simple feature collection with 10 features and 4 fields
 #> Geometry type: POINT
 #> Dimension:     XY
-#> Bounding box:  xmin: -120.8489 ymin: 56.2458 xmax: -120.8489 ymax: 56.2458
+#> Bounding box:  xmin: -120.8561 ymin: 56.23179 xmax: -120.8094 ymax: 56.25772
 #> Geodetic CRS:  WGS 84
-#> # A tibble: 2 × 5
-#>   site_id   site_name                   network source            geometry
-#>   <chr>     <chr>                       <chr>   <chr>          <POINT [°]>
-#> 1 000105501 Fort St John NP Cultural C… FEM     AirNow (-120.8489 56.2458)
-#> 2 000105501 Fort St John NP Cultural C… FEM     AirNow (-120.8489 56.2458)
+#> # A tibble: 10 × 5
+#>    site_id       site_name              network source             geometry
+#>    <chr>         <chr>                  <chr>   <chr>           <POINT [°]>
+#>  1 E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)
+#>  2 E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)
+#>  3 E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)
+#>  4 FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)
+#>  5 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)
+#>  6 E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)
+#>  7 E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)
+#>  8 E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)
+#>  9 FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)
+#> 10 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)
 #> 
 #> $data
 #> # A tibble: 0 × 0
@@ -126,8 +135,8 @@ get_station_data(c("Vanderhoof BC, Canada", "Kamloops, BC, Canada"),
 #> Warning: Adding a search buffer of 25 km to each location (see arg `buffer_dist`)
 #> FEM - AirNow : 2 station(s) to check for data
 #> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.
-#> 2026-08-10 20:16:22: Getting hourly files
-#> 2026-08-10 20:16:22: Getting station metadata
+#> 2026-08-10 20:24:56: Getting hourly files
+#> 2026-08-10 20:24:56: Getting station metadata
 #> $stations
 #> Simple feature collection with 2 features and 4 fields
 #> Geometry type: POINT
