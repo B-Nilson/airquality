@@ -716,14 +716,26 @@ make_taylor_rmse_lines <- function(
       )
     })
   })
+  lines_data <- lines_lables |>
+    lapply(\(x) x |> lapply(\(y) y$lines) |> dplyr::bind_rows()) |>
+    dplyr::bind_rows()
+  # Columns identifying each arc: everything except the x/y coordinates
+  line_groups <- setdiff(names(lines_data), c("x", "y"))
+
+  lines_data <- lines_data |>
+    dplyr::mutate(
+      keep = get_standard_deviation(.data$x, .data$y) < sd_max &
+        get_correlation(.data$x, .data$y) >= min_cor,
+      run = cumsum(!.data$keep)
+    ) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(line_groups))) |>
+    dplyr::mutate(first_run = .data$run[.data$keep][1]) |>
+    dplyr::filter(.data$keep, .data$run == .data$first_run) |>
+    dplyr::select(-c("keep", "run", "first_run")) |>
+    dplyr::ungroup()
+
   list(
-    lines = lines_lables |>
-      lapply(\(x) x |> lapply(\(y) y$lines) |> dplyr::bind_rows()) |>
-      dplyr::bind_rows() |>
-      dplyr::filter(
-        get_standard_deviation(.data$x, .data$y) < sd_max,
-        get_correlation(.data$x, .data$y) >= min_cor
-      ),
+    lines = lines_data,
     labels = lines_lables |>
       lapply(\(x) x |> lapply(\(y) y$labels) |> dplyr::bind_rows()) |>
       dplyr::bind_rows() |>
