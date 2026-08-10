@@ -2,131 +2,160 @@
 % Please edit documentation in R/plotting_taylor_diagram.R
 \name{taylor_diagram}
 \alias{taylor_diagram}
-\title{Create a Taylor diagram to assess model performance using the relationship between correlation, standard deviation, and centered RMS error.}
+\title{Create a Taylor diagram}
 \usage{
 taylor_diagram(
   dat,
   data_cols = c(obs = "obs", mod = "mod"),
   group_by,
   facet_by = NULL,
+  date_col = NULL,
   facet_rows = 1,
-  obs_colour = "purple",
-  obs_shape = 16,
-  obs_size = 1.5,
-  obs_stroke = 1,
-  obs_label = "Obs.",
-  mod_colours = "default",
-  mod_fills = "default",
-  mod_shapes = "default",
-  mod_size = 1.5,
-  mod_stroke = 1,
-  cor_minimum = NULL,
-  cor_step = 0.1,
-  cor_colour = "grey30",
-  cor_linetype = "longdash",
-  cor_label = "Correlation",
-  rmse_minimum = 0,
-  rmse_step = "default",
-  rmse_colour = "brown",
-  rmse_linetype = "dotted",
-  rmse_label = "Centered RMS Error",
-  rmse_label_pos = "default",
-  sd_maximum = NULL,
-  sd_step = "default",
-  sd_colour = "black",
-  sd_linetypes = c(obs = "dashed", other = "dashed"),
-  sd_label = "Standard Deviation",
+  obs_point_options = list(colour = "purple", shape = 16, size = 2, stroke = 1, label =
+    "Obs.", label_padding = labels_padding),
+  mod_point_options = list(colours = NULL, fills = NULL, shapes = 21, size = 3, stroke =
+    1),
+  cor_line_options = list(minimum = NULL, step = 0.1, colour = "grey30", linetype =
+    "longdash", label = "Correlation", label_type = "decimal"),
+  rmse_line_options = list(minimum = 0, step = NULL, colour = "brown", linetype =
+    "dotted", label = "Centered RMS Error", label_pos = NULL),
+  sd_line_options = list(maximum = NULL, step = NULL, colour = "black", linetypes = c(obs
+    = "dashed", other = "dashed"), label = "Standard Deviation"),
   plot_padding = 0.5,
-  labels_padding = 2
+  labels_padding = 0.5
 )
 }
 \arguments{
-\item{dat}{Paired observation and model data with (at least) all columns in `data_cols`, `group_by`, and (if provided) `facet_by`.}
+\item{dat}{A data frame containing at least the columns specified in
+`data_cols`, `group_by`, and `facet_by`. Must contain more than 2 rows.}
 
-\item{data_cols}{(Optional) a character vector with 2 values indication column names in `dat` to get observed and modelled values.
-Default assumes columns "obs" and "mod" exist.}
+\item{data_cols}{A named character vector of length 2 with names `"obs"` and
+`"mod"` specifying the column names in `dat` for observed and modelled
+values. Defaults to `c(obs = "obs", mod = "mod")`.}
 
-\item{group_by}{a character vector with between 1 and 3 column names to use as groups.
-The first value will be used for `colour`, the second (if present) will be used for `shape`, and the third (if present) will be used for `fill` when adding model data points.
-If names are present they will be used as the corresponding legend titles.}
+\item{group_by}{A named character vector of 1–3 column names in `dat` used
+to distinguish model output. The first element maps to `colour`, the
+second (if present) to `shape`, and the third (if present) to `fill`.
+Element names become legend titles.}
 
-\item{facet_by}{(Optional) a character vector with 1 or 2 column names to use as facets in `ggplot2::facet_wrap()`.
-If names are present they will be used as the corresponding facet titles.
-Default (NULL) does not facet the plot.}
+\item{facet_by}{A named character vector of 1–2 column names passed to
+[ggplot2::facet_wrap()]. Element names become facet strip labels. Defaults
+to `NULL` (no faceting).}
 
-\item{facet_rows}{(Optional) a single numeric value indicating the number of rows to use in facetting if `facet_by` values provided.
-Default is a single row.}
+\item{date_col}{A single string naming a date/time column in `dat` used by
+`add_features()` to derive additional grouping variables. Defaults to
+`NULL`.}
 
-\item{obs_colour, obs_shape, obs_size, obs_stroke}{(Optional) a single value indicating the colour/shape/size/stroke of the observed data point.
-Default is a full-colour purple circle.}
+\item{facet_rows}{A positive integer giving the number of rows in the facet
+layout. Defaults to `1`.}
 
-\item{obs_label}{(Optional) a single character value indicating the text to display for the observed point.
-Default is "Obs."}
+\item{obs_point_options}{A named list controlling the appearance of the
+observed data point. Accepted elements:
+\describe{
+  \item{`colour`}{Colour of the point. Defaults to `"purple"`.}
+  \item{`shape`}{Shape of the point. Defaults to `16` (solid circle).}
+  \item{`size`}{Size of the point. Defaults to `1.5`.}
+  \item{`stroke`}{Stroke width of the point. Defaults to `1`.}
+  \item{`label`}{Text label displayed beside the point.
+    Defaults to `"Obs."`.}
+  \item{`label_padding`}{Distance (in standard-deviation units) between
+    the point and its label. Defaults to `labels_padding`.}
+}}
 
-\item{mod_colours, mod_shapes, mod_fills}{(Optional) a named vector of colours/shapes to use for the provided `group_by`
-where the names correspond to values in that group column to assign each colour/shape to (i.e `c("group_1" = "red", ...)`).
-Default uses "good looking" colours/shapes/fills.}
+\item{mod_point_options}{A named list controlling the appearance of modelled
+data points. Accepted elements:
+\describe{
+  \item{`colours`}{A named character vector mapping `group_by[[1]]` levels
+    to colours. Defaults to the `"Dark2"` palette from
+    [ggplot2::scale_colour_brewer()].}
+  \item{`fills`}{A named character vector mapping `group_by[[3]]` levels to
+    fill colours (only used when `group_by` has three elements). Defaults
+    to [ggplot2::scale_fill_viridis_d()].}
+  \item{`shapes`}{A named integer vector mapping `group_by[[2]]` levels to
+    point shapes. Defaults to shapes `21` through `30`.}
+  \item{`size`}{Size of the points. Defaults to `1.5`.}
+  \item{`stroke`}{Stroke width of the points. Defaults to `1`.}
+}}
 
-\item{mod_size, mod_stroke}{(Optional) a single numeric value indicating the size/stroke of the model data points.
-Default matches the size/stroke of the observed point.}
+\item{cor_line_options}{A named list controlling the radial correlation lines.
+Accepted elements:
+\describe{
+  \item{`minimum`}{Minimum correlation value shown, from -1 to 1. Defaults
+    to the nearest 0.1 at or below the smallest correlation in `dat`, with
+    a floor of `0.5`.}
+  \item{`step`}{Spacing between correlation lines. Defaults to `0.1`.}
+  \item{`colour`}{Line colour. Defaults to `"grey30"`.}
+  \item{`linetype`}{Line type. Defaults to `"longdash"`.}
+  \item{`label`}{Axis title. Defaults to `"Correlation"`.}
+  \item{`label_type`}{Type of label to display for the axis. Options are `"decimal"`
+    (default) or `"percent".}
+}}
 
-\item{cor_minimum}{(Optional) a single numeric value indicating the minimum correlation value to display (from -1 to +1).
-Default uses the nearest 0.1 below the minimum correlation.}
+\item{rmse_line_options}{A named list controlling the centred-RMS-error arcs.
+Accepted elements:
+\describe{
+  \item{`minimum`}{Minimum RMS error arc drawn (must be `>= 0`). The first
+    arc is drawn one `step` above this value. Defaults to `0`.}
+  \item{`step`}{Spacing between RMS error arcs. Defaults to a value
+    producing approximately 4 arcs with "pretty" spacing.}
+  \item{`colour`}{Arc colour. Defaults to `"brown"`.}
+  \item{`linetype`}{Arc line type. Defaults to `"dotted"`.}
+  \item{`label`}{Axis title. Defaults to `"Centered RMS Error"`.}
+  \item{`label_pos`}{Position of arc labels as a proportion in \[0, 1\]:
+    `0` places labels at the leftmost point on the x-axis, `0.5` at the
+    arc apex, and `1` at the rightmost point. Defaults to 10% above the
+    midpoint between `minimum` and `1`.}
+}}
 
-\item{cor_step}{(Optional) a single value indicating the spacing between each correlation line.
-Default is a step of 0.1 (10\%).}
+\item{sd_line_options}{A named list controlling the standard-deviation arcs.
+Accepted elements:
+\describe{
+  \item{`maximum`}{Maximum standard deviation displayed (must be `>= 0`).
+    Defaults to the nearest multiple of 5 above the largest standard
+    deviation in `dat`.}
+  \item{`step`}{Spacing between standard-deviation arcs. Defaults to a
+    value producing approximately 4 arcs with "pretty" spacing.}
+  \item{`colour`}{Arc colour. Defaults to `"black"`.}
+  \item{`linetypes`}{A named character vector with elements `"obs"` and
+    `"other"` specifying the line type for the observed standard-deviation
+    arc and all other arcs, respectively. Defaults to
+    `c(obs = "dashed", other = "dashed")`.}
+  \item{`label`}{Axis title. Defaults to `"Standard Deviation"`.}
+}}
 
-\item{cor_colour, cor_linetype}{(Optional) a single value indicating the colour/linetype of the correlation grid lines.
-Default is grey long-dash lines.}
+\item{plot_padding}{A single non-negative number giving extra space (in
+standard-deviation units) added beyond the outermost arc. Increase this
+value if text labels are clipped. Defaults to `0.5`.}
 
-\item{cor_label}{(Optional) a single character value indicating the text to display for the correlation axis title.
-Default is "Correlation".}
-
-\item{rmse_minimum}{(Optional) a single numeric value indicating the minimum rmse line to display (>= 0).
-Default is 0 (meaning the first line to display is at `rmse_step`).}
-
-\item{rmse_step}{(Optional) a single value indicating the spacing between each rmse line.
-Default produces approximatley 4 lines with "pretty" spacing.}
-
-\item{rmse_colour, rmse_linetype}{(Optional) a single value indicating the colour/linetype of the rmse circles originating from the observed point.
-Default is brown dotted lines.}
-
-\item{rmse_label}{(Optional) a single character value indicating the text to display for the RMSE axis title.
-Default is "Centered RMS Error".}
-
-\item{rmse_label_pos}{(Optional) a single value (0-1) indicating the location of the labels for the rmse circles
-(0 == far left along x-axis, 0.5 = top of cirles, 1 = far right along x-axis).
-Default is 10\% greater than the minimum correlation.}
-
-\item{sd_maximum}{(Optional) a single numeric value indicating the maximum standard deviation value to display (>= 0).
-Default is the nearest "pretty" value above the maximum standard deviation.}
-
-\item{sd_step}{(Optional) a single value indicating the spacing between each standard deviation line.
-Default produces approximatley 4 lines with "pretty" spacing.}
-
-\item{sd_colour}{(Optional) a single value indicating the colour of the standard deviation arcs.
-Default is black.}
-
-\item{sd_linetypes}{(Optional) a character vector with 2 line types and names `"obs", "other"` indicating the line types of standard deviation arcs.
-Default is dashed for the observed line, dotted for others.}
-
-\item{sd_label}{(Optional) a single character value indicating the text to display for the standard deviation axis title.
-Default is "Standard Deviation".}
-
-\item{plot_padding, labels_padding}{(Optional) a single numeric value indicating how much spacing (standard deviation units) to add to most text labels.
-Default is 2 for both, likely needs to be adjusted depeding on the figure size and number of facets.}
+\item{labels_padding}{A single non-negative number controlling the distance
+(in standard-deviation units) between grid lines or arcs and their text
+labels. Adjust to suit the figure size and number of facets.
+Defaults to `2`.}
 }
 \value{
-A ggplot object of your taylor diagram.
+A [ggplot2::ggplot()] object.
 }
 \description{
-Blah Blah Blah Taylor (2001) Blah Blah Blah
-TODO: Add description
+Visualises model performance using the geometric relationship between
+correlation, standard deviation, and centred root-mean-square (RMS) error,
+following Taylor (2001).
+}
+\details{
+A Taylor diagram represents three performance statistics simultaneously:
+
+* **Standard deviation**: the radial distance from the origin.
+* **Correlation**: the azimuthal angle from the positive x-axis.
+* **Centred RMS error**: the distance from the observed point on the x-axis.
+
+The observed point always sits on the positive x-axis at a distance equal to
+the observed standard deviation. A model point that overlaps the observed
+point has perfect agreement (correlation of 1, centred RMS error of 0, and
+matching standard deviation).
 }
 \examples{
 \dontrun{
-# Make test data
-data <- as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
+# Prepare example data
+data <- as.data.frame(datasets::ChickWeight) |>
   dplyr::filter(.data$Chick == 1) |>
   tidyr::pivot_wider(names_from = "Chick", values_from = "weight") |>
   dplyr::full_join(
@@ -135,31 +164,50 @@ data <- as.data.frame(datasets::ChickWeight) |> # TODO: make better test dataset
   ) |>
   dplyr::rename(obs = `1`, mod = "weight") |>
   dplyr::mutate(Chick = factor(round(as.numeric(.data$Chick) / 20)))
-# Basic usage
+
+# Basic usage with two grouping variables
 taylor_diagram(data, group_by = c(Diet = "Diet", Chick = "Chick"))
-# Force 0 on left axis
-taylor_diagram(data,
+
+# Extend the correlation axis to include 0 and reposition RMS error labels
+taylor_diagram(
+  data,
   group_by = c(Diet = "Diet", Chick = "Chick"),
-  cor_minimum = 0, rmse_label_pos = 130
-) # TODO: fix this
-# Change colours / shapes
-taylor_diagram(data,
-  group_by = c(Diet = "Diet", Chick = "Chick"),
-  mod_colours = c("AB" = "pink", "BC" = "blue"),
-  mod_fills = c("EGG" = "white", "PA" = "darkgrey"), # TODO: update this
-  mod_shapes = c("FALSE" = 23, "TRUE" = 22),
-  mod_size = 4, mod_stroke = 6,
-  obs_colour = "brown", obs_shape = 23, obs_size = 6,
-  cor_colour = "orange", cor_linetype = "dotdash",
-  rmse_colour = "green", rmse_linetype = "longdash",
-  sd_colour = "purple", sd_linetypes = c(obs = "solid", other = "dashed")
+  cor_line_options  = list(minimum = 0),
+  rmse_line_options = list(label_pos = 0.3)
 )
-# Adjust text positioning
-taylor_diagram(data,
+
+# Custom colours, shapes, and line styles
+taylor_diagram(
+  data,
+  group_by  = c(Diet = "Diet", Chick = "Chick"),
+  obs_point_options = list(colour = "brown", shape = 23, size = 6),
+  mod_point_options = list(
+    colours = c("1" = "pink", "2" = "blue", "3" = "green", "4" = "orange"),
+    size  = 4,
+    stroke  = 2
+  ),
+  cor_line_options = list(colour = "orange", linetype = "dotdash"),
+  rmse_line_options = list(colour = "green",  linetype = "longdash"),
+  sd_line_options = list(
+    colour = "purple",
+    linetypes = c(obs = "solid", other = "dashed")
+  )
+)
+
+# Adjust label and plot padding
+taylor_diagram(
+  data,
   group_by = c(Diet = "Diet", Chick = "Chick"),
-  plot_padding = 4, labels_padding = 1, rmse_label_pos = 0.7
+  plot_padding = 4,
+  labels_padding = 1,
+  rmse_line_options = list(label_pos = 0.7)
 )
 }
+}
+\references{
+Taylor, K. E. (2001). Summarizing model performance in a single diagram.
+*Journal of Geophysical Research: Atmospheres*, **106**(D7), 7183–7192.
+\doi{10.1029/2000JD900719}
 }
 \seealso{
 Other Data Visualisation:
