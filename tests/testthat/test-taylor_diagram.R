@@ -1,5 +1,5 @@
-test_that("Plot created without error", {
-  obs <- lapply(1:5, \(i) {
+make_model_obs <- function() {
+  lapply(1:5, \(i) {
     withr::with_seed(
       seed = i,
       example_obs |>
@@ -14,6 +14,10 @@ test_that("Plot created without error", {
     )
   }) |>
     dplyr::bind_rows()
+}
+
+test_that("Plot created without error", {
+  obs <- make_model_obs()
 
   obs |>
     taylor_diagram(group_by = "model_name") |>
@@ -59,4 +63,17 @@ test_that("legend titles follow group_by names", {
   expect_identical(gg$labels$colour, "Model")
   expect_identical(gg$labels$shape, "Temp")
   expect_identical(gg$labels$fill, "Ws")
+})
+
+test_that("default saved plot matches the golden image", {
+  obs <- make_model_obs()
+
+  gg <- obs |> taylor_diagram(group_by = "model_name")
+  out_file <- tempfile(fileext = ".png")
+  # Low quality keeps the golden PNG small and the render fast. The data is
+  # built with fixed seeds, so rendering is deterministic and byte-for-byte
+  # comparison is stable across runs.
+  gg |> handyr::save_figure(out_path = out_file, quality = "low")
+
+  expect_snapshot_file(out_file, "taylor_diagram.png")
 })
