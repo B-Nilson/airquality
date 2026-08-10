@@ -291,7 +291,7 @@ make_wind_rose_base <- function(
     ggplot2::labs(
       x = NULL,
       y = NULL,
-      fill = "Wind Speed [%s]" %>% sprintf(ws_out_units),
+      fill = "Wind Speed [%s]" |> sprintf(ws_out_units),
     )
 
   if (!is.null(missing_p)) {
