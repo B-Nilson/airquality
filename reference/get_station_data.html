@@ -139,33 +139,24 @@ Some sources may have additional columns included not found in others.</p>
 <span class="r-in"><span><span class="co">#  for the first hour of Feb 2019</span></span></span>
 <span class="r-in"><span><span class="fu">get_station_data</span><span class="op">(</span>locations <span class="op">=</span> <span class="st">"Fort St. John, BC, Canada"</span>, date_range <span class="op">=</span> <span class="st">"2019-02-01 01:00:00"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Adding a search buffer of 10 km to each location (see arg `buffer_dist`)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> FEM - BCgov : 4 station(s) to check for data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Data from the 'BCgov' repository are collected from the British Columbia Ministry of Environment and Climate Change Strategy and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www2.gov.bc.ca/gov/content/environment/air-land-water/air` for more information.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Error in standardize_data_format(dplyr::bind_rows(obs), date_range = date_range, : No data available before reformatting.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>URL 'ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//AnnualSummary/': Timeout of 60 seconds was reached</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Error in file(con, "r"): cannot open the connection to 'ftp://ftp.env.gov.bc.ca/pub/outgoing/AIR//AnnualSummary/'</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FEM - AirNow : 1 station(s) to check for data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-06-22 01:57:36: Getting hourly files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-06-22 01:57:37: Getting station metadata</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-08-10 20:16:15: Getting hourly files</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-08-10 20:16:16: Getting station metadata</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Error in data_fun(stations = site_ids, date_range, quiet = quiet): No data available for desired stations during specified date range.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $stations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 10 features and 4 fields</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 2 features and 4 fields</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Dimension:     XY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -120.8561 ymin: 56.23179 xmax: -120.8094 ymax: 56.25772</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bounding box:  xmin: -120.8489 ymin: 56.2458 xmax: -120.8489 ymax: 56.2458</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geodetic CRS:  WGS 84</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    site_id       site_name              network source             geometry</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;POINT [°]&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> E243516       Fort St John NP Cultu… FEM     BCgov   (-120.8489 56.2458)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> E299830       Fort St John Key Lear… FEM     BCgov  (-120.8561 56.24472)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> E304550       Fort St John 85th Ave… FEM     BCgov  (-120.8539 56.23179)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> FSJ OGC CAMEL Fort St John Hospital  FEM     BCgov  (-120.8094 56.25772)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> 000105501     Fort St John NP Cultu… FEM     AirNow  (-120.8489 56.2458)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 5</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   site_id   site_name                   network source            geometry</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;POINT [°]&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 000105501 Fort St John NP Cultural C… FEM     AirNow (-120.8489 56.2458)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 000105501 Fort St John NP Cultural C… FEM     AirNow (-120.8489 56.2458)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $data</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 0 × 0</span></span>
@@ -181,8 +172,8 @@ Some sources may have additional columns included not found in others.</p>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Adding a search buffer of 25 km to each location (see arg `buffer_dist`)</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> FEM - AirNow : 2 station(s) to check for data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Data from the 'AirNow' repository are collected from the US Environmental Protection Agency and are NOT to be used commercially. Recent observations are not quality assured, and are intended for research and/or situational awareness (**NOT for regulatory decision making**). See `https://www.airnow.gov` for more information.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-06-22 01:57:42: Getting hourly files</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-06-22 01:57:43: Getting station metadata</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-08-10 20:16:22: Getting hourly files</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> 2026-08-10 20:16:22: Getting station metadata</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $stations</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Simple feature collection with 2 features and 4 fields</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Geometry type: POINT</span>
@@ -213,7 +204,7 @@ Some sources may have additional columns included not found in others.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

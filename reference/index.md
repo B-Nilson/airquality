@@ -32,9 +32,7 @@
 - [`purpleair_api()`](https://b-nilson.github.io/airquality/reference/purpleair_api.md)
   : Interface with the PurpleAir API
 - [`taylor_diagram()`](https://b-nilson.github.io/airquality/reference/taylor_diagram.md)
-  : Create a Taylor diagram to assess model performance using the
-  relationship between correlation, standard deviation, and centered RMS
-  error.
+  : Create a Taylor diagram
 - [`tile_plot()`](https://b-nilson.github.io/airquality/reference/tile_plot.md)
   : Create tiled summary diagrams
 - [`wind_rose()`](https://b-nilson.github.io/airquality/reference/wind_rose.md)

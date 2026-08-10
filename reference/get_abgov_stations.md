@@ -58,14 +58,14 @@ get_abgov_stations()
 #>    <chr>   <chr>       <chr> <chr>       <chr>       <chr>   <chr>   <dbl> <dbl>
 #>  1 01AQY   Leduc Sens… Pilo…  NA         NA          NA      Albert…  53.2 -114.
 #>  2 01CAP   Woodcroft   Oper… "Station o… http://cap… NA      Capita…  53.6 -114.
-#>  3 01LICA  Cold Lake … Oper…  NA         http://www… NA      Lakela…  54.4 -110.
-#>  4 01PAML  Jasper      Port… "EPA porta… NA          NA      West C…  52.9 -118.
-#>  5 01PASZA Grande Pra… Oper…  NA         http://www… NA      Peace …  55.2 -119.
-#>  6 01SIA   Sherwood P… Oper…  NA         http://cap… NA      Strath…  53.5 -113.
-#>  7 01WBEA  Fort McKay  Oper… "Fort McKa… http://www… Near t… Wood B…  57.2 -112.
-#>  8 02AQM   Calgary So… Oper…  NA         http://www… 49th A… Calgar…  51.0 -114.
-#>  9 02CAP   O’Morrow S… Oper… "Not an AQ… https://ca… NA      Capita…  54.9 -113.
-#> 10 02CRAZ  Cochrane-M… Port… "CRAZ PAML… https://cr… NA      Calgar…  51.2 -114.
+#>  3 01COCH  Cochrane S… Port… "Aeroqual … NA          NA      Albert…  51.2 -115.
+#>  4 01LICA  Cold Lake … Oper…  NA         http://www… NA      Lakela…  54.4 -110.
+#>  5 01OLDS  Olds Sensor Pilo…  NA         NA          NA      Albert…  51.8 -114.
+#>  6 01PAML  Jasper      Port… "EPA porta… NA          NA      West C…  52.9 -118.
+#>  7 01PASZA Grande Pra… Oper…  NA         http://www… NA      Peace …  55.2 -119.
+#>  8 01SIA   Sherwood P… Oper…  NA         http://cap… NA      Strath…  53.5 -113.
+#>  9 01WBEA  Fort McKay  Oper… "Fort McKa… http://www… Near t… Wood B…  57.2 -112.
+#> 10 02AQM   Calgary So… Oper…  NA         http://www… 49th A… Calgar…  51.0 -114.
 #> # ℹ 76 more rows
 #> # ℹ 2 more variables: elev <dbl>, tz_local <chr>
 # if spatial object required
@@ -80,14 +80,14 @@ get_abgov_stations(use_sf = TRUE)
 #>  * <chr>   <chr>             <chr> <chr>       <chr>       <chr>   <chr>   <dbl>
 #>  1 01AQY   Leduc Sensor      Pilo…  NA         NA          NA      Albert…    NA
 #>  2 01CAP   Woodcroft         Oper… "Station o… http://cap… NA      Capita…   673
-#>  3 01LICA  Cold Lake South   Oper…  NA         http://www… NA      Lakela…    NA
-#>  4 01PAML  Jasper            Port… "EPA porta… NA          NA      West C…    NA
-#>  5 01PASZA Grande Prairie -… Oper…  NA         http://www… NA      Peace …    NA
-#>  6 01SIA   Sherwood Park     Oper…  NA         http://cap… NA      Strath…   709
-#>  7 01WBEA  Fort McKay        Oper… "Fort McKa… http://www… Near t… Wood B…    NA
-#>  8 02AQM   Calgary Southeast Oper…  NA         http://www… 49th A… Calgar…  1030
-#>  9 02CAP   O’Morrow Station… Oper… "Not an AQ… https://ca… NA      Capita…   571
-#> 10 02CRAZ  Cochrane-Mitford… Port… "CRAZ PAML… https://cr… NA      Calgar…    NA
+#>  3 01COCH  Cochrane Sensor   Port… "Aeroqual … NA          NA      Albert…    NA
+#>  4 01LICA  Cold Lake South   Oper…  NA         http://www… NA      Lakela…    NA
+#>  5 01OLDS  Olds Sensor       Pilo…  NA         NA          NA      Albert…    NA
+#>  6 01PAML  Jasper            Port… "EPA porta… NA          NA      West C…    NA
+#>  7 01PASZA Grande Prairie -… Oper…  NA         http://www… NA      Peace …    NA
+#>  8 01SIA   Sherwood Park     Oper…  NA         http://cap… NA      Strath…   709
+#>  9 01WBEA  Fort McKay        Oper… "Fort McKa… http://www… Near t… Wood B…    NA
+#> 10 02AQM   Calgary Southeast Oper…  NA         http://www… 49th A… Calgar…  1030
 #> # ℹ 76 more rows
 #> # ℹ 2 more variables: tz_local <chr>, geometry <POINT [°]>
 # }
