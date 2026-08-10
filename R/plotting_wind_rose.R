@@ -270,6 +270,7 @@ make_wind_rose_base <- function(
       legend.direction = "vertical"
     ) +
     ggplot2::coord_radial(
+      thetalim = c(0.5, nlevels(rose_data$wd_bin) + 0.5),
       r.axis.inside = as.integer(freq_labels_position),
       inner.radius = 0.2,
       start = -handyr::convert_units(

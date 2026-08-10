@@ -27,6 +27,12 @@ test_that("default saved plot looks good", {
   gg |> handyr::save_figure(out_path = out_file)
 })
 
+test_that("sectors span 360/n degrees centered on compass bearings", {
+  gg <- wind_rose(obs = example_obs)
+  n_sectors <- nlevels(gg$data$wd_bin)
+  expect_identical(gg$coordinates$limits$theta, c(0.5, n_sectors + 0.5))
+})
+
 test_that("extra features work", {
   example_obs |>
     wind_rose(facet_by = "month", facet_rows = 4, date_col = "date_local")
