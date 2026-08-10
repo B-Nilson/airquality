@@ -356,11 +356,11 @@ taylor_diagram <- function(
   }
   if (length(group_by) >= 2) {
     taylor <- taylor +
-      ggplot2::labs(shape = names(group_by)[2])
+      ggplot2::labs(colour = names(group_by)[1], shape = names(group_by)[2])
   }
   if (length(group_by) >= 3) {
     taylor <- taylor +
-      ggplot2::labs(colour = names(group_by)[3])
+      ggplot2::labs(fill = names(group_by)[3])
   }
   return(taylor)
 }

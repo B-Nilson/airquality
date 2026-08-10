@@ -34,3 +34,29 @@ test_that("Plot created without error", {
     expect_no_warning() |>
     expect_no_error()
 })
+
+test_that("legend titles follow group_by names", {
+  data <- example_obs |>
+    dplyr::mutate(
+      obs = as.numeric(pm25_1hr),
+      mod = obs * 1.1,
+      model_name = "model_1",
+      temp_bin = cut(as.numeric(temp_1hr), breaks = 3),
+      ws_bin = cut(as.numeric(ws_1hr), breaks = 3)
+    )
+
+  # Case: two grouping variables (colour + shape)
+  gg <- data |>
+    taylor_diagram(group_by = c(Model = "model_name", Temp = "temp_bin"))
+  expect_identical(gg$labels$colour, "Model")
+  expect_identical(gg$labels$shape, "Temp")
+
+  # Case: three grouping variables (colour + shape + fill)
+  gg <- data |>
+    taylor_diagram(
+      group_by = c(Model = "model_name", Temp = "temp_bin", Ws = "ws_bin")
+    )
+  expect_identical(gg$labels$colour, "Model")
+  expect_identical(gg$labels$shape, "Temp")
+  expect_identical(gg$labels$fill, "Ws")
+})
