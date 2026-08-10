@@ -140,6 +140,7 @@ tile_plot <- function(
     ggplot2::ggplot() |>
     add_default_theme() |>
     facet_plot(by = names(facet_by), rows = facet_rows, scales = facet_scales) +
+    ggplot2::theme(legend.position = "right", legend.direction = "vertical") +
     ggplot2::geom_tile(ggplot2::aes(x = x, y = y, fill = z), colour = colour) +
     ggplot2::scale_x_discrete(expand = ggplot2::expansion(0)) +
     ggplot2::scale_y_discrete(expand = ggplot2::expansion(0)) +

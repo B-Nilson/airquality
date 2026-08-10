@@ -29,7 +29,7 @@ tile_plot(
 `z`, and (if provided) `facet_by`.}
 
 \item{x, y}{Character strings giving the column names in `obs` to use as the
-horizontal and vertical axes, respectively. If either value is a function found in the `lubridate` package, 
+horizontal and vertical axes, respectively. If either value is a function found in the `lubridate` package,
 and that column is absent from `obs`, it will be derived from `date_col`.}
 
 \item{z}{A character string giving the column name in `obs` whose values are
@@ -49,8 +49,8 @@ containing observation dates. Used to derive temporal columns when `x` or
 
 \item{facet_by}{A character vector of one or two column names to use as
 faceting variables passed to [ggplot2::facet_wrap()]. Named elements will
-be used as the corresponding facet strip titles. 
-If any value matches a function found in the `lubridate` package, 
+be used as the corresponding facet strip titles.
+If any value matches a function found in the `lubridate` package,
 and that column is absent from `obs`, it will be derived from `date_col`.
 Default (`NULL`) produces no facetting.}
 
