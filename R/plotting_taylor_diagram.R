@@ -601,7 +601,15 @@ add_taylor_sd_lines <- function(
       guide = "none"
     ) +
     # TODO: get facet pairs in order added, get obs sd for each pair, add to global var whenever labels checked, don't label if global index of obs sd within x% of label
+    # Expand x like the template expands y (0% at the wedge apex/origin
+    # side, 5% at the outer edge): the wedge is flush at x = 0 by
+    # construction whenever min_cor >= 0, and the default 5%-both-sides
+    # expansion otherwise leaves a dead whitespace gutter left of the
+    # apex. With min_cor < 0 the slanted wedge edge reaches x_min exactly,
+    # so a flush left expansion seats that boundary on the panel edge too.
+    # See #59.
     ggplot2::scale_x_continuous(
+      expand = ggplot2::expansion(c(0, 0.05)),
       breaks = if (min_cor > -1) lines_at else c(-lines_at, lines_at),
       labels = \(l) ifelse(l < 0 & min_cor > -1, "", abs(l))
     )
