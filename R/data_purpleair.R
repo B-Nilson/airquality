@@ -83,6 +83,29 @@ get_purpleair_stations <- function(
 #' # test = purpleair_api(read_key = read_key, channel = "sensors",
 #' # parameters = parameters[5:7])
 #' }
+format_purpleair_query_parameters <- function(parameters) {
+  timestamp_names <- intersect(
+    c("start_timestamp", "end_timestamp"),
+    names(parameters)
+  )
+  for (name in timestamp_names) {
+    value <- parameters[[name]]
+    if (
+      length(value) != 1L ||
+        !is.numeric(value) ||
+        is.na(value) ||
+        !is.finite(value)
+    ) {
+      stop(name, " must be one finite numeric Unix timestamp.")
+    }
+    # PurpleAir expects integer Unix timestamps and rejects scientific
+    # notation such as 1.566e+09. Keep internal request calculations numeric,
+    # but serialize the outgoing query explicitly as full decimal seconds.
+    parameters[[name]] <- sprintf("%.0f", value)
+  }
+  parameters
+}
+
 purpleair_api <- function(
   read_key = NULL,
   write_key = NULL,
@@ -181,11 +204,14 @@ purpleair_api <- function(
     }
   }
 
-  # Make the request
+  # Make the request. Keep timestamp values numeric for request
+  # selection/cost calculations above, but serialize them as full decimal
+  # integer strings for PurpleAir; scientific notation is rejected by the API.
+  query_parameters <- format_purpleair_query_parameters(parameters)
   api_response <- httr::GET(
     paste0(api_url, endpoint),
     httr::add_headers("X-API-Key" = api_key),
-    query = parameters
+    query = query_parameters
   ) |>
     httr::content()
 
