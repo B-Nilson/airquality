@@ -53,7 +53,7 @@ Other Data Collection:
 # \donttest{
 # Normal usage
 get_abgov_stations()
-#> # A tibble: 86 × 11
+#> # A tibble: 90 × 11
 #>    site_id site_name   type  description operated_by address airshed   lat   lng
 #>    <chr>   <chr>       <chr> <chr>       <chr>       <chr>   <chr>   <dbl> <dbl>
 #>  1 01AQY   Leduc Sens… Pilo…  NA         NA          NA      Albert…  53.2 -114.
@@ -63,19 +63,19 @@ get_abgov_stations()
 #>  5 01OLDS  Olds Sensor Pilo…  NA         NA          NA      Albert…  51.8 -114.
 #>  6 01PAML  Jasper      Port… "EPA porta… NA          NA      West C…  52.9 -118.
 #>  7 01PASZA Grande Pra… Oper…  NA         http://www… NA      Peace …  55.2 -119.
-#>  8 01SIA   Sherwood P… Oper…  NA         http://cap… NA      Strath…  53.5 -113.
-#>  9 01WBEA  Fort McKay  Oper… "Fort McKa… http://www… Near t… Wood B…  57.2 -112.
-#> 10 02AQM   Calgary So… Oper…  NA         http://www… 49th A… Calgar…  51.0 -114.
-#> # ℹ 76 more rows
+#>  8 01SAML  SAML Barlo… Port… "SAML depl… NA          NA      Albert…  51.0 -114.
+#>  9 01SIA   Sherwood P… Oper…  NA         http://cap… NA      Strath…  53.5 -113.
+#> 10 01WBEA  Fort McKay  Oper… "Fort McKa… http://www… Near t… Wood B…  57.2 -112.
+#> # ℹ 80 more rows
 #> # ℹ 2 more variables: elev <dbl>, tz_local <chr>
 # if spatial object required
 get_abgov_stations(use_sf = TRUE)
-#> Simple feature collection with 86 features and 9 fields
+#> Simple feature collection with 90 features and 9 fields
 #> Geometry type: POINT
 #> Dimension:     XY
 #> Bounding box:  xmin: -119.3968 ymin: 49.46218 xmax: -110.2331 ymax: 58.7084
 #> Geodetic CRS:  WGS 84
-#> # A tibble: 86 × 10
+#> # A tibble: 90 × 10
 #>    site_id site_name         type  description operated_by address airshed  elev
 #>  * <chr>   <chr>             <chr> <chr>       <chr>       <chr>   <chr>   <dbl>
 #>  1 01AQY   Leduc Sensor      Pilo…  NA         NA          NA      Albert…    NA
@@ -85,10 +85,10 @@ get_abgov_stations(use_sf = TRUE)
 #>  5 01OLDS  Olds Sensor       Pilo…  NA         NA          NA      Albert…    NA
 #>  6 01PAML  Jasper            Port… "EPA porta… NA          NA      West C…    NA
 #>  7 01PASZA Grande Prairie -… Oper…  NA         http://www… NA      Peace …    NA
-#>  8 01SIA   Sherwood Park     Oper…  NA         http://cap… NA      Strath…   709
-#>  9 01WBEA  Fort McKay        Oper… "Fort McKa… http://www… Near t… Wood B…    NA
-#> 10 02AQM   Calgary Southeast Oper…  NA         http://www… 49th A… Calgar…  1030
-#> # ℹ 76 more rows
+#>  8 01SAML  SAML Barlow Sola… Port… "SAML depl… NA          NA      Albert…    NA
+#>  9 01SIA   Sherwood Park     Oper…  NA         http://cap… NA      Strath…   709
+#> 10 01WBEA  Fort McKay        Oper… "Fort McKa… http://www… Near t… Wood B…    NA
+#> # ℹ 80 more rows
 #> # ℹ 2 more variables: tz_local <chr>, geometry <POINT [°]>
 # }
 ```
